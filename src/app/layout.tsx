@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/auth-context";
@@ -42,12 +42,16 @@ export const metadata: Metadata = {
     images: ["/og-image.png"],
     creator: "@flowcentin",
   },
-  themeColor: "#09090f",
   robots: {
     index: true,
     follow: true,
     googleBot: { index: true, follow: true, "max-image-preview": "large" },
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#09090f",
+  colorScheme: "dark",
 };
 
 const revealScript = `

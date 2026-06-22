@@ -1,33 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth';
-import { supabaseAdmin } from '@/lib/supabase';
+import { requireUser } from '@/lib/auth/server';
 import { sendFollowUpEmail, generateFollowUpEmail } from '@/lib/gmail';
+import { followUpSchema, validationError } from '@/lib/validations/domain';
+import { ZodError } from 'zod';
 
 export async function POST(req: NextRequest) {
     try {
-        const authHeader = req.headers.get('authorization');
-        if (!authHeader?.startsWith('Bearer ')) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
-        const token = authHeader.substring(7);
-        const userInfo = verifyToken(token);
-        if (!userInfo) {
-            return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-        }
-
-        const body = await req.json();
-        const { invoiceId, stage } = body;
-
-        if (!invoiceId || !stage) {
-            return NextResponse.json({ error: 'invoiceId and stage required' }, { status: 400 });
-        }
+        const { supabase, user: authUser, response } = await requireUser();
+        if (!authUser) return response!;
+        const { invoiceId, stage } = followUpSchema.parse(await req.json());
 
         // Get user + Gmail tokens
-        const { data: user, error: userError } = await supabaseAdmin
+        const { data: user, error: userError } = await supabase
             .from('users')
             .select('name, company_name, gmail_connected, gmail_access_token, gmail_refresh_token')
-            .eq('id', userInfo.userId)
+            .eq('id', authUser.id)
             .single();
 
         if (userError || !user) {
@@ -39,11 +26,11 @@ export async function POST(req: NextRequest) {
         }
 
         // Get invoice + client data
-        const { data: invoice, error: invError } = await supabaseAdmin
+        const { data: invoice, error: invError } = await supabase
             .from('invoices')
             .select(`*, clients(name, email)`)
             .eq('id', invoiceId)
-            .eq('user_id', userInfo.userId)
+            .eq('user_id', authUser.id)
             .single();
 
         if (invError || !invoice) {
@@ -66,7 +53,7 @@ export async function POST(req: NextRequest) {
             invoiceNumber: invoice.invoice_number,
             amount: formattedAmount,
             dueDate: invoice.due_date,
-            senderName: user.name || userInfo.email.split('@')[0],
+            senderName: user.name || authUser.email?.split('@')[0] || 'Flowcent User',
             companyName: user.company_name,
         });
 
@@ -86,22 +73,26 @@ export async function POST(req: NextRequest) {
         }
 
         // Record the follow-up in DB
-        await supabaseAdmin.from('followups').insert({
+        const { error: followUpError } = await supabase.from('followups').insert({
             invoice_id: invoiceId,
-            user_id: userInfo.userId,
+            user_id: authUser.id,
             stage,
             email_subject: emailContent.subject,
+            message_content: emailContent.html,
+            channel: 'email',
             sent_at: new Date().toISOString(),
             status: 'sent',
         });
+        if (followUpError) console.error('Follow-up audit log failed:', followUpError);
 
         return NextResponse.json({
             success: true,
             message: `Stage ${stage} follow-up sent to ${invoice.clients.email}`,
             messageId: result.messageId,
         });
-    } catch (err: any) {
+    } catch (err: unknown) {
+        if (err instanceof ZodError) return NextResponse.json(validationError(err), { status: 400 });
         console.error('Send follow-up error:', err);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to send follow-up' }, { status: 500 });
     }
 }

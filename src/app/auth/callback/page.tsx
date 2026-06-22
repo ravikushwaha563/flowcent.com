@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/auth-context';
 
 export default function AuthCallbackPage() {
@@ -13,27 +12,17 @@ export default function AuthCallbackPage() {
     useEffect(() => {
         const handleCallback = async () => {
             try {
-                // Supabase handles the hash automatically, get the session
-                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-                
-                if (sessionError) throw sessionError;
-                
-                if (!session) {
-                    throw new Error('No valid session found');
-                }
+                const code = new URLSearchParams(window.location.search).get('code');
+                if (!code) throw new Error('No authorization code received');
 
                 setStatus('Syncing account details...');
 
-                // Send session token to our backend to generate our custom JWT
                 const res = await fetch('/api/auth/oauth-sync', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ 
-                        access_token: session.access_token,
-                        refresh_token: session.refresh_token
-                    }),
+                    body: JSON.stringify({ code }),
                 });
 
                 const data = await res.json();
@@ -42,13 +31,13 @@ export default function AuthCallbackPage() {
 
                 setStatus('Success! Redirecting...');
                 
-                // Login using our custom context (which stores the custom JWT)
-                await login(data.token);
+                await login();
                 router.push('/dashboard');
                 
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.error('OAuth callback error:', err);
-                setStatus(`Error: ${err.message}. Redirecting...`);
+                const message = err instanceof Error ? err.message : 'Authentication failed';
+                setStatus(`Error: ${message}. Redirecting...`);
                 setTimeout(() => router.push('/login'), 3000);
             }
         };

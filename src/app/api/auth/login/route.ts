@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
 import { loginSchema } from '@/lib/validations/auth';
-import { signToken } from '@/lib/auth';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 export async function POST(req: NextRequest) {
     try {
@@ -11,7 +10,7 @@ export async function POST(req: NextRequest) {
         const validatedData = loginSchema.parse(body);
         const { email, password } = validatedData;
 
-        // Sign in with Supabase Auth
+        const supabase = await createServerSupabaseClient();
         const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
             email,
             password,
@@ -24,12 +23,6 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // Generate JWT token
-        const token = signToken({
-            userId: authData.user.id,
-            email: authData.user.email!,
-        });
-
         return NextResponse.json({
             user: {
                 id: authData.user.id,
@@ -37,14 +30,13 @@ export async function POST(req: NextRequest) {
                 name: authData.user.user_metadata?.name || null,
                 companyName: authData.user.user_metadata?.company_name || null,
             },
-            token,
             message: 'Login successful',
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
         // Handle validation errors
-        if (error.name === 'ZodError') {
+        if (error instanceof Error && error.name === 'ZodError') {
             return NextResponse.json(
-                { error: 'Validation failed', details: error.errors },
+                { error: 'Validation failed' },
                 { status: 400 }
             );
         }

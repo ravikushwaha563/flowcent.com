@@ -1,20 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth';
-import { supabaseAdmin } from '@/lib/supabase';
+import { requireUser } from '@/lib/auth/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { checkAiLimit, PlanType } from '@/lib/plan-limits';
+import { requireServerEnv } from '@/lib/env/server';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const genAI = new GoogleGenerativeAI(requireServerEnv('GEMINI_API_KEY'));
 
 export async function POST(req: NextRequest) {
     try {
-        // Auth
-        const authHeader = req.headers.get('authorization');
-        if (!authHeader?.startsWith('Bearer ')) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-        const userInfo = verifyToken(authHeader.substring(7));
-        if (!userInfo) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+        const { supabase, user: authUser, response } = await requireUser();
+        if (!authUser) return response!;
 
         const { clientId } = await req.json();
         if (!clientId) {
@@ -22,24 +17,27 @@ export async function POST(req: NextRequest) {
         }
 
         // Fetch user plan and ai usage
-        const { data: user } = await supabaseAdmin
+        const { data: user } = await supabase
             .from('users')
-            .select('subscription_plan, ai_usage_this_month')
-            .eq('id', userInfo.userId)
+            .select('subscription_plan, plan_expires_at, ai_usage_this_month')
+            .eq('id', authUser.id)
             .single();
 
         if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
-        const limitCheck = checkAiLimit((user.subscription_plan || 'free') as PlanType, user.ai_usage_this_month || 0);
+        const activePlan = user.plan_expires_at && new Date(user.plan_expires_at) < new Date()
+            ? 'free'
+            : (user.subscription_plan || 'free');
+        const limitCheck = checkAiLimit(activePlan as PlanType, user.ai_usage_this_month || 0);
 
         if (!limitCheck.allowed) {
             return NextResponse.json({ error: 'LIMIT_EXCEEDED', message: limitCheck.message }, { status: 403 });
         } // 1. Fetch client info
-        const { data: client, error: clientErr } = await supabaseAdmin
+        const { data: client, error: clientErr } = await supabase
             .from('clients')
             .select('*')
             .eq('id', clientId)
-            .eq('user_id', userInfo.userId)
+            .eq('user_id', authUser.id)
             .single();
 
         if (clientErr || !client) {
@@ -47,18 +45,19 @@ export async function POST(req: NextRequest) {
         }
 
         // 2. Fetch all invoices for this client
-        const { data: invoices } = await supabaseAdmin
+        const { data: invoices } = await supabase
             .from('invoices')
             .select('id, invoice_number, amount, currency, due_date, status, created_at, paid_at, payment_intent_score, current_stage')
             .eq('client_id', clientId)
-            .eq('user_id', userInfo.userId)
+            .eq('user_id', authUser.id)
             .order('created_at', { ascending: false });
 
         // 3. Fetch all logged promises/excuses
-        const { data: promises } = await supabaseAdmin
-            .from('client_promises')
-            .select('*')
-            .eq('client_id', clientId)
+        const { data: promises } = await supabase
+            .from('promises')
+            .select('*, invoices!inner(client_id, user_id)')
+            .eq('invoices.client_id', clientId)
+            .eq('invoices.user_id', authUser.id)
             .order('created_at', { ascending: false })
             .limit(20);
 
@@ -131,7 +130,7 @@ Rules:
         const aiData = JSON.parse(jsonMatch[0]);
 
         // Save to database
-        await supabaseAdmin
+        await supabase
             .from('clients')
             .update({
                 ai_trust_score: aiData.trust_score,
@@ -142,17 +141,17 @@ Rules:
             .eq('id', clientId);
 
         // Update ai usage
-        await supabaseAdmin
+        await supabase
             .from('users')
             .update({ ai_usage_this_month: (user.ai_usage_this_month || 0) + 1 })
-            .eq('id', userInfo.userId);
+            .eq('id', authUser.id);
 
         return NextResponse.json({
             success: true,
             analysis: aiData,
         });
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('Client trust score error:', err);
-        return NextResponse.json({ error: err.message || 'Failed to generate trust score' }, { status: 500 });
+        return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to generate trust score' }, { status: 500 });
     }
 }

@@ -113,13 +113,9 @@ export default function SettingsPage() {
     };
 
     const disconnectGmail = async () => {
-        // Simple — just clear via profile API
         try {
-            await fetch('/api/user/profile', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                body: JSON.stringify({ gmail_connected: false, gmail_access_token: null, gmail_refresh_token: null, gmail_email: null }),
-            });
+            const response = await fetch('/api/auth/gmail', { method: 'DELETE' });
+            if (!response.ok) throw new Error('Disconnect failed');
             setProfile(p => p ? { ...p, gmail_connected: false, gmail_email: undefined } : p);
             toast.success('Gmail disconnected.');
         } catch {

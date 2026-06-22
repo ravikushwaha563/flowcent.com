@@ -1,8 +1,14 @@
 import Razorpay from 'razorpay';
+import { requireServerEnv } from '@/lib/env/server';
 
-const razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID!,
-    key_secret: process.env.RAZORPAY_KEY_SECRET!,
-});
+let instance: Razorpay | null = null;
 
-export default razorpay;
+export function getRazorpay() {
+    if (!instance) {
+        instance = new Razorpay({
+            key_id: requireServerEnv('RAZORPAY_KEY_ID'),
+            key_secret: requireServerEnv('RAZORPAY_KEY_SECRET'),
+        });
+    }
+    return instance;
+}

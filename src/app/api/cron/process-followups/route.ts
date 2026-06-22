@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { createAdminSupabaseClient } from '@/lib/supabase/admin';
 import { sendFollowUpEmail, refreshAccessToken } from '@/lib/gmail';
 import { sendWhatsAppTemplate } from '@/lib/whatsapp';
+import { serverEnv } from '@/lib/env/server';
 
 export async function GET(req: NextRequest) {
     try {
         // 1. Verify Cron Secret securely
         const authHeader = req.headers.get('authorization');
-        const expectedSecret = process.env.CRON_SECRET_KEY;
+        const expectedSecret = serverEnv.CRON_SECRET_KEY;
         
         if (!expectedSecret) {
             console.error('CRON_SECRET_KEY is not configured in environment variables');
@@ -18,6 +19,7 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        const supabaseAdmin = createAdminSupabaseClient();
         const now = new Date().toISOString();
 
         // 2. Fetch overdue invoices that need follow-up
@@ -26,11 +28,12 @@ export async function GET(req: NextRequest) {
             .select(`
                 *,
                 clients(id, name, email, company, phone),
-                users(id, email, name, gmail_connected, gmail_access_token, gmail_refresh_token, gmail_token_expiry)
+                users(id, email, name, subscription_plan, plan_expires_at, gmail_connected, gmail_access_token, gmail_refresh_token, gmail_token_expiry)
             `)
             .neq('status', 'paid')
             .eq('auto_followup', true)
             .lte('next_followup_date', now)
+            .lte('current_stage', 5)
             .limit(50); // Batch process
 
         if (invoiceError) {
@@ -50,6 +53,10 @@ export async function GET(req: NextRequest) {
             try {
                 const user = invoice.users;
                 const client = invoice.clients;
+
+                const paidPlanActive = user?.subscription_plan !== 'free'
+                    && (!user?.plan_expires_at || new Date(user.plan_expires_at) > new Date());
+                if (!paidPlanActive) continue;
 
                 // Ensure user has connected Gmail
                 if (!user || !user.gmail_connected || !user.gmail_refresh_token) {
@@ -111,7 +118,7 @@ export async function GET(req: NextRequest) {
 </div>`;
 
                 // Send the email
-                await sendFollowUpEmail({
+                const emailResult = await sendFollowUpEmail({
                     accessToken,
                     refreshToken: user.gmail_refresh_token,
                     to: client.email,
@@ -120,6 +127,9 @@ export async function GET(req: NextRequest) {
                     subject,
                     htmlBody: body
                 });
+                if (!emailResult.success) {
+                    throw new Error(emailResult.error || 'Gmail send failed');
+                }
 
                 // --- WhatsApp Integration ---
                 let whatsappStatus = 'skipped_no_phone';
@@ -146,6 +156,7 @@ export async function GET(req: NextRequest) {
                 // --- End WhatsApp ---
 
                 // Calculate next follow-up date (e.g., +3 days)
+                const isFinalStage = stage >= 5;
                 const nextDate = new Date();
                 nextDate.setDate(nextDate.getDate() + 3);
 
@@ -154,10 +165,22 @@ export async function GET(req: NextRequest) {
                     .from('invoices')
                     .update({
                         current_stage: stage + 1,
-                        next_followup_date: nextDate.toISOString(),
+                        next_followup_date: isFinalStage ? null : nextDate.toISOString(),
+                        auto_followup: !isFinalStage,
                         updated_at: new Date().toISOString()
                     })
                     .eq('id', invoice.id);
+
+                await supabaseAdmin.from('followups').insert({
+                    invoice_id: invoice.id,
+                    user_id: user.id,
+                    stage,
+                    email_subject: subject,
+                    message_content: body,
+                    channel: client.phone && whatsappStatus === 'sent' ? 'email+whatsapp' : 'email',
+                    status: 'sent',
+                    sent_at: new Date().toISOString(),
+                });
 
                 processedCount++;
             } catch (processErr) {
@@ -173,7 +196,7 @@ export async function GET(req: NextRequest) {
             checked: invoices.length
         });
 
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('Cron job fatal error:', err);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }

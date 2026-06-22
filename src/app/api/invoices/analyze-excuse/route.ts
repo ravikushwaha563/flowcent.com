@@ -1,18 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth';
-import { supabaseAdmin } from '@/lib/supabase';
+import { requireUser } from '@/lib/auth/server';
 import { analyzeEmailForExcuses } from '@/lib/gemini';
 import { checkAiLimit, PlanType } from '@/lib/plan-limits';
+import { serverEnv } from '@/lib/env/server';
 
 export async function POST(req: NextRequest) {
     try {
-        const authHeader = req.headers.get('authorization');
-        if (!authHeader?.startsWith('Bearer ')) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-        const token = authHeader.substring(7);
-        const userInfo = verifyToken(token);
-        if (!userInfo) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+        const { supabase, user: authUser, response } = await requireUser();
+        if (!authUser) return response!;
 
         const body = await req.json();
         const { invoiceId, emailContent, clientReplyDate } = body;
@@ -22,31 +17,33 @@ export async function POST(req: NextRequest) {
         }
 
         // Fetch user plan and ai usage
-        const { data: user } = await supabaseAdmin
+        const { data: user } = await supabase
             .from('users')
-            .select('subscription_plan, ai_usage_this_month')
-            .eq('id', userInfo.userId)
+            .select('subscription_plan, plan_expires_at, ai_usage_this_month')
+            .eq('id', authUser.id)
             .single();
 
         if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
-        const limitCheck = checkAiLimit((user.subscription_plan || 'free') as PlanType, user.ai_usage_this_month || 0);
+        const activePlan = user.plan_expires_at && new Date(user.plan_expires_at) < new Date()
+            ? 'free'
+            : (user.subscription_plan || 'free');
+        const limitCheck = checkAiLimit(activePlan as PlanType, user.ai_usage_this_month || 0);
 
         if (!limitCheck.allowed) {
             return NextResponse.json({ error: 'LIMIT_EXCEEDED', message: limitCheck.message }, { status: 403 });
         }
 
-        // Check Gemini API key
-        if (!process.env.GOOGLE_GEMINI_API_KEY) {
-            return NextResponse.json({ error: 'GOOGLE_GEMINI_API_KEY not configured' }, { status: 503 });
+        if (!serverEnv.GROQ_API_KEY) {
+            return NextResponse.json({ error: 'AI provider is not configured' }, { status: 503 });
         }
 
         // Get invoice + client
-        const { data: invoice } = await supabaseAdmin
+        const { data: invoice } = await supabase
             .from('invoices')
             .select('*, clients(name, email)')
             .eq('id', invoiceId)
-            .eq('user_id', userInfo.userId)
+            .eq('user_id', authUser.id)
             .single();
 
         if (!invoice) return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
@@ -66,7 +63,7 @@ export async function POST(req: NextRequest) {
         // Save each extracted promise to DB
         const savedPromises = [];
         for (const p of analysis.promises) {
-            const { data: promise } = await supabaseAdmin
+            const { data: promise } = await supabase
                 .from('promises')
                 .insert({
                     invoice_id: invoiceId,
@@ -82,16 +79,16 @@ export async function POST(req: NextRequest) {
         }
 
         // Update invoice payment_intent_score
-        await supabaseAdmin
+        await supabase
             .from('invoices')
             .update({ payment_intent_score: analysis.intent_score })
             .eq('id', invoiceId);
 
         // Update ai usage
-        await supabaseAdmin
+        await supabase
             .from('users')
             .update({ ai_usage_this_month: (user.ai_usage_this_month || 0) + 1 })
-            .eq('id', userInfo.userId);
+            .eq('id', authUser.id);
 
         return NextResponse.json({
             success: true,
@@ -99,58 +96,61 @@ export async function POST(req: NextRequest) {
             savedPromises,
             message: `Analyzed ${analysis.promises.length} promise(s) detected`,
         });
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('Excuse analysis error:', err);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        return NextResponse.json({ error: err instanceof Error ? err.message : 'Analysis failed' }, { status: 500 });
     }
 }
 
 export async function GET(req: NextRequest) {
     try {
-        const authHeader = req.headers.get('authorization');
-        if (!authHeader?.startsWith('Bearer ')) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        const token = authHeader.substring(7);
-        const userInfo = verifyToken(token);
-        if (!userInfo) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+        const { supabase, user, response } = await requireUser();
+        if (!user) return response!;
 
         const { searchParams } = new URL(req.url);
         const invoiceId = searchParams.get('invoiceId');
 
-        let query = supabaseAdmin
+        let query = supabase
             .from('promises')
             .select('*, invoices!inner(user_id, invoice_number, amount, currency, clients(name))')
-            .eq('invoices.user_id', userInfo.userId)
+            .eq('invoices.user_id', user.id)
             .order('created_at', { ascending: false });
 
         if (invoiceId) query = query.eq('invoice_id', invoiceId);
 
         const { data: promises } = await query;
         return NextResponse.json({ promises: promises || [] });
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
+    } catch (err: unknown) {
+        return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to load promises' }, { status: 500 });
     }
 }
 
 export async function PATCH(req: NextRequest) {
     try {
-        const authHeader = req.headers.get('authorization');
-        if (!authHeader?.startsWith('Bearer ')) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        const token = authHeader.substring(7);
-        const userInfo = verifyToken(token);
-        if (!userInfo) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+        const { supabase, user, response } = await requireUser();
+        if (!user) return response!;
 
         const body = await req.json();
         const { promiseId, fulfilled } = body;
 
-        const { data: promise } = await supabaseAdmin
+        const { data: ownedPromise } = await supabase
+            .from('promises')
+            .select('id, invoices!inner(user_id)')
+            .eq('id', promiseId)
+            .eq('invoices.user_id', user.id)
+            .single();
+        if (!ownedPromise) return NextResponse.json({ error: 'Promise not found' }, { status: 404 });
+
+        const { data: promise, error } = await supabase
             .from('promises')
             .update({ fulfilled })
             .eq('id', promiseId)
             .select()
             .single();
 
+        if (error) return NextResponse.json({ error: 'Failed to update promise' }, { status: 500 });
         return NextResponse.json({ promise });
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
+    } catch (err: unknown) {
+        return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to update promise' }, { status: 500 });
     }
 }

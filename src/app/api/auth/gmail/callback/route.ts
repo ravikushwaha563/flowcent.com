@@ -1,23 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { exchangeCodeForTokens, getGmailAddress } from '@/lib/gmail';
-import { supabaseAdmin } from '@/lib/supabase';
+import { requireUser } from '@/lib/auth/server';
 
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const code = searchParams.get('code');
-    const userId = searchParams.get('state'); // userId passed in state param
+    const state = searchParams.get('state');
     const error = searchParams.get('error');
 
     if (error) {
         return NextResponse.redirect(new URL('/dashboard/settings?gmail=denied', req.url));
     }
 
-    if (!code || !userId) {
+    const storedState = req.cookies.get('flowcent_gmail_oauth_state')?.value;
+    if (!code || !state || !storedState || state !== storedState) {
         return NextResponse.redirect(new URL('/dashboard/settings?gmail=error', req.url));
     }
 
     try {
-        // Exchange code for tokens
+        const { supabase, user, response } = await requireUser();
+        if (response || !user) return NextResponse.redirect(new URL('/login?next=/dashboard/settings', req.url));
+
         const tokens = await exchangeCodeForTokens(code);
 
         if (!tokens.access_token) {
@@ -27,8 +30,7 @@ export async function GET(req: NextRequest) {
         // Get Gmail address
         const gmailAddress = await getGmailAddress(tokens.access_token, tokens.refresh_token || undefined);
 
-        // Save tokens to users table
-        await supabaseAdmin
+        const { error: updateError } = await supabase
             .from('users')
             .update({
                 gmail_connected: true,
@@ -38,10 +40,14 @@ export async function GET(req: NextRequest) {
                 gmail_email: gmailAddress,
                 updated_at: new Date().toISOString(),
             })
-            .eq('id', userId);
+            .eq('id', user.id);
 
-        return NextResponse.redirect(new URL('/dashboard/settings?gmail=connected', req.url));
-    } catch (err: any) {
+        if (updateError) throw updateError;
+
+        const redirect = NextResponse.redirect(new URL('/dashboard/settings?gmail=connected', req.url));
+        redirect.cookies.delete('flowcent_gmail_oauth_state');
+        return redirect;
+    } catch (err: unknown) {
         console.error('Gmail callback error:', err);
         return NextResponse.redirect(new URL('/dashboard/settings?gmail=error', req.url));
     }

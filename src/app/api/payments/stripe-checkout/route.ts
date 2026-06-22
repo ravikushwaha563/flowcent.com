@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import stripe from '@/lib/stripe';
-import { supabaseAdmin } from '@/lib/supabase';
+import { getStripe } from '@/lib/stripe';
+import { createAdminSupabaseClient } from '@/lib/supabase/admin';
+import { publicEnv } from '@/lib/env/public';
 
 export async function POST(req: NextRequest) {
     try {
@@ -11,7 +12,8 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Invoice ID is required' }, { status: 400 });
         }
 
-        // Fetch invoice details
+        const supabaseAdmin = createAdminSupabaseClient();
+        const stripe = getStripe();
         const { data: invoice, error } = await supabaseAdmin
             .from('invoices')
             .select('*, clients(id, name, email, company)')
@@ -26,7 +28,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Invoice is already paid' }, { status: 400 });
         }
 
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+        const appUrl = publicEnv.appUrl;
 
         // Create Stripe Checkout Session
         const session = await stripe.checkout.sessions.create({
@@ -65,8 +67,8 @@ export async function POST(req: NextRequest) {
             .eq('id', invoiceId);
 
         return NextResponse.json({ url: session.url });
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('Stripe checkout error:', err);
-        return NextResponse.json({ error: err.message || 'Failed to create Stripe session' }, { status: 500 });
+        return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to create Stripe session' }, { status: 500 });
     }
 }

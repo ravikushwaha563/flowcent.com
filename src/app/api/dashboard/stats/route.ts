@@ -1,24 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth';
-import { supabaseAdmin } from '@/lib/supabase';
+import { NextResponse } from 'next/server';
+import { requireUser } from '@/lib/auth/server';
 
 // GET /api/dashboard/stats - Get dashboard statistics
-export async function GET(req: NextRequest) {
+export async function GET() {
     try {
-        const authHeader = req.headers.get('authorization');
-        if (!authHeader?.startsWith('Bearer ')) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
-        const userInfo = verifyToken(authHeader.substring(7));
-        if (!userInfo) {
-            return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-        }
-
-        const userId = userInfo.userId;
+        const { supabase, user, response } = await requireUser();
+        if (!user) return response!;
+        const userId = user.id;
 
         // Get all invoices
-        const { data: invoices, error: invoicesError } = await supabaseAdmin
+        const { data: invoices, error: invoicesError } = await supabase
             .from('invoices')
             .select('id, amount, status, due_date, paid_at')
             .eq('user_id', userId);
@@ -26,7 +17,7 @@ export async function GET(req: NextRequest) {
         if (invoicesError) throw invoicesError;
 
         // Get all clients
-        const { data: clients, error: clientsError } = await supabaseAdmin
+        const { data: clients, error: clientsError } = await supabase
             .from('clients')
             .select('id')
             .eq('user_id', userId);
@@ -45,6 +36,8 @@ export async function GET(req: NextRequest) {
 
         const pendingAmount = pendingInvoices.reduce((sum, inv) => sum + parseFloat(inv.amount), 0);
         const overdueAmount = overdueInvoices.reduce((sum, inv) => sum + parseFloat(inv.amount), 0);
+        const paidAmount = paidInvoices.reduce((sum, inv) => sum + parseFloat(inv.amount), 0);
+        const totalAmount = invoices?.reduce((sum, inv) => sum + parseFloat(inv.amount), 0) || 0;
 
         // Calculate average payment delay for paid invoices
         let avgPaymentDelay = 0;
@@ -63,14 +56,16 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.json({
             stats: {
-                totalInvoices,
-                totalClients,
-                pendingAmount: pendingAmount.toFixed(2),
-                pendingCount: pendingInvoices.length,
-                overdueAmount: overdueAmount.toFixed(2),
-                overdueCount: overdueInvoices.length,
-                paidCount: paidInvoices.length,
-                avgPaymentDelay,
+                total_invoices: totalInvoices,
+                total_clients: totalClients,
+                total_amount: totalAmount,
+                paid_amount: paidAmount,
+                pending_amount: pendingAmount,
+                pending_count: pendingInvoices.length,
+                overdue_amount: overdueAmount,
+                overdue_count: overdueInvoices.length,
+                paid_count: paidInvoices.length,
+                avg_payment_delay: avgPaymentDelay,
             }
         });
     } catch (error) {

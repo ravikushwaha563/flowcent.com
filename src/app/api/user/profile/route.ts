@@ -1,22 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth';
-import { supabaseAdmin } from '@/lib/supabase';
+import { requireUser } from '@/lib/auth/server';
+import { updateProfileSchema, validationError } from '@/lib/validations/domain';
+import { ZodError } from 'zod';
 
 export async function GET(req: NextRequest) {
     try {
-        const authHeader = req.headers.get('authorization');
-        if (!authHeader?.startsWith('Bearer ')) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-        const token = authHeader.substring(7);
-        const userInfo = verifyToken(token);
-        if (!userInfo) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+        const { supabase, user: authUser, response } = await requireUser();
+        if (!authUser) return response!;
 
-        const { data: user } = await supabaseAdmin
+        const { data: user, error } = await supabase
             .from('users')
             .select('id, name, email, company_name, gmail_connected, gmail_email')
-            .eq('id', userInfo.userId)
+            .eq('id', authUser.id)
             .single();
+        if (error) return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
 
         return NextResponse.json({ user });
     } catch (err: any) {
@@ -26,31 +23,22 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
     try {
-        const authHeader = req.headers.get('authorization');
-        if (!authHeader?.startsWith('Bearer ')) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-        const token = authHeader.substring(7);
-        const userInfo = verifyToken(token);
-        if (!userInfo) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+        const { supabase, user: authUser, response } = await requireUser();
+        if (!authUser) return response!;
+        const validated = updateProfileSchema.parse(await req.json());
+        const updates = { ...validated, updated_at: new Date().toISOString() };
 
-        const body = await req.json();
-        const allowed = ['name', 'company_name', 'gmail_connected', 'gmail_access_token', 'gmail_refresh_token', 'gmail_email'];
-        const updates: Record<string, any> = {};
-        for (const key of allowed) {
-            if (key in body) updates[key] = body[key];
-        }
-        updates.updated_at = new Date().toISOString();
-
-        const { data: user } = await supabaseAdmin
+        const { data: user, error } = await supabase
             .from('users')
             .update(updates)
-            .eq('id', userInfo.userId)
+            .eq('id', authUser.id)
             .select('id, name, email, company_name, gmail_connected, gmail_email')
             .single();
 
+        if (error) return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 });
         return NextResponse.json({ user });
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
+    } catch (err: unknown) {
+        if (err instanceof ZodError) return NextResponse.json(validationError(err), { status: 400 });
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }

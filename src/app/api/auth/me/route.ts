@@ -1,37 +1,27 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth';
+import { NextResponse } from 'next/server';
+import { requireUser } from '@/lib/auth/server';
 
-export async function GET(req: NextRequest) {
+export async function GET() {
     try {
-        // Get token from Authorization header
-        const authHeader = req.headers.get('authorization');
+        const { supabase, user, response } = await requireUser();
+        if (!user) return response!;
 
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return NextResponse.json(
-                { error: 'No authorization token provided' },
-                { status: 401 }
-            );
-        }
+        const { data: profile } = await supabase
+            .from('users')
+            .select('name, company_name, industry, gmail_connected, created_at, updated_at')
+            .eq('id', user.id)
+            .single();
 
-        const token = authHeader.substring(7);
-
-        // Verify JWT token
-        const userInfo = verifyToken(token);
-
-        if (!userInfo) {
-            return NextResponse.json(
-                { error: 'Invalid or expired token' },
-                { status: 401 }
-            );
-        }
-
-        // Return user info from JWT (stored during login/signup)
         return NextResponse.json({
             user: {
-                id: userInfo.userId,
-                email: userInfo.email,
-                name: null, // Will be populated from localStorage on client
-                companyName: null,
+                id: user.id,
+                email: user.email,
+                name: profile?.name ?? user.user_metadata?.name ?? null,
+                companyName: profile?.company_name ?? null,
+                industry: profile?.industry ?? null,
+                gmailConnected: profile?.gmail_connected ?? false,
+                createdAt: profile?.created_at ?? user.created_at,
+                updatedAt: profile?.updated_at ?? user.updated_at ?? user.created_at,
             },
         });
     } catch (error) {

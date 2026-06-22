@@ -3,9 +3,9 @@
 export type PlanType = 'free' | 'pro' | 'agency';
 
 export interface PlanLimits {
-    maxInvoices: number;
-    maxClients: number;
-    maxAiAnalyses: number;
+    maxInvoices: number | null;
+    maxClients: number | null;
+    maxAiAnalyses: number | null;
     autoFollowups: boolean;
     csvExport: boolean;
     advancedAnalytics: boolean;
@@ -25,9 +25,9 @@ const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
         price: 0,
     },
     pro: {
-        maxInvoices: Infinity,
-        maxClients: Infinity,
-        maxAiAnalyses: Infinity,
+        maxInvoices: null,
+        maxClients: null,
+        maxAiAnalyses: null,
         autoFollowups: true,
         csvExport: true,
         advancedAnalytics: true,
@@ -35,9 +35,9 @@ const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
         price: 499,
     },
     agency: {
-        maxInvoices: Infinity,
-        maxClients: Infinity,
-        maxAiAnalyses: Infinity,
+        maxInvoices: null,
+        maxClients: null,
+        maxAiAnalyses: null,
         autoFollowups: true,
         csvExport: true,
         advancedAnalytics: true,
@@ -54,16 +54,16 @@ export interface UsageCheck {
     allowed: boolean;
     message: string;
     currentUsage: number;
-    limit: number;
+    limit: number | null;
     upgradeRequired: boolean;
 }
 
 export function checkInvoiceLimit(plan: PlanType, currentCount: number): UsageCheck {
     const limits = getPlanLimits(plan);
-    const allowed = currentCount < limits.maxInvoices;
+    const allowed = limits.maxInvoices === null || currentCount < limits.maxInvoices;
     return {
         allowed,
-        message: allowed ? '' : `Free plan allows ${limits.maxInvoices} invoices/month. Upgrade to Pro for unlimited invoices.`,
+        message: allowed ? '' : `Your plan allows ${limits.maxInvoices} invoices/month. Upgrade for unlimited invoices.`,
         currentUsage: currentCount,
         limit: limits.maxInvoices,
         upgradeRequired: !allowed,
@@ -72,10 +72,10 @@ export function checkInvoiceLimit(plan: PlanType, currentCount: number): UsageCh
 
 export function checkClientLimit(plan: PlanType, currentCount: number): UsageCheck {
     const limits = getPlanLimits(plan);
-    const allowed = currentCount < limits.maxClients;
+    const allowed = limits.maxClients === null || currentCount < limits.maxClients;
     return {
         allowed,
-        message: allowed ? '' : `Free plan allows ${limits.maxClients} clients. Upgrade to Pro for unlimited clients.`,
+        message: allowed ? '' : `Your plan allows ${limits.maxClients} clients. Upgrade for unlimited clients.`,
         currentUsage: currentCount,
         limit: limits.maxClients,
         upgradeRequired: !allowed,
@@ -84,10 +84,10 @@ export function checkClientLimit(plan: PlanType, currentCount: number): UsageChe
 
 export function checkAiLimit(plan: PlanType, currentCount: number): UsageCheck {
     const limits = getPlanLimits(plan);
-    const allowed = currentCount < limits.maxAiAnalyses;
+    const allowed = limits.maxAiAnalyses === null || currentCount < limits.maxAiAnalyses;
     return {
         allowed,
-        message: allowed ? '' : `Free plan allows ${limits.maxAiAnalyses} AI analyses/month. Upgrade to Pro for unlimited AI.`,
+        message: allowed ? '' : `Your plan allows ${limits.maxAiAnalyses} AI analyses/month. Upgrade for unlimited AI.`,
         currentUsage: currentCount,
         limit: limits.maxAiAnalyses,
         upgradeRequired: !allowed,

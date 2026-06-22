@@ -1,9 +1,9 @@
-import { createClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
+import { publicEnv } from '@/lib/env/public';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-// Admin client for server-side operations (RLS disabled on tables, auth handled by our JWT)
-export const supabaseAdmin = createClient(supabaseUrl, supabaseAnonKey);
+// Browser code only receives the public anon key. Database access is protected
+// by RLS and the authenticated Supabase session stored in cookies.
+export const supabase = createBrowserClient(
+    publicEnv.supabaseUrl,
+    publicEnv.supabaseAnonKey,
+);

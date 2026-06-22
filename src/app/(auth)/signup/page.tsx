@@ -7,7 +7,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { signupSchema, type SignupInput } from '@/lib/validations/auth';
 import { useAuth } from '@/contexts/auth-context';
-import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
 export default function SignupPage() {
@@ -29,8 +28,13 @@ export default function SignupPage() {
             });
             const result = await response.json();
             if (!response.ok) throw new Error(result.error || 'Signup failed');
-            await login(result.token);
-            router.push('/dashboard');
+            if (result.requiresEmailConfirmation) {
+                toast.success('Check your email to confirm your account.');
+                router.push('/login');
+            } else {
+                await login();
+                router.push('/dashboard');
+            }
         } catch (err: any) {
             toast.error(err.message || 'Signup failed');
         } finally {
@@ -38,20 +42,9 @@ export default function SignupPage() {
         }
     };
 
-    const handleGoogleSignup = async () => {
-        try {
-            setIsLoading(true);
-            const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    redirectTo: `${window.location.origin}/auth/callback`,
-                },
-            });
-            if (error) throw error;
-        } catch (err: any) {
-            toast.error(err.message || 'Failed to initialize Google Auth');
-            setIsLoading(false);
-        }
+    const handleGoogleSignup = () => {
+        setIsLoading(true);
+        window.location.assign('/api/auth/google');
     };
 
     return (

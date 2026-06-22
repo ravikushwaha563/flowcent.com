@@ -1,14 +1,16 @@
 import { google } from 'googleapis';
-
-const CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
-const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
-const REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3000/api/auth/gmail/callback';
+import { publicEnv } from '@/lib/env/public';
+import { requireServerEnv, serverEnv } from '@/lib/env/server';
 
 export function getOAuthClient() {
-    return new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
+    return new google.auth.OAuth2(
+        requireServerEnv('GOOGLE_CLIENT_ID'),
+        requireServerEnv('GOOGLE_CLIENT_SECRET'),
+        serverEnv.GOOGLE_REDIRECT_URI || `${publicEnv.appUrl}/api/auth/gmail/callback`,
+    );
 }
 
-export function getGmailAuthUrl(userId: string): string {
+export function getGmailAuthUrl(state: string): string {
     const oauth2Client = getOAuthClient();
     return oauth2Client.generateAuthUrl({
         access_type: 'offline',
@@ -18,7 +20,7 @@ export function getGmailAuthUrl(userId: string): string {
             'https://www.googleapis.com/auth/userinfo.email',
         ],
         prompt: 'consent',
-        state: userId, // pass userId so we know who to link it to
+        state,
     });
 }
 

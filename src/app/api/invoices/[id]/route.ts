@@ -1,38 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth';
-import { supabaseAdmin } from '@/lib/supabase';
+import { requireUser } from '@/lib/auth/server';
+import { updateInvoiceSchema, validationError } from '@/lib/validations/domain';
+import { ZodError } from 'zod';
 
 export async function GET(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const authHeader = req.headers.get('authorization');
-        if (!authHeader?.startsWith('Bearer ')) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-        const token = authHeader.substring(7);
-        const userInfo = verifyToken(token);
-        if (!userInfo) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+        const { supabase, user, response } = await requireUser();
+        if (!user) return response!;
 
         // Next.js 16: params must be awaited in server components/routes
         const { id } = await params;
 
-        const { data: invoice, error } = await supabaseAdmin
+        const { data: invoice, error } = await supabase
             .from('invoices')
             .select('*, clients(id, name, email, company)')
             .eq('id', id)
-            .eq('user_id', userInfo.userId)
+            .eq('user_id', user.id)
             .single();
 
         if (error || !invoice) {
-            console.error('Invoice fetch error:', error?.message, '| id:', id, '| userId:', userInfo.userId);
+            console.error('Invoice fetch error:', error?.message, '| id:', id, '| userId:', user.id);
             return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
         }
 
         return NextResponse.json({ invoice });
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
+    } catch (err: unknown) {
+        return NextResponse.json({ error: err instanceof Error ? err.message : 'Internal server error' }, { status: 500 });
     }
 }
 
@@ -41,38 +37,31 @@ export async function PATCH(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const authHeader = req.headers.get('authorization');
-        if (!authHeader?.startsWith('Bearer ')) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-        const token = authHeader.substring(7);
-        const userInfo = verifyToken(token);
-        if (!userInfo) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+        const { supabase, user, response } = await requireUser();
+        if (!user) return response!;
 
         // Next.js 16: params must be awaited
         const { id } = await params;
 
-        const body = await req.json();
-        const allowedFields = ['status', 'payment_intent_score', 'paid_at', 'razorpay_order_id', 'razorpay_payment_id', 'payment_gateway'];
-        const updates: Record<string, any> = {};
-        for (const key of allowedFields) {
-            if (key in body) updates[key] = body[key];
-        }
-        if (body.status === 'paid' && !updates.paid_at) {
+        const body = updateInvoiceSchema.parse(await req.json());
+        const updates: Record<string, string | number> = { ...body };
+        if (body.status === 'paid') {
             updates.paid_at = new Date().toISOString();
         }
         updates.updated_at = new Date().toISOString();
 
-        const { data: invoice } = await supabaseAdmin
+        const { data: invoice, error } = await supabase
             .from('invoices')
             .update(updates)
             .eq('id', id)
-            .eq('user_id', userInfo.userId)
+            .eq('user_id', user.id)
             .select('*, clients(id, name, email)')
             .single();
 
+        if (error || !invoice) return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
         return NextResponse.json({ invoice });
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
+    } catch (err: unknown) {
+        if (err instanceof ZodError) return NextResponse.json(validationError(err), { status: 400 });
+        return NextResponse.json({ error: err instanceof Error ? err.message : 'Internal server error' }, { status: 500 });
     }
 }

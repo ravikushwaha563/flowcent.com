@@ -1,22 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth';
-import { supabaseAdmin } from '@/lib/supabase';
 import { checkInvoiceLimit, PlanType } from '@/lib/plan-limits';
+import { requireUser } from '@/lib/auth/server';
+import { createInvoiceSchema, validationError } from '@/lib/validations/domain';
+import { ZodError } from 'zod';
 
 // GET /api/invoices - List all invoices for current user
 export async function GET(req: NextRequest) {
     try {
-        const authHeader = req.headers.get('authorization');
-        if (!authHeader?.startsWith('Bearer ')) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+        const { supabase, user, response } = await requireUser();
+        if (!user) return response!;
 
-        const userInfo = verifyToken(authHeader.substring(7));
-        if (!userInfo) {
-            return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-        }
-
-        const { data, error } = await supabaseAdmin
+        const { data, error } = await supabase
             .from('invoices')
             .select(`
         *,
@@ -27,7 +21,7 @@ export async function GET(req: NextRequest) {
           company
         )
       `)
-            .eq('user_id', userInfo.userId)
+            .eq('user_id', user.id)
             .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -42,33 +36,31 @@ export async function GET(req: NextRequest) {
 // POST /api/invoices - Create a new invoice
 export async function POST(req: NextRequest) {
     try {
-        const authHeader = req.headers.get('authorization');
-        if (!authHeader?.startsWith('Bearer ')) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+        const { supabase, user, response } = await requireUser();
+        if (!user) return response!;
+        const { clientId, invoiceNumber, amount, currency, dueDate, autoFollowup } = createInvoiceSchema.parse(await req.json());
 
-        const userInfo = verifyToken(authHeader.substring(7));
-        if (!userInfo) {
-            return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-        }
-
-        const body = await req.json();
-        const { clientId, invoiceNumber, amount, currency, dueDate, autoFollowup } = body;
-
-        if (!clientId || !invoiceNumber || !amount || !dueDate) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-        }
+        const { data: ownedClient } = await supabase
+            .from('clients')
+            .select('id')
+            .eq('id', clientId)
+            .eq('user_id', user.id)
+            .single();
+        if (!ownedClient) return NextResponse.json({ error: 'Client not found' }, { status: 404 });
 
         // Fetch user plan and usage
-        const { data: user } = await supabaseAdmin
+        const { data: profile } = await supabase
             .from('users')
-            .select('subscription_plan, invoice_count_this_month')
-            .eq('id', userInfo.userId)
+            .select('subscription_plan, plan_expires_at, invoice_count_this_month')
+            .eq('id', user.id)
             .single();
             
-        if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+        if (!profile) return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
+        const activePlan = profile.plan_expires_at && new Date(profile.plan_expires_at) < new Date()
+            ? 'free'
+            : (profile.subscription_plan || 'free');
         
-        const limitCheck = checkInvoiceLimit((user.subscription_plan || 'free') as PlanType, user.invoice_count_this_month || 0);
+        const limitCheck = checkInvoiceLimit(activePlan as PlanType, profile.invoice_count_this_month || 0);
         
         if (!limitCheck.allowed) {
             return NextResponse.json({ error: 'LIMIT_EXCEEDED', message: limitCheck.message }, { status: 403 });
@@ -79,14 +71,14 @@ export async function POST(req: NextRequest) {
         const nextFollowup = new Date(due);
         nextFollowup.setDate(due.getDate() + 1);
 
-        const { data, error } = await supabaseAdmin
+        const { data, error } = await supabase
             .from('invoices')
             .insert({
-                user_id: userInfo.userId,
+                user_id: user.id,
                 client_id: clientId,
                 invoice_number: invoiceNumber,
-                amount: parseFloat(amount),
-                currency: currency || 'INR',
+                amount,
+                currency,
                 due_date: dueDate,
                 status: 'pending',
                 payment_intent_score: 50,
@@ -108,13 +100,16 @@ export async function POST(req: NextRequest) {
         if (error) throw error;
 
         // Update usage
-        await supabaseAdmin
+        await supabase
             .from('users')
-            .update({ invoice_count_this_month: (user.invoice_count_this_month || 0) + 1 })
-            .eq('id', userInfo.userId);
+            .update({ invoice_count_this_month: (profile.invoice_count_this_month || 0) + 1 })
+            .eq('id', user.id);
 
         return NextResponse.json({ invoice: data }, { status: 201 });
     } catch (error) {
+        if (error instanceof ZodError) {
+            return NextResponse.json(validationError(error), { status: 400 });
+        }
         console.error('Create invoice error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }

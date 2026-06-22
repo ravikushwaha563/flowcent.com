@@ -1,0 +1,24 @@
+import 'server-only';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import { publicEnv } from '@/lib/env/public';
+
+export async function createServerSupabaseClient() {
+    const cookieStore = await cookies();
+
+    return createServerClient(publicEnv.supabaseUrl, publicEnv.supabaseAnonKey, {
+        cookies: {
+            getAll: () => cookieStore.getAll(),
+            setAll: (cookiesToSet) => {
+                try {
+                    cookiesToSet.forEach(({ name, value, options }) => {
+                        cookieStore.set(name, value, options);
+                    });
+                } catch {
+                    // Server Components cannot write cookies. The proxy refreshes
+                    // sessions before protected requests reach route handlers.
+                }
+            },
+        },
+    });
+}

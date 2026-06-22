@@ -165,8 +165,9 @@ export default function InvoicesPage() {
         try {
             const res = await fetch('/api/cron/process-followups');
             const data = await res.json();
-            if (data.count > 0) {
-                toast.success(`Sent ${data.count} follow-ups!`, { id: 'cron' });
+            if (!res.ok) throw new Error(data.error || 'Automation can only run from the secure scheduler');
+            if (data.processed > 0) {
+                toast.success(`Sent ${data.processed} follow-ups!`, { id: 'cron' });
                 fetchData();
             } else {
                 toast.success('No follow-ups due right now.', { id: 'cron' });

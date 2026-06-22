@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { supabaseAdmin } from '@/lib/supabase';
+import { createAdminSupabaseClient } from '@/lib/supabase/admin';
+import { requireServerEnv } from '@/lib/env/server';
+import { getRazorpay } from '@/lib/razorpay';
 
 export async function POST(req: NextRequest) {
     try {
@@ -11,14 +13,32 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Missing payment verification data' }, { status: 400 });
         }
 
-        // Verify the payment signature
+        const supabaseAdmin = createAdminSupabaseClient();
         const expectedSignature = crypto
-            .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET!)
+            .createHmac('sha256', requireServerEnv('RAZORPAY_KEY_SECRET'))
             .update(`${razorpay_order_id}|${razorpay_payment_id}`)
             .digest('hex');
 
         if (expectedSignature !== razorpay_signature) {
             return NextResponse.json({ error: 'Invalid payment signature — possible fraud' }, { status: 400 });
+        }
+
+        const { data: targetInvoice } = await supabaseAdmin
+            .from('invoices')
+            .select('id, amount, currency, status, razorpay_order_id')
+            .eq('id', invoiceId)
+            .eq('razorpay_order_id', razorpay_order_id)
+            .single();
+        if (!targetInvoice) return NextResponse.json({ error: 'Payment does not belong to this invoice' }, { status: 400 });
+        if (targetInvoice.status === 'paid') return NextResponse.json({ success: true, alreadyProcessed: true });
+
+        const payment = await getRazorpay().payments.fetch(razorpay_payment_id);
+        const expectedAmount = Math.round(Number(targetInvoice.amount) * 100);
+        if (payment.order_id !== razorpay_order_id
+            || Number(payment.amount) !== expectedAmount
+            || payment.currency !== targetInvoice.currency
+            || !['authorized', 'captured'].includes(payment.status)) {
+            return NextResponse.json({ error: 'Payment details do not match the invoice' }, { status: 400 });
         }
 
         // Payment is verified — mark invoice as paid
@@ -33,6 +53,8 @@ export async function POST(req: NextRequest) {
                 updated_at: now,
             })
             .eq('id', invoiceId)
+            .eq('razorpay_order_id', razorpay_order_id)
+            .neq('status', 'paid')
             .select('*, clients(id, name, email)')
             .single();
 
@@ -46,8 +68,8 @@ export async function POST(req: NextRequest) {
             message: 'Payment verified and invoice marked as paid',
             invoice,
         });
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('Payment verification error:', err);
-        return NextResponse.json({ error: err.message || 'Payment verification failed' }, { status: 500 });
+        return NextResponse.json({ error: err instanceof Error ? err.message : 'Payment verification failed' }, { status: 500 });
     }
 }

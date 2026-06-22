@@ -1,23 +1,18 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth';
-import { supabaseAdmin } from '@/lib/supabase';
+import { NextResponse } from 'next/server';
 import { getPlanLimits, PlanType } from '@/lib/plan-limits';
+import { requireUser } from '@/lib/auth/server';
 
 // GET /api/billing/status — Returns current plan, usage, and limits
-export async function GET(req: NextRequest) {
+export async function GET() {
     try {
-        const authHeader = req.headers.get('authorization');
-        if (!authHeader?.startsWith('Bearer ')) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-        const userInfo = verifyToken(authHeader.substring(7));
-        if (!userInfo) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+        const { supabase, user: authUser, response } = await requireUser();
+        if (!authUser) return response!;
 
         // Fetch user
-        const { data: user, error } = await supabaseAdmin
+        const { data: user, error } = await supabase
             .from('users')
             .select('subscription_plan, plan_started_at, plan_expires_at, invoice_count_this_month, ai_usage_this_month, usage_reset_at')
-            .eq('id', userInfo.userId)
+            .eq('id', authUser.id)
             .single();
 
         if (error || !user) {
@@ -30,14 +25,14 @@ export async function GET(req: NextRequest) {
         const needsReset = now.getMonth() !== resetAt.getMonth() || now.getFullYear() !== resetAt.getFullYear();
 
         if (needsReset) {
-            await supabaseAdmin
+            await supabase
                 .from('users')
                 .update({
                     invoice_count_this_month: 0,
                     ai_usage_this_month: 0,
                     usage_reset_at: now.toISOString(),
                 })
-                .eq('id', userInfo.userId);
+                .eq('id', authUser.id);
             user.invoice_count_this_month = 0;
             user.ai_usage_this_month = 0;
         }
@@ -46,10 +41,10 @@ export async function GET(req: NextRequest) {
         const limits = getPlanLimits(plan);
 
         // Count actual clients
-        const { count: clientCount } = await supabaseAdmin
+        const { count: clientCount } = await supabase
             .from('clients')
             .select('id', { count: 'exact', head: true })
-            .eq('user_id', userInfo.userId);
+            .eq('user_id', authUser.id);
 
         // Check if plan is expired
         const isExpired = user.plan_expires_at && new Date(user.plan_expires_at) < now;
@@ -64,9 +59,9 @@ export async function GET(req: NextRequest) {
             expiresAt: user.plan_expires_at,
             isExpired: !!isExpired,
             usage: {
-                invoices: { used: user.invoice_count_this_month, limit: activeLimits.maxInvoices },
-                clients: { used: clientCount || 0, limit: activeLimits.maxClients },
-                aiAnalyses: { used: user.ai_usage_this_month, limit: activeLimits.maxAiAnalyses },
+                invoices: { used: user.invoice_count_this_month, limit: activeLimits.maxInvoices, unlimited: activeLimits.maxInvoices === null },
+                clients: { used: clientCount || 0, limit: activeLimits.maxClients, unlimited: activeLimits.maxClients === null },
+                aiAnalyses: { used: user.ai_usage_this_month, limit: activeLimits.maxAiAnalyses, unlimited: activeLimits.maxAiAnalyses === null },
             },
             features: {
                 autoFollowups: activeLimits.autoFollowups,
@@ -74,7 +69,7 @@ export async function GET(req: NextRequest) {
                 advancedAnalytics: activeLimits.advancedAnalytics,
             },
         });
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('Billing status error:', err);
         return NextResponse.json({ error: 'Failed to get billing status' }, { status: 500 });
     }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { createAdminSupabaseClient } from '@/lib/supabase/admin';
 
 // GET /api/invoices/public/[id] — Public, unauthenticated endpoint
 // Used by the /pay/[id] client payment portal.
@@ -14,7 +14,7 @@ export async function GET(
             return NextResponse.json({ error: 'Invoice ID is required' }, { status: 400 });
         }
 
-        // Fetch invoice + client + freelancer (user) details
+        const supabaseAdmin = createAdminSupabaseClient();
         const { data: invoice, error } = await supabaseAdmin
             .from('invoices')
             .select(`
@@ -48,7 +48,7 @@ export async function GET(
                 email: (invoice as any).users?.email || '',
             },
         });
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('Public invoice fetch error:', err);
         return NextResponse.json({ error: 'Failed to fetch invoice' }, { status: 500 });
     }

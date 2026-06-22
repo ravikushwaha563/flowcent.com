@@ -40,12 +40,24 @@ export default function PublicPaymentPage({ params }: { params: Promise<{ id: st
     const [payLoading, setPayLoading] = useState(false);
     const [payError, setPayError] = useState('');
 
-    // Check for payment redirect
+    // Verify Stripe server-side before showing a successful payment state.
     useEffect(() => {
-        if (searchParams.get('payment') === 'success') {
-            setPaymentSuccess(true);
+        const sessionId = searchParams.get('session_id');
+        if (searchParams.get('payment') === 'success' && sessionId) {
+            fetch('/api/payments/stripe-verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sessionId, invoiceId }),
+            }).then(async (response) => {
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Payment verification failed');
+                setPaymentSuccess(true);
+                setInvoice(previous => previous ? { ...previous, status: 'paid', paid_at: new Date().toISOString() } : previous);
+            }).catch((error: unknown) => {
+                setPayError(error instanceof Error ? error.message : 'Payment verification failed');
+            });
         }
-    }, [searchParams]);
+    }, [searchParams, invoiceId]);
 
     // Fetch invoice data
     useEffect(() => {

@@ -1,36 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth';
-import { supabaseAdmin } from '@/lib/supabase';
+import { requireUser } from '@/lib/auth/server';
 
 // POST /api/invoices/score - Calculate payment intent score for an invoice
 export async function POST(req: NextRequest) {
     try {
-        const authHeader = req.headers.get('authorization');
-        if (!authHeader?.startsWith('Bearer ')) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-        const userInfo = verifyToken(authHeader.substring(7));
-        if (!userInfo) return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+        const { supabase, user, response } = await requireUser();
+        if (!user) return response!;
 
         const { invoiceId } = await req.json();
         if (!invoiceId) return NextResponse.json({ error: 'invoiceId required' }, { status: 400 });
 
         // Fetch the invoice with client history
-        const { data: invoice, error: invError } = await supabaseAdmin
+        const { data: invoice, error: invError } = await supabase
             .from('invoices')
             .select('*, clients(id, name, email)')
             .eq('id', invoiceId)
-            .eq('user_id', userInfo.userId)
+            .eq('user_id', user.id)
             .single();
 
         if (invError || !invoice) return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
 
         // Fetch client's payment history (other invoices)
-        const { data: clientHistory } = await supabaseAdmin
+        const { data: clientHistory } = await supabase
             .from('invoices')
             .select('status, due_date, paid_at, amount')
             .eq('client_id', invoice.client_id)
-            .eq('user_id', userInfo.userId)
+            .eq('user_id', user.id)
             .neq('id', invoiceId);
 
         // ────── Scoring Algorithm ──────
@@ -117,7 +112,7 @@ export async function POST(req: NextRequest) {
         else if (score >= 45) { label = 'Medium'; color = '#fbbf24'; }
 
         // Update invoice score in DB
-        await supabaseAdmin
+        await supabase
             .from('invoices')
             .update({ payment_intent_score: score, updated_at: new Date().toISOString() })
             .eq('id', invoiceId);

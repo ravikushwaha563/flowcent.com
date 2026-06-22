@@ -7,7 +7,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, type LoginInput } from '@/lib/validations/auth';
 import { useAuth } from '@/contexts/auth-context';
-import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
 export default function LoginPage() {
@@ -29,7 +28,7 @@ export default function LoginPage() {
             });
             const result = await response.json();
             if (!response.ok) throw new Error(result.error || 'Login failed');
-            await login(result.token);
+            await login();
             router.push('/dashboard');
         } catch (err: any) {
             toast.error(err.message || 'Login failed');
@@ -38,20 +37,9 @@ export default function LoginPage() {
         }
     };
 
-    const handleGoogleLogin = async () => {
-        try {
-            setIsLoading(true);
-            const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    redirectTo: `${window.location.origin}/auth/callback`,
-                },
-            });
-            if (error) throw error;
-        } catch (err: any) {
-            toast.error(err.message || 'Failed to initialize Google Auth');
-            setIsLoading(false);
-        }
+    const handleGoogleLogin = () => {
+        setIsLoading(true);
+        window.location.assign('/api/auth/google');
     };
 
     return (

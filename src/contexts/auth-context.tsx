@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useCallback, useContext, useState, useEffect } from 'react';
 
 interface User {
     id: string;
@@ -18,8 +18,8 @@ interface AuthContextType {
     token: string | null;
     isAuthenticated: boolean;
     isLoading: boolean;
-    login: (token: string) => Promise<void>;
-    logout: () => void;
+    login: () => Promise<void>;
+    logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,69 +29,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [token, setToken] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Load user on mount
-    useEffect(() => {
-        const loadUser = async () => {
-            const storedToken = localStorage.getItem('token');
-            if (storedToken) {
-                try {
-                    const response = await fetch('/api/auth/me', {
-                        headers: {
-                            Authorization: `Bearer ${storedToken}`,
-                        },
-                    });
-
-                    if (response.ok) {
-                        const data = await response.json();
-                        setUser(data.user);
-                        setToken(storedToken);
-                    } else {
-                        // Invalid token, clear it
-                        localStorage.removeItem('token');
-                    }
-                } catch (error) {
-                    console.error('Failed to load user:', error);
-                    localStorage.removeItem('token');
-                }
-            }
-            setIsLoading(false);
-        };
-
-        loadUser();
-    }, []);
-
-    const login = async (newToken: string) => {
-        // Store token
-        localStorage.setItem('token', newToken);
-        setToken(newToken);
-
-        // Fetch user data
+    const loadUser = useCallback(async () => {
         try {
-            const response = await fetch('/api/auth/me', {
-                headers: {
-                    Authorization: `Bearer ${newToken}`,
-                },
-            });
-
+            const response = await fetch('/api/auth/me', { cache: 'no-store' });
             if (response.ok) {
                 const data = await response.json();
                 setUser(data.user);
+                // Compatibility marker while dashboard calls migrate away from
+                // manually attaching Authorization headers. It contains no secret.
+                setToken('cookie-session');
+            } else {
+                setUser(null);
+                setToken(null);
             }
         } catch (error) {
             console.error('Failed to fetch user:', error);
+            setUser(null);
+            setToken(null);
+        } finally {
+            setIsLoading(false);
         }
-    };
+    }, []);
 
-    const logout = () => {
-        localStorage.removeItem('token');
+    useEffect(() => { void loadUser(); }, [loadUser]);
+
+    const login = useCallback(async () => {
+        setIsLoading(true);
+        await loadUser();
+    }, [loadUser]);
+
+    const logout = useCallback(async () => {
+        await fetch('/api/auth/logout', { method: 'POST' });
         setToken(null);
         setUser(null);
-    };
+    }, []);
 
     const value = {
         user,
         token,
-        isAuthenticated: !!token, // Check token, not user! User can be null even when authenticated
+        isAuthenticated: !!user,
         isLoading,
         login,
         logout,
