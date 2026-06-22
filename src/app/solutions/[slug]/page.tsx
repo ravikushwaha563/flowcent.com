@@ -36,7 +36,7 @@ const SOLUTIONS: Record<string, {
             { icon: '📈', title: 'Analytics Dashboard', desc: 'See exactly how much is pending, overdue, and collected. Know your average payment delay in real time.' },
         ],
         features: ['Invoice tracking (up to 5 free)', 'Gmail-connected follow-up automation', 'AI Excuse Memory™', 'Payment Intent Score', 'Client management', 'Promise & excuse log with timeline'],
-        testimonial: { name: 'Arjun Mehta', role: 'Web Developer, Mumbai', text: 'I used to spend Sunday evenings writing awkward "just following up" emails. Now Flowcent does that for me. My average payment time went from 52 days to 14 days in the first month.', avatar: '👨‍💻' },
+        testimonial: { name: 'Freelancer workflow', role: 'Illustrative scenario', text: 'An overdue invoice moves through a controlled reminder sequence while the freelancer can review its status and stop automation at any time.', avatar: '👨‍💻' },
         cta: 'Start collecting faster — free →',
     },
     agencies: {
@@ -57,10 +57,10 @@ const SOLUTIONS: Record<string, {
             { icon: '📊', title: 'Centralized invoice dashboard', desc: 'All invoices across all clients in one view. Status, overdue days, and payment score — at a glance.' },
             { icon: '✉️', title: 'Consistent automated follow-ups', desc: 'One professional tone, five escalation stages, from everyone\'s Gmail. Every client gets the same quality response.' },
             { icon: '🏆', title: 'Client risk scoring', desc: 'See which clients are trending toward late payment before it happens. Take action early.' },
-            { icon: '🔄', title: 'Team collaboration (Agency plan)', desc: 'Multiple team members, audit log, and activity tracking — coming in Agency plan.' },
+            { icon: '💳', title: 'Direct payment links', desc: 'Give clients a secure Razorpay or Stripe checkout path from each invoice.' },
         ],
-        features: ['Unlimited invoices & clients', 'Team member access (Agency plan)', 'Centralized collection dashboard', 'Automated 5-stage follow-ups', 'Client risk scoring', 'White-label email templates (Agency plan)', 'CSV export for accounting', 'Dedicated account manager'],
-        testimonial: { name: 'Priya Nair', role: 'Agency Director, Delhi', text: 'We manage 40+ client invoices. Before Flowcent, we had a spreadsheet and a prayer. Now everything is automated, consistent, and we\'ve reduced our average payment delay from 38 days to 10 days.', avatar: '👩‍💼' },
+        features: ['Unlimited invoices & clients on Pro', 'Centralized collection dashboard', 'Automated 5-stage follow-ups', 'Client risk scoring', 'Secure payment links', 'PDF invoice export', 'Gmail integration', 'Multi-currency invoices'],
+        testimonial: { name: 'Agency workflow', role: 'Illustrative scenario', text: 'The agency sees pending and overdue invoices in one dashboard and applies the same follow-up policy across clients.', avatar: '👩‍💼' },
         cta: 'Centralize your collections free →',
     },
     designers: {
@@ -84,7 +84,7 @@ const SOLUTIONS: Record<string, {
             { icon: '📊', title: 'Retainer tracking', desc: 'Create recurring monthly invoices for retainer clients. Flowcent auto-follows-up the moment they\'re overdue.' },
         ],
         features: ['Invoice creation & tracking', 'Promise & commitment logging', 'AI Excuse Memory™', '5-stage automated follow-ups', 'Client payment history timeline', 'Professional email templates', 'Retainer invoice support', 'Multi-currency (INR, USD, EUR)'],
-        testimonial: { name: 'Riya Sharma', role: 'UI/UX Designer, Bangalore', text: 'I\'m not a confrontational person. Flowcent\'s automated follow-ups are professional and firm in a way I could never be. I recovered a ₹85,000 payment last month that I\'d basically given up on.', avatar: '👩‍🎨' },
+        testimonial: { name: 'Designer workflow', role: 'Illustrative scenario', text: 'Professional reminders are sent from the connected Gmail account so the designer can stay consistent without drafting every message.', avatar: '👩‍🎨' },
         cta: 'Stop chasing — start creating →',
     },
     consultants: {
@@ -108,7 +108,7 @@ const SOLUTIONS: Record<string, {
             { icon: '📧', title: 'Gmail-connected emails', desc: 'All follow-ups from your personal email address — ensuring clients never feel like they\'re dealing with a system.' },
         ],
         features: ['Professional 5-stage follow-up sequences', 'Milestone & partial payment tracking', 'Payment Intent Score', 'Client relationship notes', 'Gmail integration (your email, your brand)', 'Promise & commitment log', 'Multi-currency billing', 'Analytics dashboard'],
-        testimonial: { name: 'Vikram Kapoor', role: 'Strategy Consultant, Pune', text: 'I was hesitant — I didn\'t want a bot emailing my clients. But Flowcent\'s emails sound like me, from my Gmail, with perfect timing. I haven\'t had an awkward payment conversation in 3 months.', avatar: '👨‍💼' },
+        testimonial: { name: 'Consultant workflow', role: 'Illustrative scenario', text: 'A consultant keeps invoice history, client promises and follow-up records together for a clearer commercial conversation.', avatar: '👨‍💼' },
         cta: 'Protect relationships & get paid →',
     },
     developers: {
@@ -132,7 +132,7 @@ const SOLUTIONS: Record<string, {
             { icon: '✉️', title: 'Follow-up without breaking flow', desc: 'Emails fire automatically at scheduled intervals. You stay in flow state. Clients stay accountable.' },
         ],
         features: ['5-minute setup with Gmail OAuth', 'Fully automated 5-stage follow-ups', 'Invoice & client dashboard', 'AI analysis of client replies', 'Payment Intent Score', 'Client payment history & risk profile', 'Multi-currency support', 'API-first architecture (coming soon)'],
-        testimonial: { name: 'Karan Dev', role: 'Full-stack Developer, Ahmedabad', text: 'I had a client who owed me ₹1.4L for 3 months. I enabled Flowcent, forgot about it, and got paid within the first 10 days. The Stage 4 Urgent email is apparently very effective.', avatar: '🧑‍💻' },
+        testimonial: { name: 'Developer workflow', role: 'Illustrative scenario', text: 'A secure public payment link gives the client a direct Razorpay or Stripe checkout path without exposing internal invoice IDs.', avatar: '🧑‍💻' },
         cta: 'Automate your collections →',
     },
     'content-creators': {
@@ -156,7 +156,7 @@ const SOLUTIONS: Record<string, {
             { icon: '🤖', title: 'AI Excuse Memory™', desc: '"Finance team is overwhelmed with Q1 close" — AI recognizes this, logs it, and escalates accordingly.' },
         ],
         features: ['Invoice creation for brand deals & campaigns', 'Recurring invoice for monthly retainers', 'Gmail follow-up automation', 'Multi-currency (USD for international brands)', 'AI Excuse Memory™', 'Brand payment history & risk score', 'Promise & commitment tracker', 'Analytics: on-time vs. late by brand'],
-        testimonial: { name: 'Sneha Rao', role: 'Lifestyle Creator, Hyderabad', text: 'I work with 8 brands at a time. Flowcent gives me a dashboard where I can see exactly which brand is late and by how many days. The automated follow-ups have literally recovered ₹6L for me this quarter.', avatar: '🧑‍🎤' },
+        testimonial: { name: 'Creator workflow', role: 'Illustrative scenario', text: 'Brand invoices across multiple currencies remain visible in one place with due dates, status and payment context.', avatar: '🧑‍🎤' },
         cta: 'Get paid for your content →',
     },
 };
@@ -212,8 +212,8 @@ export default async function SolutionDetailPage({ params }: { params: Promise<{
                             <div className="absolute inset-0 rounded-3xl bg-gradient-to-tl from-[#09090f]/50 via-transparent to-transparent pointer-events-none" />
                             {/* Testimonial card floated on image */}
                             <div className="absolute -bottom-6 -left-4 glass-card p-5 max-w-[280px] anim-bounce-in" style={{ borderColor: `${solution.color}25` }}>
-                                <div className="flex gap-0.5 mb-2">{Array(5).fill(0).map((_, j) => <span key={j} className="text-yellow-400 text-xs">★</span>)}</div>
-                                <p className="text-xs text-white/60 italic leading-relaxed mb-3">"{solution.testimonial.text.slice(0, 90)}..."</p>
+                                <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: solution.color }}>Example</p>
+                                <p className="text-xs text-white/60 leading-relaxed mb-3">{solution.testimonial.text}</p>
                                 <div className="flex items-center gap-2">
                                     <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
                                         style={{ background: `linear-gradient(135deg, ${solution.color}, ${solution.color}88)` }}>

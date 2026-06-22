@@ -3,6 +3,7 @@ import { requireUser } from '@/lib/auth/server';
 import { sendFollowUpEmail, generateFollowUpEmail } from '@/lib/gmail';
 import { followUpSchema, validationError } from '@/lib/validations/domain';
 import { ZodError } from 'zod';
+import { decryptSecret } from '@/lib/crypto/secrets';
 
 export async function POST(req: NextRequest) {
     try {
@@ -59,8 +60,8 @@ export async function POST(req: NextRequest) {
 
         // Send via Gmail API
         const result = await sendFollowUpEmail({
-            accessToken: user.gmail_access_token,
-            refreshToken: user.gmail_refresh_token || undefined,
+            accessToken: decryptSecret(user.gmail_access_token),
+            refreshToken: user.gmail_refresh_token ? decryptSecret(user.gmail_refresh_token) : undefined,
             to: invoice.clients.email,
             toName: invoice.clients.name,
             fromName: user.company_name || user.name || 'Flowcent User',

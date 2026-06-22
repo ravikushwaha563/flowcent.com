@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
-import { getGmailAuthUrl } from '@/lib/gmail';
+import { getGmailAuthUrl, getOAuthClient } from '@/lib/gmail';
 import { requireUser } from '@/lib/auth/server';
 import { randomBytes } from 'crypto';
+import { decryptSecret } from '@/lib/crypto/secrets';
 
 export async function GET() {
     try {
@@ -11,7 +12,7 @@ export async function GET() {
         // Check env vars are set
         if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
             return NextResponse.json(
-                { error: 'Gmail integration not configured. Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to .env' },
+                { error: 'Gmail integration is not available on this deployment' },
                 { status: 503 }
             );
         }
@@ -35,6 +36,15 @@ export async function GET() {
 export async function DELETE() {
     const { supabase, user, response } = await requireUser();
     if (!user) return response!;
+
+    const { data: profile } = await supabase.from('users').select('gmail_access_token').eq('id', user.id).single();
+    if (profile?.gmail_access_token) {
+        try {
+            await getOAuthClient().revokeToken(decryptSecret(profile.gmail_access_token));
+        } catch (error) {
+            console.error('Failed to revoke Gmail token:', error);
+        }
+    }
 
     const { error } = await supabase.from('users').update({
         gmail_connected: false,

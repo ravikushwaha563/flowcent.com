@@ -33,6 +33,22 @@ export const followUpSchema = z.object({
     stage: z.number().int().min(1).max(5),
 });
 
+export const publicPaymentTokenSchema = z.string().uuid();
+
+export const createPaymentSchema = z.object({
+    publicToken: publicPaymentTokenSchema,
+});
+
+export const verifyRazorpayPaymentSchema = createPaymentSchema.extend({
+    razorpay_order_id: z.string().min(1).max(100),
+    razorpay_payment_id: z.string().min(1).max(100),
+    razorpay_signature: z.string().regex(/^[a-f0-9]{64}$/i),
+});
+
+export const verifyStripePaymentSchema = createPaymentSchema.extend({
+    sessionId: z.string().min(1).max(255),
+});
+
 export function validationError(error: z.ZodError) {
     return {
         error: 'Validation failed',

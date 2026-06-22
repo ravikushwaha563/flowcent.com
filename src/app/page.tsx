@@ -23,7 +23,7 @@ function Hero() {
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
           <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
         </span>
-        <span className="text-white/80 font-medium">AI Excuse Memory™ is officially live</span>
+        <span className="text-white/80 font-medium">AI-assisted payment analysis</span>
         <Link href="/dashboard/intelligence" className="text-blue-400 font-semibold hover:text-blue-300">Explore →</Link>
       </div>
       <h1 className="text-[2.8rem] sm:text-6xl lg:text-[5rem] font-bold tracking-tighter leading-[1.04] mb-6"
@@ -64,25 +64,25 @@ function Hero() {
         </div>
       </div>
 
-      {/* Social proof + metrics */}
+      {/* Product facts */}
       <div className="flex flex-col sm:flex-row items-center justify-center gap-6"
         style={{ animation: 'revealUp 0.6s cubic-bezier(0.22,1,0.36,1) 400ms both' }}>
         <div className="flex items-center gap-3">
           <div className="flex -space-x-2">
-            {['RS', 'AM', 'PN', 'KP', 'SR'].map((initials, i) => (
+            {['INR', 'USD', 'EUR', 'GBP'].map((initials, i) => (
               <div key={i} className="w-8 h-8 rounded-full border-2 border-[#09090f] flex items-center justify-center text-[10px] font-bold text-white"
                 style={{ background: `linear-gradient(135deg, hsl(${i * 50 + 200}, 80%, 50%), hsl(${i * 50 + 250}, 80%, 40%))` }}>
                 {initials}
               </div>
             ))}
           </div>
-          <span className="text-sm text-white/40">Trusted by <span className="text-white/70 font-semibold">500+</span> Indian freelancers</span>
+          <span className="text-sm text-white/40">Built for freelancers and small agencies</span>
         </div>
         <div className="w-px h-6 bg-white/10 hidden sm:block" />
         <div className="flex items-center gap-6">
           {[
-            { val: '3×', label: 'faster payments' },
-            { val: '45→14', label: 'days avg collection' },
+            { val: '5', label: 'follow-up stages' },
+            { val: '4', label: 'currencies' },
             { val: '₹0', label: 'to start' },
           ].map(({ val, label }) => (
             <div key={label} className="text-center">
@@ -114,7 +114,7 @@ function LogoCloud() {
       <div className="max-w-7xl mx-auto">
         <p className="text-center text-xs font-semibold text-white/25 uppercase tracking-[0.2em] mb-8"
           style={{ animation: 'revealUp 0.6s cubic-bezier(0.22,1,0.36,1) 0ms both' }}>
-          Trusted by freelancers & agencies working with
+          Designed for independent professionals using tools like
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4"
           style={{ animation: 'revealUp 0.6s cubic-bezier(0.22,1,0.36,1) 120ms both' }}>
@@ -188,10 +188,10 @@ function Features() {
           ))}
         </div>
 
-        {/* Coming Soon banner */}
+        {/* Roadmap banner */}
         <div className="mt-8 p-5 rounded-2xl border border-dashed border-white/[0.08] bg-white/[0.01] text-center">
           <p className="text-sm text-white/30">
-            🚀 <span className="text-white/50 font-medium">Coming soon:</span> PDF Invoice Export · WhatsApp Follow-ups · Razorpay Payment Links · Team Collaboration · Stripe Integration
+            <span className="text-white/50 font-medium">Available:</span> PDF export · Razorpay payment links · Stripe checkout · Gmail follow-ups · AI analysis
           </p>
         </div>
       </div>
@@ -298,29 +298,29 @@ function HowItWorks() {
   );
 }
 
-// ── Testimonials ──────────────────────────────────────────────────────────────
+// ── Workflow examples ─────────────────────────────────────────────────────────
 function Testimonials() {
   const testimonials = [
-    { name: 'Riya Sharma', role: 'Freelance UI/UX Designer, Bangalore', text: 'I used to spend 2 hours every week chasing invoices. Now Flowcent sends automated follow-ups and I literally just got paid ₹85,000 last week without a single WhatsApp message.', initials: 'RS', grad: 'from-blue-500 to-indigo-600', stars: 5 },
-    { name: 'Arjun Mehta', role: 'Web Developer & Agency Owner, Mumbai', text: 'The AI Excuse Memory is genius. One client used the same "bank is processing" excuse 4 times. Flowcent caught it, flagged him as high-risk, and I stopped taking new projects from him.', initials: 'AM', grad: 'from-purple-500 to-pink-600', stars: 5 },
-    { name: 'Priya Nair', role: 'Content Strategist, Delhi', text: 'Getting paid from clients was a nightmare. Flowcent\'s 5-stage follow-up system is professional and firm. My average payment time went from 52 days to just 14 days!', initials: 'PN', grad: 'from-emerald-500 to-teal-600', stars: 5 },
-    { name: 'Karan Patel', role: 'Video Editor, Ahmedabad', text: "Easiest tool I've added to my workflow. Connect Gmail, create an invoice, and automation handles everything. Even my dad's CA firm started using it for their small business clients.", initials: 'KP', grad: 'from-amber-500 to-orange-600', stars: 5 },
-    { name: 'Sneha Rao', role: 'Social Media Manager, Hyderabad', text: 'The payment intent score is surprisingly accurate. It correctly predicted 3 out of my last 4 late payers. Now I ask for 50% advance from red-flag clients.', initials: 'SR', grad: 'from-cyan-500 to-blue-600', stars: 5 },
-    { name: 'Vikram Singh', role: 'Graphic Designer, Pune', text: 'I had given up on getting paid for a ₹1.2L project. Flowcent\'s Stage 5 final notice email recovered it in 48 hours. This tool paid for itself 300× on day one.', initials: 'VS', grad: 'from-rose-500 to-red-600', stars: 5 },
+    { name: 'Overdue invoice', role: 'Illustrative workflow', text: 'A pending invoice passes its due date. Flowcent marks it overdue and schedules the next enabled follow-up stage.', initials: '01', grad: 'from-blue-500 to-indigo-600' },
+    { name: 'Client promise', role: 'Illustrative workflow', text: 'A client says the accounts team will pay on Friday. AI analysis highlights credibility and suggests a firm, professional response.', initials: '02', grad: 'from-purple-500 to-pink-600' },
+    { name: 'Gmail follow-up', role: 'Illustrative workflow', text: 'The reminder is sent from the connected Gmail account, preserving the sender identity and client relationship.', initials: '03', grad: 'from-emerald-500 to-teal-600' },
+    { name: 'Secure payment link', role: 'Illustrative workflow', text: 'The client opens an unguessable payment link and checks out through Razorpay or Stripe without seeing internal invoice IDs.', initials: '04', grad: 'from-amber-500 to-orange-600' },
+    { name: 'Payment verification', role: 'Illustrative workflow', text: 'Flowcent verifies the provider signature and amount before marking the invoice paid.', initials: '05', grad: 'from-cyan-500 to-blue-600' },
+    { name: 'Client insight', role: 'Illustrative workflow', text: 'Invoice history, delays and logged promises remain together so future credit decisions have useful context.', initials: '06', grad: 'from-rose-500 to-red-600' },
   ];
   return (
     <section id="testimonials" className="relative z-10 py-24 px-6">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
-          <span className="text-xs font-semibold tracking-[0.2em] text-green-400 uppercase mb-4 block">Testimonials</span>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tighter mb-4">Freelancers <span className="grad-text tracking-tighter">love Flowcent</span></h2>
-          <p className="text-white/40 text-lg max-w-md mx-auto">Real stories from Indian freelancers who stopped chasing and started collecting.</p>
+          <span className="text-xs font-semibold tracking-[0.2em] text-green-400 uppercase mb-4 block">Workflows</span>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tighter mb-4">From overdue to <span className="grad-text tracking-tighter">paid</span></h2>
+          <p className="text-white/40 text-lg max-w-md mx-auto">Illustrative examples of how the product handles common collection tasks.</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {testimonials.map((t, i) => (
             <div key={t.name} className={`glass-card feature-card p-6 space-y-4 reveal-up reveal-delay-${Math.min((i % 6) + 1, 6)}`}>
-              <div className="flex gap-0.5">{Array(t.stars).fill(0).map((_, j) => <span key={j} className="text-yellow-400 text-sm">★</span>)}</div>
-              <p className="text-sm text-white/70 leading-relaxed">"{t.text}"</p>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-green-400/70">Example</span>
+              <p className="text-sm text-white/70 leading-relaxed">{t.text}</p>
               <div className="flex items-center gap-3 pt-2 border-t border-white/[0.06]">
                 <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${t.grad} flex items-center justify-center text-xs font-bold text-white shrink-0`}>{t.initials}</div>
                 <div>
@@ -341,10 +341,10 @@ function FAQ() {
   const [open, setOpen] = useState<number | null>(null);
   const faqs = [
     { q: 'Is Flowcent really free to start?', a: 'Yes! The Free plan is completely free — no credit card required. You get 5 invoices, manual follow-ups, Gmail integration, and 5 AI analyses per month. Upgrade anytime when you grow.' },
-    { q: 'How does the AI Excuse Memory™ work?', a: 'When a client replies, paste their email into Flowcent. Our AI (powered by Groq\'s LLaMA model) reads it and extracts promises, excuses, and payment intent. It builds a timeline log so you spot patterns over time.' },
+    { q: 'How does the AI Excuse Memory™ work?', a: 'Paste a client reply into Flowcent. The configured AI provider analyzes the message, identifies the likely intent, and suggests a professional response. Invoice-linked analysis can also log extracted promises.' },
     { q: 'Will my clients know I\'m using Flowcent?', a: 'No. All emails are sent from your own Gmail account via OAuth. Your clients see your name and address — not Flowcent\'s.' },
     { q: 'Will Flowcent spam my clients with emails?', a: 'Absolutely not. The system is careful — it sends staged emails (Friendly → Firm → Urgent → Final) with deliberate multi-day gaps. You can disable automation per invoice anytime.' },
-    { q: 'Is my data secure?', a: 'Yes. All data is stored in an encrypted Supabase (PostgreSQL) database. Gmail tokens are encrypted at rest and only used to send emails on your behalf. We never read your inbox.' },
+    { q: 'What Gmail access does Flowcent request?', a: 'Flowcent requests Gmail send access and your Google account email. It does not request inbox-read access. You can disconnect Gmail or revoke access from Google at any time.' },
     { q: 'Can I use Flowcent for USD or EUR invoices?', a: 'Yes! Flowcent supports INR, USD, EUR, and GBP. Multi-currency display is automatic — the format follows each invoice\'s currency setting.' },
   ];
   return (
@@ -396,7 +396,7 @@ function FinalCTA() {
             <div className="relative">
               <div className="text-4xl mb-4">💰</div>
               <h2 className="text-3xl sm:text-5xl font-bold tracking-tighter text-white mb-4">Ready to get paid faster?</h2>
-              <p className="text-white/70 mb-10 text-lg max-w-md mx-auto">Join 500+ freelancers who cut their payment collection time by 3× with Flowcent.</p>
+              <p className="text-white/70 mb-10 text-lg max-w-md mx-auto">Create your first client and invoice, then choose exactly how and when Flowcent follows up.</p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link href="/signup">
                   <button className="bg-white text-[#3d61ff] font-bold px-8 py-3.5 rounded-xl text-sm hover:bg-white/90 transition-colors shadow-2xl hover:-translate-y-0.5" style={{ transition: 'transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease' }}>Start for free — no credit card →</button>

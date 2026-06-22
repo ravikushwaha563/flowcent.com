@@ -18,12 +18,12 @@ const PLANS = [
         href: '/signup',
         metric: 'Up to 5 invoices',
         features: [
-            { text: '5 active invoices', included: true },
+            { text: '5 invoices per month', included: true },
             { text: '3 clients', included: true },
             { text: 'Gmail integration', included: true },
             { text: '5-stage manual follow-ups', included: true },
-            { text: 'AI Excuse Memory™ (5×/month)', included: true },
-            { text: 'Payment Intent Score (3×/month)', included: true },
+            { text: '5 shared AI analyses per month', included: true },
+            { text: 'Payment intent scoring', included: true },
             { text: 'Basic analytics', included: true },
             { text: 'INR, USD, EUR, GBP', included: true },
             { text: 'Automated scheduling', included: false },
@@ -39,7 +39,7 @@ const PLANS = [
         color: '#a78bfa',
         colorRgb: '167,139,250',
         popular: true,
-        cta: 'Start 14-day free trial',
+        cta: 'Create account',
         href: '/signup?plan=pro',
         metric: 'Unlimited everything',
         features: [
@@ -49,62 +49,32 @@ const PLANS = [
             { text: 'Fully automated 5-stage follow-ups', included: true },
             { text: 'AI Excuse Memory™ (unlimited)', included: true },
             { text: 'Payment Intent Score (unlimited)', included: true },
-            { text: 'Advanced analytics & reports', included: true },
-            { text: 'All currencies', included: true },
-            { text: 'CSV export', included: true },
-            { text: 'Priority email support (24hr)', included: true },
+            { text: 'Dashboard analytics', included: true },
+            { text: 'INR, USD, EUR, GBP', included: true },
+            { text: 'Secure Razorpay and Stripe links', included: true },
             { text: 'Team members', included: false },
-        ],
-    },
-    {
-        name: 'Agency',
-        price: { monthly: 1499, annual: 1199 },
-        period: '/month',
-        desc: 'For agencies managing collections at scale.',
-        color: '#34d399',
-        colorRgb: '52,211,153',
-        popular: false,
-        cta: 'Contact us',
-        href: 'mailto:hello@flowcent.in',
-        metric: 'Team + white-label',
-        features: [
-            { text: 'Everything in Pro', included: true },
-            { text: 'Multiple team members', included: true },
-            { text: 'White-label email templates', included: true },
-            { text: 'Custom sending domain', included: true },
-            { text: 'Advanced CSV/PDF export', included: true },
-            { text: 'Dedicated account manager', included: true },
-            { text: 'SLA-backed support (< 4hr)', included: true },
-            { text: 'Custom integrations', included: true },
-            { text: 'Audit log & activity tracking', included: true },
-            { text: 'Volume pricing', included: true },
-            { text: 'Onboarding call included', included: true },
         ],
     },
 ];
 
 const COMPARISON_ROWS = [
-    { label: 'Active invoices', free: '5', pro: 'Unlimited', agency: 'Unlimited', section: 'Invoices' },
-    { label: 'Clients', free: '3', pro: 'Unlimited', agency: 'Unlimited', section: null },
-    { label: 'Gmail integration', free: true, pro: true, agency: true, section: 'Automation' },
-    { label: 'Manual follow-ups', free: true, pro: true, agency: true, section: null },
-    { label: 'Automated scheduling', free: false, pro: true, agency: true, section: null },
-    { label: 'AI Excuse Memory™', free: '5/mo', pro: 'Unlimited', agency: 'Unlimited', section: 'AI' },
-    { label: 'Payment Intent Score', free: '3/mo', pro: 'Unlimited', agency: 'Unlimited', section: null },
-    { label: 'Analytics dashboard', free: 'Basic', pro: 'Advanced', agency: 'Advanced + Export', section: 'Analytics' },
-    { label: 'CSV export', free: false, pro: true, agency: true, section: null },
-    { label: 'Team members', free: false, pro: false, agency: true, section: 'Team' },
-    { label: 'White-label emails', free: false, pro: false, agency: true, section: null },
-    { label: 'Support level', free: 'Community', pro: 'Priority email', agency: 'Dedicated manager', section: null },
+    { label: 'Invoices per month', free: '5', pro: 'Unlimited', section: 'Invoices' },
+    { label: 'Clients', free: '3', pro: 'Unlimited', section: null },
+    { label: 'Gmail integration', free: true, pro: true, section: 'Automation' },
+    { label: 'Manual follow-ups', free: true, pro: true, section: null },
+    { label: 'Automated scheduling', free: false, pro: true, section: null },
+    { label: 'AI usage', free: '5/mo shared', pro: 'Unlimited', section: 'AI' },
+    { label: 'Payment intent score', free: true, pro: true, section: null },
+    { label: 'Payment links', free: true, pro: true, section: 'Payments' },
+    { label: 'PDF invoice export', free: true, pro: true, section: null },
+    { label: 'Team members', free: false, pro: false, section: 'Roadmap' },
 ];
 
 const FAQS = [
-    { q: 'Can I upgrade or downgrade anytime?', a: 'Yes. Upgrade or downgrade at any time. If you downgrade, your Pro features stay active until the end of your billing period — nothing is lost mid-cycle.' },
-    { q: 'Is the 14-day Pro trial really free?', a: 'Completely free — no credit card required to start. After 14 days, you\'ll be prompted to enter payment details or drop to the Free plan automatically.' },
-    { q: 'What happens to my invoices if I downgrade?', a: 'Your data is always safe. Existing invoices become read-only if you exceed the free plan limits — you can\'t create new ones until you\'re under the limit or upgrade again.' },
-    { q: 'Do you issue GST invoices for subscriptions?', a: 'Yes. All paid plans include a GST-compliant invoice for every billing cycle, downloadable from your account settings.' },
-    { q: 'Do you offer startup or NGO discounts?', a: 'Yes — email us at hello@flowcent.in with your details. We\'ve worked with bootstrapped founders and nonprofits before and we\'ll work something out.' },
-    { q: 'Can I use Flowcent in languages other than English?', a: 'The AI Excuse Memory™ engine understands replies in Hindi, Hinglish, Tamil, Telugu, and English. The interface is in English only for now — regional language UI is on our roadmap.' },
+    { q: 'What does the Free plan include?', a: 'The Free plan includes 5 invoices per month, 3 clients and 5 shared AI analyses. Manual follow-ups and payment links remain available.' },
+    { q: 'When does Pro activate?', a: 'Pro activates after the Razorpay payment is verified. Monthly and annual billing are supported from the Billing page.' },
+    { q: 'What happens when Pro expires?', a: 'Your account falls back to Free limits. Existing records remain in your account, while new usage must stay within the Free plan limits.' },
+    { q: 'Can I use international currencies?', a: 'Yes. Invoice display supports INR, USD, EUR and GBP. INR checkout uses Razorpay; the other supported currencies use Stripe Checkout.' },
 ];
 
 function CheckIcon({ color }: { color: string }) {
@@ -151,7 +121,7 @@ export default function PricingPage() {
     useReveal();
     const [annual, setAnnual] = useState(false);
 
-    const fmt = (n: number) => n === 0 ? '₹0' : `₹${annual ? Math.round(n * 0.8).toLocaleString('en-IN') : n.toLocaleString('en-IN')}`;
+    const fmt = (monthly: number, annualPrice: number) => monthly === 0 ? '₹0' : `₹${(annual ? annualPrice : monthly).toLocaleString('en-IN')}`;
 
     return (
         <div className="min-h-screen bg-[#09090f] text-white overflow-x-hidden">
@@ -201,7 +171,7 @@ export default function PricingPage() {
             {/* ─── Plans ─── */}
             <section className="relative z-10 px-6 pb-20">
                 <div className="max-w-5xl mx-auto">
-                    <div className="grid md:grid-cols-3 gap-5 items-start">
+                    <div className="grid md:grid-cols-2 gap-5 items-start max-w-3xl mx-auto">
                         {PLANS.map((plan, i) => (
                             <div key={plan.name}
                                 className={`relative rounded-2xl overflow-hidden transition-all duration-300 reveal-up ${plan.popular ? 'md:-mt-4' : ''}`}
@@ -234,12 +204,12 @@ export default function PricingPage() {
                                             <span className="text-[11px] text-white/30 font-medium">{plan.metric}</span>
                                         </div>
                                         <div className="flex items-baseline gap-1 mb-1">
-                                            <span className="text-4xl font-black text-white">{fmt(plan.price.monthly)}</span>
+                                            <span className="text-4xl font-black text-white">{fmt(plan.price.monthly, plan.price.annual)}</span>
                                             <span className="text-white/35 text-sm">{plan.period}</span>
                                         </div>
                                         {annual && plan.price.monthly > 0 && (
                                             <p className="text-[11px] text-white/30">
-                                                Billed ₹{Math.round(plan.price.monthly * 0.8 * 12).toLocaleString('en-IN')}/yr · Save ₹{Math.round(plan.price.monthly * 0.2 * 12).toLocaleString('en-IN')}
+                                                Billed ₹{(plan.price.annual * 12).toLocaleString('en-IN')}/yr · Save ₹{((plan.price.monthly - plan.price.annual) * 12).toLocaleString('en-IN')}
                                             </p>
                                         )}
                                         <p className="text-xs text-white/40 mt-2">{plan.desc}</p>
@@ -255,7 +225,7 @@ export default function PricingPage() {
                                         </button>
                                     </Link>
                                     {plan.name === 'Free' && <p className="text-center text-[11px] text-white/25">No credit card required</p>}
-                                    {plan.name === 'Pro' && <p className="text-center text-[11px] text-white/25">No credit card for trial · Cancel anytime</p>}
+                                    {plan.name === 'Pro' && <p className="text-center text-[11px] text-white/25">Secure checkout via Razorpay</p>}
 
                                     {/* Features */}
                                     <div className="space-y-2.5 pt-2 border-t border-white/[0.06]">
@@ -278,9 +248,9 @@ export default function PricingPage() {
                 <div className="max-w-4xl mx-auto">
                     <div className="grid sm:grid-cols-3 gap-4">
                         {[
-                            { icon: '🔒', title: 'No Lock-in', desc: 'Cancel or downgrade at any time. Your data exports as CSV on request.' },
-                            { icon: '🇮🇳', title: 'Made for India', desc: 'INR pricing, GST invoices, UPI-friendly. Built by Indian freelancers, for Indian freelancers.' },
-                            { icon: '⚡', title: 'ROI in Week 1', desc: 'Most users collect their first overdue payment within 7 days of signing up.' },
+                            { icon: '🔒', title: 'Secure Checkout', desc: 'Subscription activation is tied to a verified Razorpay order.' },
+                            { icon: '🇮🇳', title: 'Made for India', desc: 'INR pricing and Razorpay checkout, with multi-currency client invoices.' },
+                            { icon: '⚡', title: 'Free to Start', desc: 'Create clients and invoices without entering payment details.' },
                         ].map(t => (
                             <div key={t.title} className="flex flex-col gap-3 p-5 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
                                 <span className="text-2xl">{t.icon}</span>
@@ -303,7 +273,7 @@ export default function PricingPage() {
                     </div>
                     <div className="rounded-2xl border border-white/[0.07] overflow-hidden bg-[#0d0d18]/80">
                         {/* Header */}
-                        <div className="grid grid-cols-4 divide-x divide-white/[0.06] border-b border-white/[0.07] bg-white/[0.02]">
+                        <div className="grid grid-cols-3 divide-x divide-white/[0.06] border-b border-white/[0.07] bg-white/[0.02]">
                             <div className="p-4" />
                             {PLANS.map(p => (
                                 <div key={p.name} className="p-4 text-center">
@@ -319,13 +289,12 @@ export default function PricingPage() {
                                         <span className="text-[10px] font-bold uppercase tracking-widest text-white/25">{row.section}</span>
                                     </div>
                                 )}
-                                <div className={`grid grid-cols-4 divide-x divide-white/[0.04] border-t border-white/[0.04] hover:bg-white/[0.02] transition-colors ${i % 2 === 0 ? '' : ''}`}>
+                                <div className={`grid grid-cols-3 divide-x divide-white/[0.04] border-t border-white/[0.04] hover:bg-white/[0.02] transition-colors ${i % 2 === 0 ? '' : ''}`}>
                                     <div className="p-4">
                                         <span className="text-[12.5px] text-white/55">{row.label}</span>
                                     </div>
                                     <div className="p-4 flex items-center justify-center"><CellValue val={row.free} color={PLANS[0].color} /></div>
                                     <div className="p-4 flex items-center justify-center"><CellValue val={row.pro} color={PLANS[1].color} /></div>
-                                    <div className="p-4 flex items-center justify-center"><CellValue val={row.agency} color={PLANS[2].color} /></div>
                                 </div>
                             </div>
                         ))}
@@ -366,7 +335,7 @@ export default function PricingPage() {
                                 <span className="grad-text tracking-tighter">pays for a year of Pro.</span>
                             </h2>
                             <p className="text-white/40 text-sm mb-8 max-w-md mx-auto">
-                                Join 500+ Indian freelancers who stopped chasing and started collecting.
+                                Start with the free plan and upgrade only when your collection workflow grows.
                             </p>
                             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                                 <Link href="/signup">

@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     url: "https://flowcent.in",
     siteName: "Flowcent",
     title: "Flowcent – Get Paid Automatically",
-    description: "AI-powered invoice tracking and payment collection for Indian freelancers & agencies. Cut payment time from 45 days to 12.",
+    description: "AI-assisted invoice tracking, payment links, and follow-up automation for Indian freelancers and small agencies.",
     images: [
       {
         url: "/og-image.png",

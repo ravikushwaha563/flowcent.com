@@ -2,7 +2,6 @@
 
 import { useState, useEffect, use, useCallback } from 'react';
 import { useAuth } from '@/contexts/auth-context';
-import { useSearchParams } from 'next/navigation';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import { InvoicePDF } from '@/components/InvoicePDF';
 import RazorpayButton from '@/components/RazorpayButton';
@@ -16,7 +15,7 @@ interface Client { id: string; name: string; email: string; company?: string; }
 interface Invoice {
     id: string; invoice_number: string; amount: number; currency: string;
     due_date: string; status: string; payment_intent_score: number;
-    clients: Client; created_at: string; paid_at?: string;
+    clients: Client; created_at: string; paid_at?: string; public_token: string;
 }
 interface ClientPromise {
     id: string; promise_text: string; promise_type: string;
@@ -53,8 +52,8 @@ function IntentBar({ score }: { score: number }) {
     );
 }
 
-function StripeCheckoutButton({ invoiceId, amount, currency, token }: {
-    invoiceId: string; amount: number; currency: string; token: string | null;
+function StripeCheckoutButton({ publicToken, amount, currency }: {
+    publicToken: string; amount: number; currency: string;
 }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -64,8 +63,8 @@ function StripeCheckoutButton({ invoiceId, amount, currency, token }: {
         try {
             const res = await fetch('/api/payments/stripe-checkout', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                body: JSON.stringify({ invoiceId }),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ publicToken }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Failed to create Stripe session');
@@ -102,7 +101,6 @@ export default function InvoiceDetailPage({ params }: { params: PageParams }) {
     // Next.js 16: params is a Promise — must use React.use() to unwrap
     const { id } = use(params);
     const { token } = useAuth();
-    const searchParams = useSearchParams();
     const [invoice, setInvoice] = useState<Invoice | null>(null);
     const [promises, setPromises] = useState<ClientPromise[]>([]);
     const [loading, setLoading] = useState(true);
@@ -127,32 +125,6 @@ export default function InvoiceDetailPage({ params }: { params: PageParams }) {
             setLoading(false);
         }
     }, [token]);
-
-    // Handle Stripe redirect success
-    useEffect(() => {
-        const payment = searchParams.get('payment');
-        const sessionId = searchParams.get('session_id');
-        if (payment === 'success' && sessionId && token) {
-            fetch('/api/payments/stripe-verify', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sessionId, invoiceId: id }),
-            })
-                .then(r => r.json())
-                .then(data => {
-                    if (data.success) {
-                        setSuccessMsg('✅ Stripe payment received! Invoice marked as paid.');
-                        fetchData(id);
-                    }
-                })
-                .catch(() => {});
-            // Clean up URL params
-            window.history.replaceState({}, '', `/dashboard/invoices/${id}`);
-        }
-        if (payment === 'cancelled') {
-            setSuccessMsg('');
-        }
-    }, [searchParams, token, id, fetchData]);
 
     const calculateScore = async () => {
         if (!id) return;
@@ -223,7 +195,7 @@ export default function InvoiceDetailPage({ params }: { params: PageParams }) {
                     <div className="flex items-center gap-3">
                         <button
                             onClick={() => {
-                                const url = `${window.location.origin}/pay/${invoice.id}`;
+                                const url = `${window.location.origin}/pay/${invoice.public_token}`;
                                 navigator.clipboard.writeText(url);
                                 toast.success('Payment link copied to clipboard!');
                             }}
@@ -300,13 +272,12 @@ export default function InvoiceDetailPage({ params }: { params: PageParams }) {
 
                     {invoice.currency === 'INR' ? (
                         <RazorpayButton
-                            invoiceId={invoice.id}
+                            publicToken={invoice.public_token}
                             invoiceNumber={invoice.invoice_number}
                             amount={invoice.amount}
                             currency={invoice.currency}
                             clientName={invoice.clients.name}
                             clientEmail={invoice.clients.email}
-                            token={token}
                             onSuccess={() => {
                                 showSuccess('✅ Payment received! Invoice marked as paid.');
                                 fetchData(id);
@@ -314,15 +285,14 @@ export default function InvoiceDetailPage({ params }: { params: PageParams }) {
                         />
                     ) : (
                         <StripeCheckoutButton
-                            invoiceId={invoice.id}
+                            publicToken={invoice.public_token}
                             amount={invoice.amount}
                             currency={invoice.currency}
-                            token={token}
                         />
                     )}
 
                     <p className="text-[10px] text-white/20 text-center">
-                        🔒 Secured by {invoice.currency === 'INR' ? 'Razorpay' : 'Stripe'} · Test Mode Active
+                        Secure checkout via {invoice.currency === 'INR' ? 'Razorpay' : 'Stripe'}
                     </p>
                 </div>
             ) : (

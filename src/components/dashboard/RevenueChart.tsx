@@ -1,21 +1,16 @@
 'use client';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, type TooltipContentProps } from 'recharts';
-import { TrendingUp } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
-// Using static data for the MVP to show visual polish.
-// In a full production app, this would be fetched from a /api/dashboard/history endpoint.
-const chartData = [
-  { name: 'Oct', revenue: 15400 },
-  { name: 'Nov', revenue: 21000 },
-  { name: 'Dec', revenue: 18500 },
-  { name: 'Jan', revenue: 32000 },
-  { name: 'Feb', revenue: 45000 },
-  { name: 'Mar', revenue: 68500 },
-];
+interface CollectionMonth {
+  key: string;
+  label: string;
+  amounts: Record<string, number>;
+}
 
-const CustomTooltip = ({ active, payload, label }: Partial<TooltipContentProps<number, string>>) => {
+const CustomTooltip = ({ active, payload, label, currency }: Partial<TooltipContentProps<number, string>> & { currency: string }) => {
   if (active && payload && payload.length) {
-    const val = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(Number(payload[0].value));
+    const val = new Intl.NumberFormat('en-IN', { style: 'currency', currency, maximumFractionDigits: 0 }).format(Number(payload[0].value));
     return (
       <div className="bg-[#0a0f1c]/90 backdrop-blur-md p-3 rounded-xl border border-white/10 shadow-2xl">
         <p className="text-white/60 text-[10px] uppercase font-bold tracking-widest mb-1">{label}</p>
@@ -26,19 +21,26 @@ const CustomTooltip = ({ active, payload, label }: Partial<TooltipContentProps<n
   return null;
 };
 
-export default function RevenueChart() {
+export default function RevenueChart({ history }: { history: CollectionMonth[] }) {
+  const currencies = useMemo(() => Array.from(new Set(history.flatMap(month => Object.keys(month.amounts)))).sort(), [history]);
+  const [selectedCurrency, setSelectedCurrency] = useState('');
+  const currency = currencies.includes(selectedCurrency) ? selectedCurrency : currencies[0] || 'INR';
+  const chartData = history.map(month => ({ name: month.label, revenue: month.amounts[currency] || 0 }));
+
   return (
     <div className="glass-card p-5 h-full flex flex-col items-stretch space-y-4">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-            <h2 className="font-semibold text-white text-sm">Revenue Growth</h2>
-            <p className="text-xs text-white/30 mt-0.5">Last 6 Months</p>
+            <h2 className="font-semibold text-white text-sm">Collected Revenue</h2>
+            <p className="text-xs text-white/30 mt-0.5">Verified paid invoices · last 6 months</p>
         </div>
-        <div className="px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/20 flex items-center gap-1.5">
-            <TrendingUp size={12} className="text-green-400" />
-            <span className="text-[10px] font-bold text-green-400 tracking-wider">+42%</span>
-        </div>
+        {currencies.length > 1 && (
+          <select value={currency} onChange={event => setSelectedCurrency(event.target.value)}
+            className="bg-white/[0.04] border border-white/[0.08] rounded-lg px-2.5 py-1 text-xs text-white/60">
+            {currencies.map(item => <option key={item} value={item}>{item}</option>)}
+          </select>
+        )}
       </div>
 
       {/* Chart */}
@@ -55,7 +57,7 @@ export default function RevenueChart() {
             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} dy={10} />
             <YAxis axisLine={false} tickLine={false} tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} 
                    tickFormatter={(val) => `₹${val >= 1000 ? (val/1000) + 'k' : val}`} />
-            <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1, strokeDasharray: '4 4' }} />
+            <Tooltip content={<CustomTooltip currency={currency} />} cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1, strokeDasharray: '4 4' }} />
             <Area type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
           </AreaChart>
         </ResponsiveContainer>

@@ -48,9 +48,9 @@ const CATEGORIES = [
         label: 'Integrations',
         color: '#fbbf24',
         tagline: 'Connect the tools you already use — no new habits needed',
-        desc: 'Gmail is live. Razorpay payment links, WhatsApp follow-ups, and accounting exports (Zoho, Tally) are coming in Q2 2026.',
+        desc: 'Connect Gmail for follow-ups and use secure Razorpay or Stripe checkout links. WhatsApp and accounting exports remain optional roadmap work.',
         count: 4,
-        features: ['Gmail Integration (Live)', 'Razorpay Payment Links (Q2)', 'WhatsApp Follow-ups (Q2)', 'Accounting Export — Zoho/Tally (Q2)'],
+        features: ['Gmail Integration', 'Razorpay Payment Links', 'Stripe Checkout', 'WhatsApp Cloud API (Beta)'],
         image: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=700&q=75',
         imageAlt: 'Digital integrations and connectivity concept with glowing nodes',
     },
@@ -236,7 +236,7 @@ export default function FeaturesIndexPage() {
                 <div className="max-w-7xl mx-auto reveal-up">
                     <div className="p-5 rounded-2xl border border-dashed border-white/[0.08] bg-white/[0.01] text-center">
                         <p className="text-sm text-white/30">
-                            🚀 <span className="text-white/50 font-medium">Coming soon:</span> PDF Invoice Export · WhatsApp Follow-ups · Razorpay Payment Links · Stripe Integration · Team Collaboration
+                            <span className="text-white/50 font-medium">Available:</span> PDF invoice export · Gmail follow-ups · Razorpay links · Stripe checkout · AI analysis
                         </p>
                     </div>
                 </div>

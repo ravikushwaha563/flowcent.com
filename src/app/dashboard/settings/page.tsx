@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { User, Mail, CheckCircle2, AlertTriangle, Bot, Smartphone } from 'lucide-react';
+import { User, Mail, CheckCircle2, Download, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/lib/errors';
 
@@ -75,6 +75,8 @@ export default function SettingsPage() {
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [gmailConnecting, setGmailConnecting] = useState(false);
+    const [deleteConfirmation, setDeleteConfirmation] = useState('');
+    const [deleting, setDeleting] = useState(false);
 
     // Handle redirect from Gmail OAuth
     useEffect(() => {
@@ -121,6 +123,26 @@ export default function SettingsPage() {
             toast.success('Gmail disconnected.');
         } catch {
             toast.error('Failed to disconnect Gmail.');
+        }
+    };
+
+    const deleteAccount = async () => {
+        if (!user?.email || deleteConfirmation.toLowerCase() !== user.email.toLowerCase()) {
+            toast.error('Enter your account email exactly to confirm deletion.');
+            return;
+        }
+        setDeleting(true);
+        try {
+            const response = await fetch('/api/user/account', {
+                method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ confirmation: deleteConfirmation }),
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Account deletion failed');
+            window.location.assign('/');
+        } catch (error) {
+            toast.error(getErrorMessage(error, 'Account deletion failed'));
+            setDeleting(false);
         }
     };
 
@@ -195,19 +217,13 @@ export default function SettingsPage() {
                                     'Send follow-up emails from your own Gmail',
                                     'Use professional branded email templates',
                                     '5-stage automated payment reminders',
-                                    'Track email delivery and opens (coming soon)',
+                                    'Disconnect access at any time',
                                 ].map(f => (
                                     <p key={f} className="text-xs text-white/40 flex items-center gap-2">
                                         <span className="text-blue-400">→</span> {f}
                                     </p>
                                 ))}
                             </div>
-                        </div>
-
-                        {/* Setup instruction */}
-                        <div className="p-3 rounded-xl text-xs text-yellow-400 flex items-start gap-2" style={{ background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.15)' }}>
-                            <AlertTriangle size={14} className="mt-0.5 shrink-0" />
-                            <span>Before connecting, add <code className="bg-white/5 px-1 rounded">GOOGLE_CLIENT_ID</code> and <code className="bg-white/5 px-1 rounded">GOOGLE_CLIENT_SECRET</code> to your <code className="bg-white/5 px-1 rounded">.env</code> file.</span>
                         </div>
 
                         <button onClick={connectGmail} disabled={gmailConnecting} className="btn-primary text-sm px-5 py-2.5 flex items-center gap-2">
@@ -221,23 +237,30 @@ export default function SettingsPage() {
                 )}
             </div>
 
-            {/* Coming Soon Cards */}
-            <div className="grid sm:grid-cols-2 gap-4">
-                {[
-                    { icon: <Bot size={20} className="text-purple-400" />, title: 'AI Features', desc: 'Excuse Memory™ — detect and track payment promises from emails', badge: 'Coming Soon' },
-                    { icon: <Smartphone size={20} className="text-green-400" />, title: 'WhatsApp', desc: 'Send payment reminders via WhatsApp Business API', badge: 'Coming Soon' },
-                ].map(card => (
-                    <div key={card.title} className="glass-card p-5 opacity-60">
-                        <div className="flex items-center justify-between mb-3">
-                            <span className="flex items-center justify-center w-8 h-8 opacity-80">{card.icon}</span>
-                            <span className="text-xs px-2 py-0.5 rounded-full text-white/30" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                                {card.badge}
-                            </span>
-                        </div>
-                        <p className="text-sm font-medium text-white/70">{card.title}</p>
-                        <p className="text-xs text-white/30 mt-1">{card.desc}</p>
+            <div className="glass-card p-6 space-y-5">
+                <h2 className="font-semibold text-white text-sm">Data & Account</h2>
+                <div className="flex items-center justify-between gap-4 border-b border-white/[0.06] pb-5">
+                    <div>
+                        <p className="text-sm text-white/70">Export account data</p>
+                        <p className="text-xs text-white/30 mt-1">Download your profile, clients, invoices, promises, follow-ups and billing records.</p>
                     </div>
-                ))}
+                    <a href="/api/user/export" className="btn-outline p-2.5" title="Download account data">
+                        <Download size={16} />
+                    </a>
+                </div>
+                <div className="space-y-3">
+                    <div>
+                        <p className="text-sm text-red-400">Delete account permanently</p>
+                        <p className="text-xs text-white/30 mt-1">This removes your authentication record and all Flowcent data. This cannot be undone.</p>
+                    </div>
+                    <input type="email" value={deleteConfirmation} onChange={event => setDeleteConfirmation(event.target.value)}
+                        className="input-premium" placeholder={user?.email || 'Confirm your email'} />
+                    <button onClick={deleteAccount} disabled={deleting || !deleteConfirmation}
+                        className="btn-outline text-xs px-4 py-2 text-red-400 flex items-center gap-2 disabled:opacity-40"
+                        style={{ borderColor: 'rgba(248,113,113,0.25)' }}>
+                        <Trash2 size={14} /> {deleting ? 'Deleting...' : 'Delete Account'}
+                    </button>
+                </div>
             </div>
         </div>
     );

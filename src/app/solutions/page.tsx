@@ -13,7 +13,7 @@ const SOLUTIONS = [
         tagline: 'Stop sending awkward payment chase messages',
         desc: 'Built for solo developers, designers, and consultants who do great work but struggle to get paid on time. Flowcent automates the uncomfortable part.',
         color: '#6b96ff',
-        stat: { v: '40 days → 12', l: 'avg payment delay cut' },
+        stat: { v: '5-stage', l: 'follow-up sequence' },
         image: 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&w=600&q=75',
         imageAlt: 'Freelancer working on laptop at a cafe',
     },
@@ -24,7 +24,7 @@ const SOLUTIONS = [
         tagline: 'Scale your collections without scaling your team',
         desc: 'Managing 10+ client invoices manually is impossible. Flowcent gives your agency a centralized collection engine — automated, professional, and consistent.',
         color: '#a78bfa',
-        stat: { v: '3×', l: 'faster collection time' },
+        stat: { v: '1 view', l: 'for all client invoices' },
         image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=600&q=75',
         imageAlt: 'Agency team collaborating around a table',
     },
@@ -35,7 +35,7 @@ const SOLUTIONS = [
         tagline: 'Focus on creativity. Let AI handle the money.',
         desc: 'Creatives are the worst at chasing payments — not because they don\'t care, but because it feels awkward. Flowcent removes that friction entirely.',
         color: '#fbbf24',
-        stat: { v: '85%', l: 'promise detection accuracy' },
+        stat: { v: 'AI', l: 'reply analysis' },
         image: 'https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&w=600&q=75',
         imageAlt: 'Designer working on creative project with tablet and stylus',
     },
@@ -129,7 +129,7 @@ export default function SolutionsPage() {
                             </div>
                             <div className="absolute -bottom-4 -left-4 glass-card px-5 py-3 anim-bounce-in">
                                 <p className="text-xs text-white/50">Trusted by</p>
-                                <p className="text-sm font-bold text-white">500+ Indian freelancers</p>
+                                <p className="text-sm font-bold text-white">Freelancers and small agencies</p>
                             </div>
                         </div>
                     </div>
@@ -194,7 +194,7 @@ export default function SolutionsPage() {
                                 <span className="grad-text tracking-tighter">Flowcent has you covered.</span>
                             </h2>
                             <p className="text-white/40 text-sm mb-8 max-w-sm mx-auto">
-                                Join 500+ professionals making sure their creative work gets paid. Start free in 5 minutes.
+                                Build a repeatable collection workflow for your profession. Start with the free plan.
                             </p>
                             <Link href="/signup">
                                 <button className="btn-primary px-8 py-3.5 text-sm font-semibold">Get started free →</button>

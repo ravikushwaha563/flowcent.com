@@ -1,8 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireUser } from '@/lib/auth/server';
 import { getRazorpay } from '@/lib/razorpay';
-import { serverEnv, requireServerEnv } from '@/lib/env/server';
-import crypto from 'crypto';
+import { requireServerEnv } from '@/lib/env/server';
+import { z } from 'zod';
+import { verifyRazorpaySignature } from '@/lib/payments/razorpay-signature';
+import { activateBillingOrder } from '@/lib/billing/activate';
+
+const upgradeSchema = z.object({
+    plan: z.literal('pro').default('pro'),
+    billing: z.enum(['monthly', 'annual']).default('monthly'),
+});
+
+const verificationSchema = z.object({
+    razorpay_order_id: z.string().min(1),
+    razorpay_payment_id: z.string().min(1),
+    razorpay_signature: z.string().regex(/^[a-f0-9]{64}$/i),
+});
 
 // POST /api/billing/upgrade — Create Razorpay order for Pro plan subscription
 export async function POST(req: NextRequest) {
@@ -10,13 +23,13 @@ export async function POST(req: NextRequest) {
         const { supabase, user, response } = await requireUser();
         if (!user) return response!;
 
-        const body = await req.json();
-        const { plan = 'pro', billing = 'monthly' } = body;
+        const parsed = upgradeSchema.safeParse(await req.json());
+        if (!parsed.success) return NextResponse.json({ error: 'Invalid plan or billing cycle' }, { status: 400 });
+        const { plan, billing } = parsed.data;
 
         // Pricing
         const prices: Record<string, Record<string, number>> = {
             pro: { monthly: 499, annual: 399 },
-            agency: { monthly: 1499, annual: 1199 },
         };
 
         const price = prices[plan]?.[billing];
@@ -55,7 +68,7 @@ export async function POST(req: NextRequest) {
             orderId: order.id,
             amount: order.amount,
             currency: order.currency,
-            keyId: serverEnv.RAZORPAY_KEY_ID,
+            keyId: requireServerEnv('RAZORPAY_KEY_ID'),
             plan,
             billing,
             displayPrice: `₹${totalAmount}`,
@@ -72,18 +85,16 @@ export async function PATCH(req: NextRequest) {
         const { supabase, user, response } = await requireUser();
         if (!user) return response!;
 
-        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = await req.json();
+        const parsed = verificationSchema.safeParse(await req.json());
+        if (!parsed.success) return NextResponse.json({ error: 'Invalid payment data' }, { status: 400 });
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = parsed.data;
 
-        if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-            return NextResponse.json({ error: 'Missing payment data' }, { status: 400 });
-        }
-
-        const expected = crypto
-            .createHmac('sha256', requireServerEnv('RAZORPAY_KEY_SECRET'))
-            .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-            .digest('hex');
-
-        if (expected !== razorpay_signature) {
+        if (!verifyRazorpaySignature({
+            orderId: razorpay_order_id,
+            paymentId: razorpay_payment_id,
+            signature: razorpay_signature,
+            secret: requireServerEnv('RAZORPAY_KEY_SECRET'),
+        })) {
             return NextResponse.json({ error: 'Invalid payment signature' }, { status: 400 });
         }
 
@@ -94,9 +105,7 @@ export async function PATCH(req: NextRequest) {
             .eq('razorpay_order_id', razorpay_order_id)
             .single();
         if (!billingOrder) return NextResponse.json({ error: 'Billing order not found' }, { status: 404 });
-        if (billingOrder.status === 'paid') {
-            return NextResponse.json({ success: true, alreadyProcessed: true, plan: billingOrder.plan });
-        }
+        if (billingOrder.status === 'paid') return NextResponse.json({ success: true, alreadyProcessed: true, plan: billingOrder.plan });
 
         const remoteOrder = await getRazorpay().orders.fetch(razorpay_order_id);
         if (remoteOrder.status !== 'paid'
@@ -105,37 +114,13 @@ export async function PATCH(req: NextRequest) {
             return NextResponse.json({ error: 'Payment amount or status does not match the billing order' }, { status: 400 });
         }
 
-        const plan = billingOrder.plan;
-        const billing = billingOrder.billing_cycle;
-
-        // Activate plan
-        const now = new Date();
-        const months = billing === 'annual' ? 12 : 1;
-        const expiresAt = new Date(now);
-        expiresAt.setMonth(expiresAt.getMonth() + months);
-
-        const { error: activateError } = await supabase
-            .from('users')
-            .update({
-                subscription_plan: plan || 'pro',
-                plan_started_at: now.toISOString(),
-                plan_expires_at: expiresAt.toISOString(),
-                updated_at: now.toISOString(),
-            })
-            .eq('id', user.id);
-        if (activateError) throw activateError;
-
-        await supabase.from('billing_orders').update({
-            status: 'paid',
-            razorpay_payment_id,
-            paid_at: now.toISOString(),
-        }).eq('id', billingOrder.id).eq('status', 'created');
+        const activation = await activateBillingOrder(supabase, razorpay_order_id, razorpay_payment_id);
 
         return NextResponse.json({
             success: true,
-            plan: plan || 'pro',
-            expiresAt: expiresAt.toISOString(),
-            message: `Welcome to Flowcent ${(plan || 'pro').charAt(0).toUpperCase() + (plan || 'pro').slice(1)}!`,
+            plan: activation.plan,
+            expiresAt: activation.expiresAt,
+            message: 'Welcome to Flowcent Pro!',
         });
     } catch (err: unknown) {
         console.error('Upgrade verification error:', err);

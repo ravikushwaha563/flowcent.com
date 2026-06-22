@@ -90,7 +90,7 @@ export default async function Image() {
                 <div style={{ display: 'flex', gap: 16 }}>
                     {[
                         { value: '45 → 12 days', label: 'Avg payment time' },
-                        { value: '3× faster', label: 'Collections' },
+                        { value: '5 stages', label: 'Follow-ups' },
                         { value: '₹0 to start', label: 'Free plan forever' },
                     ].map((s) => (
                         <div key={s.label} style={{

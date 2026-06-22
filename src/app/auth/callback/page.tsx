@@ -13,6 +13,8 @@ export default function AuthCallbackPage() {
         const handleCallback = async () => {
             try {
                 const code = new URLSearchParams(window.location.search).get('code');
+                const requestedNext = new URLSearchParams(window.location.search).get('next');
+                const nextPath = requestedNext === '/reset-password' ? requestedNext : '/dashboard';
                 if (!code) throw new Error('No authorization code received');
 
                 setStatus('Syncing account details...');
@@ -32,7 +34,7 @@ export default function AuthCallbackPage() {
                 setStatus('Success! Redirecting...');
                 
                 await login();
-                router.push('/dashboard');
+                router.replace(nextPath);
                 
             } catch (err: unknown) {
                 console.error('OAuth callback error:', err);

@@ -5,18 +5,17 @@ import { CreditCard } from 'lucide-react';
 import { getErrorMessage } from '@/lib/errors';
 
 interface RazorpayButtonProps {
-    invoiceId: string;
+    publicToken: string;
     invoiceNumber: string;
     amount: number;
     currency: string;
     clientName: string;
     clientEmail: string;
-    token: string | null;
     onSuccess: () => void;
 }
 
 export default function RazorpayButton({
-    invoiceId, invoiceNumber, amount, currency, clientName, clientEmail, token, onSuccess,
+    publicToken, invoiceNumber, amount, currency, clientName, clientEmail, onSuccess,
 }: RazorpayButtonProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -44,8 +43,8 @@ export default function RazorpayButton({
             // 2. Create order via our API
             const res = await fetch('/api/payments/create-order', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                body: JSON.stringify({ invoiceId }),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ publicToken }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Failed to create payment order');
@@ -80,7 +79,7 @@ export default function RazorpayButton({
                                 razorpay_order_id: response.razorpay_order_id,
                                 razorpay_payment_id: response.razorpay_payment_id,
                                 razorpay_signature: response.razorpay_signature,
-                                invoiceId,
+                                publicToken,
                             }),
                         });
                         const verifyData = await verifyRes.json();

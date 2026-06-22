@@ -5,54 +5,26 @@ import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
 import { useReveal } from '@/hooks/useReveal';
 
-const TEAM = [
-    {
-        name: 'Arjun Singh',
-        role: 'Co-founder & CEO',
-        bio: 'Former SaaS product manager who got his agency invoices ignored for 90 days. Built Flowcent to fix that.',
-        image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=75',
-        imageAlt: 'CEO profile photo',
-        color: '#6b96ff',
-    },
-    {
-        name: 'Priya Mehta',
-        role: 'Co-founder & CTO',
-        bio: 'Full-stack engineer with 8 years in fintech. Obsessed with automation workflows and developer experience.',
-        image: 'https://images.unsplash.com/photo-1573496359142-b89b2c71e24c?auto=format&fit=crop&w=400&q=75',
-        imageAlt: 'CTO profile photo',
-        color: '#a78bfa',
-    },
-    {
-        name: 'Ravi Kumar',
-        role: 'Head of Product',
-        bio: 'Ex-freelance developer who spent more time chasing payments than writing code. Now he builds tools to stop that.',
-        image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=75',
-        imageAlt: 'Head of Product profile photo',
-        color: '#34d399',
-    },
-];
-
 const TIMELINE = [
-    { date: 'Jan 2026', title: 'Idea born', desc: 'Arjun gets his third ₹80K invoice ghosted. Decides to build the tool he always needed.', color: '#6b96ff' },
-    { date: 'Feb 1, 2026', title: 'Beta launch', desc: 'v0.1.0 ships with core invoicing, auth, and Supabase backend. First 50 beta users.', color: '#a78bfa' },
-    { date: 'Feb 8, 2026', title: 'Gmail connected', desc: 'v0.3.0: Gmail OAuth integration. Follow-up emails now sent from users\' real inbox.', color: '#34d399' },
-    { date: 'Feb 15, 2026', title: 'AI Excuse Memory™ ships', desc: 'v0.6.0: AI extracts payment promises from client replies. 85% categorization accuracy.', color: '#fbbf24' },
-    { date: 'Feb 20, 2026', title: 'Payment Intent Score', desc: 'v0.8.0: 0–100 AI-calculated payment likelihood score launches. Real-time factor breakdown.', color: '#f87171' },
-    { date: 'Q2 2026', title: 'Coming next', desc: 'WhatsApp follow-ups, Razorpay payment links, PDF export, and team collaboration.', color: '#6b96ff' },
+    { date: 'Foundation', title: 'Invoices and clients', desc: 'Secure account, client, invoice and dashboard workflows backed by Supabase.', color: '#6b96ff' },
+    { date: 'Automation', title: 'Gmail follow-ups', desc: 'Five staged reminders can be sent from a connected Gmail account.', color: '#34d399' },
+    { date: 'Intelligence', title: 'Payment analysis', desc: 'AI-assisted reply analysis, payment intent scoring and client trust context.', color: '#fbbf24' },
+    { date: 'Payments', title: 'Secure checkout', desc: 'Public-token payment links support Razorpay for INR and Stripe for other supported currencies.', color: '#f87171' },
+    { date: 'Roadmap', title: 'Operational depth', desc: 'Webhooks, team workflows, accounting exports and broader automation are the next focus.', color: '#a78bfa' },
 ];
 
 const VALUES = [
     { icon: '🎯', title: 'Relentlessly practical', desc: 'We build features that solve real pain — no vanity metrics, no fluff.', color: '#6b96ff' },
     { icon: '🇮🇳', title: 'Built for India first', desc: 'Indian freelancers have unique payment challenges. We design for that reality.', color: '#a78bfa' },
-    { icon: '🔒', title: 'Privacy by design', desc: 'We never read your inbox. Gmail OAuth is write-only. Your data is yours.', color: '#34d399' },
+    { icon: '🔒', title: 'Privacy by design', desc: 'Gmail access is limited to sending email and identifying the connected account. Inbox-read access is not requested.', color: '#34d399' },
     { icon: '💰', title: 'Free tier forever', desc: 'Every freelancer deserves better cash flow tools — even if they can\'t afford to pay yet.', color: '#fbbf24' },
 ];
 
 const STATS = [
-    { v: '500+', l: 'Freelancers', color: '#6b96ff' },
-    { v: '₹1.2Cr', l: 'Collected', color: '#34d399' },
-    { v: '3 wks', l: 'To build v1', color: '#a78bfa' },
-    { v: '85%', l: 'AI Accuracy', color: '#fbbf24' },
+    { v: '5', l: 'Follow-up stages', color: '#6b96ff' },
+    { v: '4', l: 'Currencies', color: '#34d399' },
+    { v: '2', l: 'Payment gateways', color: '#a78bfa' },
+    { v: '₹0', l: 'Free plan price', color: '#fbbf24' },
 ];
 
 export default function AboutPage() {
@@ -103,12 +75,12 @@ export default function AboutPage() {
                             </div>
                             <div className="absolute inset-0 rounded-3xl pointer-events-none bg-gradient-to-tl from-[#09090f]/30 via-transparent to-transparent" />
                             <div className="absolute -bottom-5 -right-4 glass-card px-5 py-3 anim-bounce-in">
-                                <div className="text-lg font-bold grad-text">₹1.2Cr</div>
-                                <div className="text-xs text-white/35">collected by beta users</div>
+                                <div className="text-lg font-bold grad-text">5 stages</div>
+                                <div className="text-xs text-white/35">controlled follow-up sequence</div>
                             </div>
                             <div className="absolute -top-4 -left-4 glass-card px-4 py-3 anim-bounce-in" style={{ animationDelay: '0.3s' }}>
-                                <div className="flex gap-0.5 mb-1">{Array(5).fill(0).map((_, i) => <span key={i} className="text-yellow-400 text-xs">★</span>)}</div>
-                                <div className="text-xs text-white/50">500+ freelancers trust us</div>
+                                <div className="text-xs font-bold text-blue-400 mb-1">BETA</div>
+                                <div className="text-xs text-white/50">Built for Indian professionals</div>
                             </div>
                         </div>
                     </div>
@@ -149,40 +121,12 @@ export default function AboutPage() {
                 </div>
             </section>
 
-            {/* ── Team ── */}
-            <section className="relative z-10 py-16 px-6">
-                <div className="max-w-7xl mx-auto">
-                    <div className="text-center mb-12 reveal-up">
-                        <h2 className="text-3xl font-bold mb-3">Meet the team</h2>
-                        <p className="text-white/40">A small team obsessed with one problem: helping creators get paid.</p>
-                    </div>
-                    <div className="grid sm:grid-cols-3 gap-6">
-                        {TEAM.map((m, i) => (
-                            <div key={m.name}
-                                className={`feature-card glass-card overflow-hidden reveal-up reveal-delay-${i + 1}`}
-                                style={{ borderColor: `${m.color}20` }}>
-                                <div className="h-56 overflow-hidden">
-                                    <Image src={m.image} alt={m.imageAlt} width={600} height={400}
-                                        sizes="(max-width: 640px) 100vw, 33vw"
-                                        className="feature-card-img w-full h-full object-cover object-top" />
-                                </div>
-                                <div className="p-6">
-                                    <h3 className="font-bold text-white">{m.name}</h3>
-                                    <p className="text-xs mb-3 mt-0.5" style={{ color: m.color }}>{m.role}</p>
-                                    <p className="text-sm text-white/45 leading-relaxed">{m.bio}</p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
             {/* ── Timeline ── */}
             <section className="relative z-10 py-16 px-6">
                 <div className="max-w-4xl mx-auto">
                     <div className="text-center mb-12 reveal-up">
                         <h2 className="text-3xl font-bold mb-3">Our journey</h2>
-                        <p className="text-white/40">From a frustrated freelancer's idea to a full product in 3 weeks.</p>
+                        <p className="text-white/40">The product capabilities, presented without invented adoption numbers.</p>
                     </div>
                     <div className="relative">
                         <div className="absolute left-6 top-0 bottom-0 w-px bg-gradient-to-b from-blue-500/50 via-purple-500/30 to-transparent" />
@@ -242,8 +186,8 @@ export default function AboutPage() {
                         <div className="relative">
                             <p className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-4">You do the work, we do the chasing</p>
                             <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4 leading-tight">
-                                Join 500+ professionals<br />
-                                <span className="grad-text">getting paid faster.</span>
+                                Build a calmer collection process<br />
+                                <span className="grad-text">from the first invoice.</span>
                             </h2>
                             <p className="text-white/40 text-sm mb-8 max-w-sm mx-auto">
                                 Free plan forever. Pro when you need it. Start collecting in 5 minutes.

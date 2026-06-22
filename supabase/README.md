@@ -11,3 +11,16 @@ The application uses:
 - no direct anonymous table access.
 
 Never expose `SUPABASE_SERVICE_ROLE_KEY` through a `NEXT_PUBLIC_` variable.
+
+## Applying migrations
+
+Preferred CLI flow:
+
+```bash
+npx supabase link --project-ref YOUR_PROJECT_REF
+npx supabase db push
+```
+
+If the database pooler is unavailable, paste the migration into the Supabase
+SQL editor and run it as one transaction. Verify afterward that anonymous
+table grants are revoked and RLS is enabled on every application table.

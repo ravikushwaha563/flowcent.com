@@ -38,7 +38,7 @@ const SECTIONS = [
             },
             {
                 subtitle: 'AI Features',
-                text: 'Invoice and client reply data may be processed by Groq (LLaMA 3) AI to power the AI Excuse Memory™ and Payment Intent Score features. This processing happens in-flight; we do not permanently share your data with AI providers.',
+                text: 'When you use AI features, invoice context and client reply text may be sent to the configured AI provider to generate an analysis. Provider handling is governed by its terms and the deployment configuration.',
             },
             {
                 subtitle: 'Service Emails',

@@ -10,42 +10,16 @@ import {
 import RevenueChart from '@/components/dashboard/RevenueChart';
 
 interface Stats {
-    total_invoices: number; total_amount: number; paid_amount: number;
-    overdue_amount: number; overdue_count: number; paid_count: number;
+    total_invoices: number; total_clients: number; pending_count: number;
+    overdue_count: number; paid_count: number; avg_payment_delay: number;
+    currency_totals: Array<{ currency: string; total: number; paid: number; pending: number; overdue: number }>;
+    monthly_collections: Array<{ key: string; label: string; amounts: Record<string, number> }>;
+    stage_counts: Record<string, number>;
 }
 interface RecentInvoice {
     id: string; invoice_number: string; amount: number; currency: string;
     due_date: string; status: string; payment_intent_score?: number;
     clients: { name: string; email: string };
-}
-
-const SPARKLINE_PAID = [20, 45, 38, 62, 55, 80, 73, 95, 88, 100];
-const SPARKLINE_OVERDUE = [15, 22, 18, 35, 28, 40, 32, 50, 44, 58];
-
-function Sparkline({ data, color }: { data: number[]; color: string }) {
-    const max = Math.max(...data);
-    const min = Math.min(...data);
-    const range = max - min || 1;
-    const w = 80, h = 28;
-    const points = data.map((v, i) => {
-        const x = (i / (data.length - 1)) * w;
-        const y = h - ((v - min) / range) * h;
-        return `${x},${y}`;
-    }).join(' ');
-    const areaPoints = `0,${h} ${points} ${w},${h}`;
-    return (
-        <svg width={w} height={h} className="overflow-visible">
-            <defs>
-                <linearGradient id={`sg-${color.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={color} stopOpacity="0.3" />
-                    <stop offset="100%" stopColor={color} stopOpacity="0" />
-                </linearGradient>
-            </defs>
-            <polygon points={areaPoints} fill={`url(#sg-${color.replace('#', '')})`} />
-            <polyline points={points} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            <circle cx={(data.length - 1) / (data.length - 1) * w} cy={h - ((data[data.length - 1] - min) / range) * h} r="2.5" fill={color} />
-        </svg>
-    );
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; dot: string }> = {
@@ -69,12 +43,12 @@ function ScoreBar({ score }: { score: number }) {
 }
 
 const COMING_SOON_FEATURES = [
-    { icon: <MessageCircle size={20} strokeWidth={1.5} />, title: 'WhatsApp Follow-ups', desc: 'Send automated payment reminders directly on WhatsApp — where clients actually respond.', color: '#25d366', tag: 'Q2 2026' },
-    { icon: <CreditCard size={20} strokeWidth={1.5} />, title: 'Razorpay Links', desc: 'Attach a payment link directly to your invoice. Client pays in one tap.', color: '#3395ff', tag: 'Q2 2026' },
-    { icon: <BarChart3 size={20} strokeWidth={1.5} />, title: 'Revenue Reports', desc: 'Weekly and monthly income reports with export to Excel and PDF.', color: '#a78bfa', tag: 'Q3 2026' },
-    { icon: <Users size={20} strokeWidth={1.5} />, title: 'Team Collaboration', desc: 'Add your accountant or business partner. Role-based access control.', color: '#fbbf24', tag: 'Q3 2026' },
-    { icon: <LinkIcon size={20} strokeWidth={1.5} />, title: 'Stripe Integration', desc: 'Accept payments from international clients directly in USD, EUR, GBP.', color: '#635bff', tag: 'Q4 2026' },
-    { icon: <FileText size={20} strokeWidth={1.5} />, title: 'PDF Invoice Export', desc: 'Generate a professional, branded PDF invoice with your logo.', color: '#f87171', tag: 'Q4 2026' },
+    { icon: <MessageCircle size={20} strokeWidth={1.5} />, title: 'WhatsApp Controls', desc: 'Consent tracking, template status and per-client channel preferences.', color: '#25d366', tag: 'Planned' },
+    { icon: <CreditCard size={20} strokeWidth={1.5} />, title: 'Payment Webhooks', desc: 'Provider-driven reconciliation and richer payment event history.', color: '#3395ff', tag: 'Planned' },
+    { icon: <BarChart3 size={20} strokeWidth={1.5} />, title: 'Revenue Reports', desc: 'Weekly and monthly income reports with spreadsheet export.', color: '#a78bfa', tag: 'Planned' },
+    { icon: <Users size={20} strokeWidth={1.5} />, title: 'Team Collaboration', desc: 'Role-based access for accountants and business partners.', color: '#fbbf24', tag: 'Planned' },
+    { icon: <LinkIcon size={20} strokeWidth={1.5} />, title: 'Accounting Integrations', desc: 'Structured exports and direct accounting-system connections.', color: '#635bff', tag: 'Planned' },
+    { icon: <FileText size={20} strokeWidth={1.5} />, title: 'Custom Invoice Branding', desc: 'Logos, tax fields and reusable invoice templates.', color: '#f87171', tag: 'Planned' },
 ];
 
 const QUICK_ACTIONS = [
@@ -107,8 +81,13 @@ export default function DashboardPage() {
         }).finally(() => setLoading(false));
     }, [token, isLoading]);
 
-    const fmt = (n: number) =>
-        new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
+    const fmtTotals = (field: 'paid' | 'pending' | 'overdue') => {
+        const values = stats?.currency_totals.filter(item => item[field] > 0) || [];
+        if (values.length === 0) return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(0);
+        return values.map(item => new Intl.NumberFormat('en-IN', {
+            style: 'currency', currency: item.currency, maximumFractionDigits: 0,
+        }).format(item[field])).join(' + ');
+    };
     const greeting = () => {
         const h = currentTime.getHours();
         if (h < 12) return 'Good morning';
@@ -116,39 +95,30 @@ export default function DashboardPage() {
         return 'Good evening';
     };
 
-    const collectRate = stats && stats.total_amount > 0
-        ? Math.round((stats.paid_amount / stats.total_amount) * 100) : 0;
+    const collectRate = stats && stats.total_invoices > 0
+        ? Math.round((stats.paid_count / stats.total_invoices) * 100) : 0;
 
     const STAT_CARDS = [
         {
             label: 'Outstanding',
-            value: loading ? '—' : fmt(stats ? stats.total_amount - stats.paid_amount : 0),
+            value: loading ? '—' : fmtTotals('pending'),
             sub: loading ? '' : `${(stats?.total_invoices || 0) - (stats?.paid_count || 0)} unpaid invoices`,
             color: '#6b96ff',
             icon: <Clock size={18} strokeWidth={2} />,
-            sparkline: SPARKLINE_PAID,
-            trend: '+12%',
-            trendUp: true,
         },
         {
             label: 'Collected',
-            value: loading ? '—' : fmt(stats?.paid_amount || 0),
+            value: loading ? '—' : fmtTotals('paid'),
             sub: loading ? '' : `${stats?.paid_count || 0} invoices collected`,
             color: '#34d399',
             icon: <CheckCircle2 size={18} strokeWidth={2} />,
-            sparkline: SPARKLINE_PAID,
-            trend: '+24%',
-            trendUp: true,
         },
         {
             label: 'Overdue',
-            value: loading ? '—' : fmt(stats?.overdue_amount || 0),
+            value: loading ? '—' : fmtTotals('overdue'),
             sub: loading ? '' : `${stats?.overdue_count || 0} invoices past due`,
             color: '#f87171',
             icon: <AlertTriangle size={18} strokeWidth={2} />,
-            sparkline: SPARKLINE_OVERDUE,
-            trend: '-8%',
-            trendUp: false,
         },
         {
             label: 'Collection Rate',
@@ -156,9 +126,6 @@ export default function DashboardPage() {
             sub: 'Percentage of invoices paid',
             color: '#a78bfa',
             icon: <TrendingUp size={18} strokeWidth={2} />,
-            sparkline: SPARKLINE_PAID.map(v => Math.round(v * 0.8)),
-            trend: '+5%',
-            trendUp: true,
         },
     ];
 
@@ -210,15 +177,7 @@ export default function DashboardPage() {
                                         {card.icon}
                                     </div>
                                 </div>
-                                <div className="flex items-end justify-between">
-                                    <div>
-                                        <p className="text-[11px] text-white/30">{card.sub}</p>
-                                        <span className={`inline-flex items-center gap-1 text-[11px] font-semibold mt-1 ${card.trendUp ? 'text-green-400' : 'text-red-400'}`}>
-                                            {card.trendUp ? '↑' : '↓'} {card.trend} this month
-                                        </span>
-                                    </div>
-                                    <Sparkline data={card.sparkline} color={card.color} />
-                                </div>
+                                <p className="text-[11px] text-white/30">{card.sub}</p>
                             </div>
                         </div>
                     ))}
@@ -228,7 +187,7 @@ export default function DashboardPage() {
                 <div className="grid lg:grid-cols-3 gap-5">
                     {/* Revenue Chart */}
                     <div className="lg:col-span-2">
-                        <RevenueChart />
+                        <RevenueChart history={stats?.monthly_collections || []} />
                     </div>
 
                     {/* Pipeline Metrics */}
@@ -242,10 +201,10 @@ export default function DashboardPage() {
                         </div>
                         <div className="flex flex-col gap-4 flex-1 justify-between">
                             {[
-                                { label: 'Stage 1 – Reminder', count: 0, color: '#6b96ff', pct: 0 },
-                                { label: 'Stage 2 – Follow-up', count: 0, color: '#a78bfa', pct: 0 },
-                                { label: 'Stage 3 – Urgent', count: 0, color: '#fbbf24', pct: 0 },
-                                { label: 'Stage 4–5 – Final', count: 0, color: '#f87171', pct: 0 },
+                                { label: 'Stage 1 – Reminder', count: stats?.stage_counts['1'] || 0, color: '#6b96ff' },
+                                { label: 'Stage 2 – Follow-up', count: stats?.stage_counts['2'] || 0, color: '#a78bfa' },
+                                { label: 'Stage 3 – Escalation', count: stats?.stage_counts['3'] || 0, color: '#fbbf24' },
+                                { label: 'Stage 4–5 – Final', count: (stats?.stage_counts['4'] || 0) + (stats?.stage_counts['5'] || 0), color: '#f87171' },
                             ].map((s) => (
                                 <div key={s.label} className="p-4 rounded-xl border border-white/[0.05] bg-white/[0.02]">
                                     <div className="flex items-center justify-between mb-1">
@@ -253,7 +212,7 @@ export default function DashboardPage() {
                                         <p className="text-[11px] text-white/35 font-medium">{s.label}</p>
                                     </div>
                                     <div className="mt-2 w-full h-1.5 rounded-full bg-white/[0.05]">
-                                        <div className="h-full rounded-full" style={{ width: `${s.pct}%`, background: s.color }} />
+                                        <div className="h-full rounded-full" style={{ width: `${stats?.pending_count ? Math.round((s.count / stats.pending_count) * 100) : 0}%`, background: s.color }} />
                                     </div>
                                 </div>
                             ))}
@@ -413,7 +372,7 @@ export default function DashboardPage() {
                                     <div className="mt-4 flex items-center gap-2">
                                         <div className="flex-1 h-0.5 rounded-full bg-white/[0.06]">
                                             <div className="h-full rounded-full"
-                                                style={{ width: f.tag === 'Q2 2026' ? '40%' : f.tag === 'Q3 2026' ? '20%' : '5%', background: f.color }} />
+                                                style={{ width: '10%', background: f.color }} />
                                         </div>
                                         <span className="text-[10px] font-semibold" style={{ color: f.color }}>Coming Soon</span>
                                     </div>
@@ -429,7 +388,7 @@ export default function DashboardPage() {
                     <div className="absolute inset-0 border border-blue-500/15 rounded-2xl" />
                     <div className="relative px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
                         <div>
-                            <p className="text-sm font-semibold text-white">Get 3× faster payments with Gmail automation</p>
+                            <p className="text-sm font-semibold text-white">Run consistent follow-ups with Gmail automation</p>
                             <p className="text-xs text-white/40 mt-0.5">Connect your Gmail now and let Flowcent follow up while you focus on work.</p>
                         </div>
                         <Link href="/dashboard/settings" className="shrink-0">

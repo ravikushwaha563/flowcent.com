@@ -40,8 +40,8 @@ const EXCUSE_TYPES = [
 ];
 
 const COMING_SOON_AI = [
-    { icon: <Puzzle size={24} strokeWidth={1.5} />, title: 'Pattern Memory', desc: 'AI learns your specific clients over time. After 3+ invoices, it predicts who will pay late before they even reply.', tag: 'Q2 2026', color: '#a78bfa' },
-    { icon: <Mail size={24} strokeWidth={1.5} />, title: 'AI-Written Follow-ups', desc: 'Auto-generate personalised follow-up emails based on the client\'s history, excuses logged, and payment stage.', tag: 'Q2 2026', color: '#6b96ff' },
+    { icon: <Puzzle size={24} strokeWidth={1.5} />, title: 'Pattern Memory', desc: 'Use richer client history and logged promises as context for future risk analysis.', tag: 'Planned', color: '#a78bfa' },
+    { icon: <Mail size={24} strokeWidth={1.5} />, title: 'AI-Written Follow-ups', desc: 'Generate editable follow-up drafts from invoice context and prior client replies.', tag: 'Planned', color: '#6b96ff' },
     { icon: <AlertTriangle size={24} strokeWidth={1.5} />, title: 'Risk Alerts', desc: 'Get notified before an invoice goes overdue — AI predicts 7 days in advance based on client payment history.', tag: 'Q3 2026', color: '#fbbf24' },
     { icon: <Phone size={24} strokeWidth={1.5} />, title: 'WhatsApp AI Bot', desc: 'AI reads WhatsApp replies and logs excuse patterns, just like email — even without Copy-Paste.', tag: 'Q3 2026', color: '#25d366' },
 ];
@@ -169,7 +169,7 @@ export default function IntelligencePage() {
                             </div>
                             <h1 className="text-2xl font-bold text-white tracking-tight">AI Intelligence</h1>
                         </div>
-                        <p className="text-sm text-white/35">Powered by LLaMA 3 · Excuse Memory™ Engine</p>
+                        <p className="text-sm text-white/35">AI-assisted reply analysis · Excuse Memory™</p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                         <span className="flex items-center gap-1.5 text-xs font-semibold text-purple-400 px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20">
@@ -507,7 +507,7 @@ export default function IntelligencePage() {
                                         <p className="text-xs text-white/35 leading-relaxed">{f.desc}</p>
                                         <div className="mt-4 flex items-center gap-2">
                                             <div className="flex-1 h-0.5 rounded-full bg-white/[0.06]">
-                                                <div className="h-full rounded-full" style={{ width: f.tag === 'Q2 2026' ? '35%' : '15%', background: f.color }} />
+                                                <div className="h-full rounded-full" style={{ width: '15%', background: f.color }} />
                                             </div>
                                             <span className="text-[10px] font-semibold" style={{ color: f.color }}>In dev</span>
                                         </div>

@@ -12,11 +12,11 @@ const POSTS: Record<string, {
     content: string[]; image: string;
 }> = {
     'how-indian-freelancers-get-paid-faster': {
-        title: 'How Indian Freelancers Cut Payment Time from 45 Days to 12',
+        title: 'A Practical System for Faster Freelance Payments',
         date: 'Feb 20, 2026', readTime: '8 min read', category: 'Collection Tips', categoryColor: '#6b96ff',
         author: 'Arjun Mehta', authorRole: 'Co-founder, Flowcent',
         image: 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&w=1200&q=80',
-        excerpt: 'The 5-stage follow-up system used by 500+ Indian freelancers to collect payments without damaging client relationships.',
+        excerpt: 'A practical 5-stage follow-up framework for collecting payments without damaging client relationships.',
         content: [
             'The average payment delay for Indian freelancers is 47 days. That\'s 47 days of cash flow pressure, uncertainty, and awkward follow-up messages — for work you already delivered.',
             'But a growing group of freelancers are cutting this to under 15 days. Here\'s what they do differently.',
@@ -29,7 +29,7 @@ const POSTS: Record<string, {
             '## They make payment frictionless',
             'Every invoice includes bank account, UPI ID, and payment link. Removing friction from payment removes the "I\'ll do it later" excuse permanently.',
             '## The result: 45 days → 12 days',
-            'The 500+ freelancers using Flowcent have reduced their average payment time from 45+ days to under 12 days. Not by being more aggressive — but by being more systematic.',
+            'A consistent follow-up process can reduce missed reminders without forcing you to become more aggressive. The goal is to be systematic, clear, and professional.',
         ],
     },
     'ai-excuse-memory-explained': {
@@ -44,9 +44,9 @@ const POSTS: Record<string, {
             'Every experienced freelancer keeps a mental model of each client: "Ravi always pays on the 15th," "TechCorp always asks for a revised invoice," "StartupX makes promises but takes 60 days." This mental model is incredibly valuable — but it exists only in the freelancer\'s head, can\'t be scaled, and disappears when memory fades.',
             'AI Excuse Memory™ externalizes and systematizes this model.',
             '## How the AI works',
-            'We use Groq\'s LLaMA 3 model with a custom system prompt trained on payment conversation patterns. When you paste a client\'s email or message, the AI: 1) Extracts the intent — What is the client actually saying about payment? 2) Identifies promises — Are there specific dates, amounts, or commitments? 3) Flags risk signals — Dispute language, vague promises, complete avoidance. 4) Assigns a confidence score — How likely is this client to pay, based on what they said? 5) Logs everything — The response, extracted data, and score are saved to that invoice\'s timeline.',
+            'Flowcent uses a configured AI provider with a structured prompt for payment-conversation analysis. It can classify likely intent, identify dates or commitments, flag vague or disputed language, produce a score, and save invoice-linked promises when that workflow is used.',
             '## The compounding benefit',
-            'The longer you use Flowcent, the smarter it gets about your specific clients. By invoice 5 with the same client, the AI has a rich history to draw from — and can tell you with high accuracy whether this client will pay on time or needs escalation.',
+            'Client trust analysis can use invoice history, payment delays, and logged promises as context. Treat its output as decision support rather than a guarantee that a client will pay.',
         ],
     },
     'invoice-templates-for-indian-freelancers': {
@@ -104,9 +104,9 @@ const POSTS: Record<string, {
             '## What the client receives',
             'From their perspective, they receive a regular, professional email from your Gmail address. There\'s no indication it was sent automatically. The email uses your name, references the invoice details, and is contextually appropriate for the stage.',
             '## Why this matters',
-            'Tools that send follow-ups from a generic email address have low open rates and feel impersonal. By sending from your real Gmail, open rates are 40% higher and response rates double. Clients treat the message as coming from you — because it is.',
+            'Sending from your connected Gmail keeps the sender identity familiar to the client. Flowcent does not claim a guaranteed improvement in open or response rates.',
             '## Privacy and security',
-            'Flowcent only requests the minimum Gmail scope needed: send emails on your behalf. We never read your emails. You can revoke access at any time from Settings or directly from Google\'s security settings.',
+            'Flowcent requests Gmail send access and your Google account email. It does not request inbox-read access. You can disconnect from Settings or revoke access directly in your Google account.',
         ],
     },
     'payment-intent-score-guide': {
@@ -275,7 +275,7 @@ export default function BlogPostPage() {
                         <p className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-3">Try Flowcent Free</p>
                         <h3 className="text-xl font-bold text-white mb-3">Stop chasing. Start collecting.</h3>
                         <p className="text-white/45 text-sm mb-6 max-w-sm mx-auto">
-                            Join 500+ Indian freelancers who automated payment collection with Flowcent.
+                            Build a more consistent payment collection workflow with Flowcent.
                         </p>
                         <Link href="/signup">
                             <button className="btn-primary px-8 py-3">Get started free →</button>

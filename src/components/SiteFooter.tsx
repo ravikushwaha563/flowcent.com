@@ -76,12 +76,7 @@ export default function SiteFooter() {
 
                 <div className="border-t border-white/[0.05] pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/20">
                     <div className="flex flex-col sm:flex-row items-center gap-4">
-                        <span>© 2026 Flowcent Technologies Pvt. Ltd. · Made with ❤️ in India 🇮🇳</span>
-                        {/* System status badge */}
-                        <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/[0.08] border border-green-500/20 text-green-400 text-[11px] font-medium">
-                            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
-                            All systems operational
-                        </span>
+                        <span>© 2026 Flowcent · Built in India</span>
                     </div>
                     <div className="flex items-center gap-4">
                         <Link href="/privacy" className="hover:text-white/45 transition-colors">Privacy</Link>

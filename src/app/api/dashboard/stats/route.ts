@@ -11,7 +11,7 @@ export async function GET() {
         // Get all invoices
         const { data: invoices, error: invoicesError } = await supabase
             .from('invoices')
-            .select('id, amount, status, due_date, paid_at')
+            .select('id, amount, currency, status, due_date, paid_at, current_stage')
             .eq('user_id', userId);
 
         if (invoicesError) throw invoicesError;
@@ -27,6 +27,7 @@ export async function GET() {
         // Calculate stats
         const totalInvoices = invoices?.length || 0;
         const totalClients = clients?.length || 0;
+        const now = new Date();
 
         const pendingInvoices = invoices?.filter(inv => inv.status === 'pending') || [];
         const overdueInvoices = invoices?.filter(inv => {
@@ -34,10 +35,42 @@ export async function GET() {
         }) || [];
         const paidInvoices = invoices?.filter(inv => inv.status === 'paid') || [];
 
-        const pendingAmount = pendingInvoices.reduce((sum, inv) => sum + parseFloat(inv.amount), 0);
-        const overdueAmount = overdueInvoices.reduce((sum, inv) => sum + parseFloat(inv.amount), 0);
-        const paidAmount = paidInvoices.reduce((sum, inv) => sum + parseFloat(inv.amount), 0);
-        const totalAmount = invoices?.reduce((sum, inv) => sum + parseFloat(inv.amount), 0) || 0;
+        const currencyTotals = new Map<string, { currency: string; total: number; paid: number; pending: number; overdue: number }>();
+        for (const invoice of invoices || []) {
+            const currency = invoice.currency || 'INR';
+            const amount = Number(invoice.amount);
+            const totals = currencyTotals.get(currency) || { currency, total: 0, paid: 0, pending: 0, overdue: 0 };
+            totals.total += amount;
+            if (invoice.status === 'paid') totals.paid += amount;
+            if (invoice.status === 'pending') totals.pending += amount;
+            if (invoice.status === 'pending' && new Date(invoice.due_date) < new Date()) totals.overdue += amount;
+            currencyTotals.set(currency, totals);
+        }
+
+        const monthStarts = Array.from({ length: 6 }, (_, index) => {
+            const date = new Date(now.getFullYear(), now.getMonth() - (5 - index), 1);
+            return date;
+        });
+        const monthlyCollections = monthStarts.map(date => ({
+            key: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`,
+            label: date.toLocaleDateString('en-IN', { month: 'short' }),
+            amounts: {} as Record<string, number>,
+        }));
+        for (const invoice of paidInvoices) {
+            if (!invoice.paid_at) continue;
+            const paidAt = new Date(invoice.paid_at);
+            const key = `${paidAt.getFullYear()}-${String(paidAt.getMonth() + 1).padStart(2, '0')}`;
+            const month = monthlyCollections.find(item => item.key === key);
+            if (!month) continue;
+            const currency = invoice.currency || 'INR';
+            month.amounts[currency] = (month.amounts[currency] || 0) + Number(invoice.amount);
+        }
+
+        const stageCounts = Object.fromEntries(Array.from({ length: 5 }, (_, index) => [String(index + 1), 0]));
+        for (const invoice of pendingInvoices) {
+            const stage = String(Math.min(Math.max(invoice.current_stage || 1, 1), 5));
+            stageCounts[stage] += 1;
+        }
 
         // Calculate average payment delay for paid invoices
         let avgPaymentDelay = 0;
@@ -58,14 +91,13 @@ export async function GET() {
             stats: {
                 total_invoices: totalInvoices,
                 total_clients: totalClients,
-                total_amount: totalAmount,
-                paid_amount: paidAmount,
-                pending_amount: pendingAmount,
                 pending_count: pendingInvoices.length,
-                overdue_amount: overdueAmount,
                 overdue_count: overdueInvoices.length,
                 paid_count: paidInvoices.length,
                 avg_payment_delay: avgPaymentDelay,
+                currency_totals: Array.from(currencyTotals.values()).sort((a, b) => a.currency.localeCompare(b.currency)),
+                monthly_collections: monthlyCollections,
+                stage_counts: stageCounts,
             }
         });
     } catch (error) {

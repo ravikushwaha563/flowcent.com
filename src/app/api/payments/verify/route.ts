@@ -1,32 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
 import { createAdminSupabaseClient } from '@/lib/supabase/admin';
 import { requireServerEnv } from '@/lib/env/server';
 import { getRazorpay } from '@/lib/razorpay';
+import { verifyRazorpayPaymentSchema } from '@/lib/validations/domain';
+import { verifyRazorpaySignature } from '@/lib/payments/razorpay-signature';
 
 export async function POST(req: NextRequest) {
     try {
-        const body = await req.json();
-        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, invoiceId } = body;
-
-        if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !invoiceId) {
-            return NextResponse.json({ error: 'Missing payment verification data' }, { status: 400 });
-        }
+        const parsed = verifyRazorpayPaymentSchema.safeParse(await req.json());
+        if (!parsed.success) return NextResponse.json({ error: 'Invalid payment verification data' }, { status: 400 });
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, publicToken } = parsed.data;
 
         const supabaseAdmin = createAdminSupabaseClient();
-        const expectedSignature = crypto
-            .createHmac('sha256', requireServerEnv('RAZORPAY_KEY_SECRET'))
-            .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-            .digest('hex');
-
-        if (expectedSignature !== razorpay_signature) {
+        if (!verifyRazorpaySignature({
+            orderId: razorpay_order_id,
+            paymentId: razorpay_payment_id,
+            signature: razorpay_signature,
+            secret: requireServerEnv('RAZORPAY_KEY_SECRET'),
+        })) {
             return NextResponse.json({ error: 'Invalid payment signature — possible fraud' }, { status: 400 });
         }
 
         const { data: targetInvoice } = await supabaseAdmin
             .from('invoices')
             .select('id, amount, currency, status, razorpay_order_id')
-            .eq('id', invoiceId)
+            .eq('public_token', publicToken)
             .eq('razorpay_order_id', razorpay_order_id)
             .single();
         if (!targetInvoice) return NextResponse.json({ error: 'Payment does not belong to this invoice' }, { status: 400 });
@@ -52,7 +50,7 @@ export async function POST(req: NextRequest) {
                 payment_intent_score: 100,
                 updated_at: now,
             })
-            .eq('id', invoiceId)
+            .eq('id', targetInvoice.id)
             .eq('razorpay_order_id', razorpay_order_id)
             .neq('status', 'paid')
             .select('*, clients(id, name, email)')
@@ -66,7 +64,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
             success: true,
             message: 'Payment verified and invoice marked as paid',
-            invoice,
+            status: invoice.status,
         });
     } catch (err: unknown) {
         console.error('Payment verification error:', err);

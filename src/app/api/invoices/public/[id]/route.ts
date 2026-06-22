@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminSupabaseClient } from '@/lib/supabase/admin';
+import { publicPaymentTokenSchema } from '@/lib/validations/domain';
 
 // GET /api/invoices/public/[id] — Public, unauthenticated endpoint
 // Used by the /pay/[id] client payment portal.
@@ -9,10 +10,8 @@ export async function GET(
 ) {
     try {
         const { id } = await params;
-
-        if (!id) {
-            return NextResponse.json({ error: 'Invoice ID is required' }, { status: 400 });
-        }
+        const parsedToken = publicPaymentTokenSchema.safeParse(id);
+        if (!parsedToken.success) return NextResponse.json({ error: 'Invalid payment link' }, { status: 400 });
 
         const supabaseAdmin = createAdminSupabaseClient();
         const { data: invoice, error } = await supabaseAdmin
@@ -22,7 +21,7 @@ export async function GET(
                 clients ( id, name, email, company ),
                 users ( name, company_name, email )
             `)
-            .eq('id', id)
+            .eq('public_token', parsedToken.data)
             .single();
 
         if (error || !invoice) {
@@ -34,7 +33,6 @@ export async function GET(
         // Return only safe, display-relevant data (no tokens, no user_ids, etc.)
         return NextResponse.json({
             invoice: {
-                id: invoice.id,
                 invoice_number: invoice.invoice_number,
                 amount: invoice.amount,
                 currency: invoice.currency,

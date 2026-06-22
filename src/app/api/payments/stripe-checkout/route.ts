@@ -2,22 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getStripe } from '@/lib/stripe';
 import { createAdminSupabaseClient } from '@/lib/supabase/admin';
 import { publicEnv } from '@/lib/env/public';
+import { createPaymentSchema } from '@/lib/validations/domain';
 
 export async function POST(req: NextRequest) {
     try {
-        const body = await req.json();
-        const { invoiceId } = body;
-
-        if (!invoiceId) {
-            return NextResponse.json({ error: 'Invoice ID is required' }, { status: 400 });
-        }
+        const parsed = createPaymentSchema.safeParse(await req.json());
+        if (!parsed.success) return NextResponse.json({ error: 'Invalid payment link' }, { status: 400 });
+        const { publicToken } = parsed.data;
 
         const supabaseAdmin = createAdminSupabaseClient();
         const stripe = getStripe();
         const { data: invoice, error } = await supabaseAdmin
             .from('invoices')
             .select('*, clients(id, name, email, company)')
-            .eq('id', invoiceId)
+            .eq('public_token', publicToken)
             .single();
 
         if (error || !invoice) {
@@ -47,8 +45,8 @@ export async function POST(req: NextRequest) {
                 },
             ],
             mode: 'payment',
-            success_url: `${appUrl}/pay/${invoiceId}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${appUrl}/pay/${invoiceId}?payment=cancelled`,
+            success_url: `${appUrl}/pay/${publicToken}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${appUrl}/pay/${publicToken}?payment=cancelled`,
             customer_email: invoice.clients?.email,
             metadata: {
                 invoice_id: invoice.id,
@@ -64,7 +62,7 @@ export async function POST(req: NextRequest) {
                 payment_gateway: 'stripe',
                 updated_at: new Date().toISOString(),
             })
-            .eq('id', invoiceId);
+            .eq('id', invoice.id);
 
         return NextResponse.json({ url: session.url });
     } catch (err: unknown) {

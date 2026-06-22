@@ -29,7 +29,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                                 <span className="text-white/40">payment pipeline.</span>
                             </h2>
                             <p className="text-white/50 border-l-2 border-white/10 pl-4 mt-6 text-base leading-relaxed max-w-sm">
-                                "Flowcent reads my client's excuses and follows up automatically. Collections went from 45 to 14 days."
+                                Track invoices, analyze client replies, and run a consistent follow-up process from one workspace.
                             </p>
                             <div className="flex items-center gap-3 mt-6">
                                 <div className="flex -space-x-2">
@@ -37,7 +37,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                                     <div className="w-8 h-8 rounded-full border-2 border-[#09090f] bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-[10px] font-bold">AK</div>
                                     <div className="w-8 h-8 rounded-full border-2 border-[#09090f] bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center text-[10px] font-bold">SR</div>
                                 </div>
-                                <span className="text-xs text-white/30 font-medium">Trusted by 500+ Indian freelancers</span>
+                                <span className="text-xs text-white/30 font-medium">Free to start · no credit card</span>
                             </div>
                         </div>
                     </div>

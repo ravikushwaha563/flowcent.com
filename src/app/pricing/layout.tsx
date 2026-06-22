@@ -5,7 +5,7 @@ export const metadata: Metadata = {
     description: 'Simple, transparent pricing for Indian freelancers and agencies. Start free forever. Upgrade to Pro for ₹499/month. Annual plans save 20%.',
     openGraph: {
         title: 'Flowcent Pricing — Simple & Transparent',
-        description: 'Free forever plan. Pro at ₹499/month. Agency at ₹1,499/month. No hidden fees, no contracts. 14-day Pro trial.',
+        description: 'Start with the Free plan or unlock unlimited usage and automated follow-ups with Pro at ₹499/month.',
     },
 };
 

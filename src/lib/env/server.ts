@@ -10,11 +10,13 @@ const serverEnvSchema = z.object({
     GEMINI_API_KEY: z.string().optional(),
     RAZORPAY_KEY_ID: z.string().optional(),
     RAZORPAY_KEY_SECRET: z.string().optional(),
+    RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
     STRIPE_SECRET_KEY: z.string().optional(),
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
     CRON_SECRET_KEY: z.string().min(24).optional(),
     WHATSAPP_PHONE_NUMBER_ID: z.string().optional(),
     WHATSAPP_ACCESS_TOKEN: z.string().optional(),
+    TOKEN_ENCRYPTION_KEY: z.string().optional(),
 });
 
 const parsed = serverEnvSchema.safeParse({
@@ -26,11 +28,13 @@ const parsed = serverEnvSchema.safeParse({
     GEMINI_API_KEY: process.env.GEMINI_API_KEY ?? process.env.GOOGLE_GEMINI_API_KEY,
     RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID,
     RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET,
+    RAZORPAY_WEBHOOK_SECRET: process.env.RAZORPAY_WEBHOOK_SECRET,
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
     CRON_SECRET_KEY: process.env.CRON_SECRET_KEY,
     WHATSAPP_PHONE_NUMBER_ID: process.env.WHATSAPP_PHONE_NUMBER_ID,
     WHATSAPP_ACCESS_TOKEN: process.env.WHATSAPP_ACCESS_TOKEN,
+    TOKEN_ENCRYPTION_KEY: process.env.TOKEN_ENCRYPTION_KEY,
 });
 
 if (!parsed.success) {

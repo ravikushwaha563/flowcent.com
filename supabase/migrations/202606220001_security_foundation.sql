@@ -100,6 +100,12 @@ alter table public.followups add column if not exists status text not null defau
 alter table public.followups add column if not exists message_content text;
 alter table public.followups add column if not exists channel text not null default 'email';
 
+update public.followups f
+set user_id = i.user_id
+from public.invoices i
+where f.invoice_id = i.id and f.user_id is null;
+alter table public.followups alter column user_id set not null;
+
 create table if not exists public.billing_orders (
     id uuid primary key default gen_random_uuid(),
     user_id uuid not null references public.users(id) on delete cascade,
@@ -134,6 +140,121 @@ create unique index if not exists invoices_public_token_idx on public.invoices(p
 create index if not exists promises_invoice_id_idx on public.promises(invoice_id);
 create index if not exists followups_invoice_id_idx on public.followups(invoice_id);
 create index if not exists billing_orders_user_id_idx on public.billing_orders(user_id);
+
+do $$
+begin
+    if not exists (select 1 from pg_constraint where conname = 'users_subscription_plan_check') then
+        alter table public.users add constraint users_subscription_plan_check check (subscription_plan in ('free', 'pro', 'agency'));
+    end if;
+    if not exists (select 1 from pg_constraint where conname = 'users_usage_nonnegative_check') then
+        alter table public.users add constraint users_usage_nonnegative_check check (invoice_count_this_month >= 0 and ai_usage_this_month >= 0);
+    end if;
+    if not exists (select 1 from pg_constraint where conname = 'clients_scores_check') then
+        alter table public.clients add constraint clients_scores_check check (payment_history_score between 0 and 100 and avg_payment_delay >= 0);
+    end if;
+    if not exists (select 1 from pg_constraint where conname = 'invoices_amount_check') then
+        alter table public.invoices add constraint invoices_amount_check check (amount > 0);
+    end if;
+    if not exists (select 1 from pg_constraint where conname = 'invoices_currency_check') then
+        alter table public.invoices add constraint invoices_currency_check check (currency in ('INR', 'USD', 'EUR', 'GBP'));
+    end if;
+    if not exists (select 1 from pg_constraint where conname = 'invoices_status_check') then
+        alter table public.invoices add constraint invoices_status_check check (status in ('pending', 'paid', 'cancelled'));
+    end if;
+    if not exists (select 1 from pg_constraint where conname = 'invoices_intent_stage_check') then
+        alter table public.invoices add constraint invoices_intent_stage_check check (payment_intent_score between 0 and 100 and current_stage between 1 and 6);
+    end if;
+    if not exists (select 1 from pg_constraint where conname = 'followups_stage_status_check') then
+        alter table public.followups add constraint followups_stage_status_check check (stage between 1 and 5 and status in ('queued', 'sent', 'failed'));
+    end if;
+    if not exists (select 1 from pg_constraint where conname = 'billing_orders_values_check') then
+        alter table public.billing_orders add constraint billing_orders_values_check check (
+            plan in ('pro', 'agency') and billing_cycle in ('monthly', 'annual')
+            and amount > 0 and currency = 'INR' and status in ('created', 'paid', 'failed')
+        );
+    end if;
+end;
+$$;
+
+create or replace function public.set_updated_at()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+    new.updated_at = now();
+    return new;
+end;
+$$;
+
+drop trigger if exists users_set_updated_at on public.users;
+create trigger users_set_updated_at before update on public.users
+for each row execute procedure public.set_updated_at();
+drop trigger if exists clients_set_updated_at on public.clients;
+create trigger clients_set_updated_at before update on public.clients
+for each row execute procedure public.set_updated_at();
+drop trigger if exists invoices_set_updated_at on public.invoices;
+create trigger invoices_set_updated_at before update on public.invoices
+for each row execute procedure public.set_updated_at();
+
+create or replace function public.activate_billing_order(p_order_id text, p_payment_id text)
+returns table(plan text, expires_at timestamptz, already_processed boolean)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+    billing_order public.billing_orders%rowtype;
+    current_expiry timestamptz;
+    activation_start timestamptz;
+    new_expiry timestamptz;
+begin
+    select * into billing_order
+    from public.billing_orders
+    where razorpay_order_id = p_order_id
+    for update;
+
+    if not found then raise exception 'Billing order not found'; end if;
+    if auth.role() <> 'service_role' and billing_order.user_id <> auth.uid() then
+        raise exception 'Not authorized for this billing order';
+    end if;
+
+    select plan_expires_at into current_expiry
+    from public.users
+    where id = billing_order.user_id
+    for update;
+
+    if billing_order.status = 'paid' then
+        return query select billing_order.plan, current_expiry, true;
+        return;
+    end if;
+    if billing_order.status <> 'created' then raise exception 'Billing order cannot be activated'; end if;
+
+    activation_start := greatest(now(), coalesce(current_expiry, now()));
+    new_expiry := activation_start + case
+        when billing_order.billing_cycle = 'annual' then interval '12 months'
+        else interval '1 month'
+    end;
+
+    update public.users set
+        subscription_plan = billing_order.plan,
+        plan_started_at = now(),
+        plan_expires_at = new_expiry,
+        updated_at = now()
+    where id = billing_order.user_id;
+
+    update public.billing_orders set
+        status = 'paid',
+        razorpay_payment_id = p_payment_id,
+        paid_at = now()
+    where id = billing_order.id;
+
+    return query select billing_order.plan, new_expiry, false;
+end;
+$$;
+
+revoke all on function public.activate_billing_order(text, text) from public, anon;
+grant execute on function public.activate_billing_order(text, text) to authenticated, service_role;
 
 revoke all on public.users, public.clients, public.invoices, public.promises,
     public.followups, public.billing_orders, public.webhook_events from anon;

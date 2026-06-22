@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getStripe } from '@/lib/stripe';
 import { createAdminSupabaseClient } from '@/lib/supabase/admin';
+import { verifyStripePaymentSchema } from '@/lib/validations/domain';
 
 export async function POST(req: NextRequest) {
     try {
-        const body = await req.json();
-        const { sessionId, invoiceId } = body;
-
-        if (!sessionId || !invoiceId) {
-            return NextResponse.json({ error: 'Session ID and Invoice ID are required' }, { status: 400 });
-        }
+        const parsed = verifyStripePaymentSchema.safeParse(await req.json());
+        if (!parsed.success) return NextResponse.json({ error: 'Invalid payment verification data' }, { status: 400 });
+        const { sessionId, publicToken } = parsed.data;
 
         const stripe = getStripe();
         const supabaseAdmin = createAdminSupabaseClient();
@@ -19,17 +17,16 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Payment not completed', status: session.payment_status }, { status: 400 });
         }
 
-        if (session.metadata?.invoice_id !== invoiceId) {
-            return NextResponse.json({ error: 'Stripe session does not belong to this invoice' }, { status: 400 });
-        }
-
         const { data: targetInvoice } = await supabaseAdmin
             .from('invoices')
             .select('id, status, stripe_session_id')
-            .eq('id', invoiceId)
+            .eq('public_token', publicToken)
             .eq('stripe_session_id', sessionId)
             .single();
         if (!targetInvoice) return NextResponse.json({ error: 'Stripe session does not match the invoice' }, { status: 400 });
+        if (session.metadata?.invoice_id !== targetInvoice.id) {
+            return NextResponse.json({ error: 'Stripe session does not belong to this invoice' }, { status: 400 });
+        }
         if (targetInvoice.status === 'paid') return NextResponse.json({ success: true, alreadyProcessed: true });
 
         // Mark invoice as paid
@@ -44,7 +41,7 @@ export async function POST(req: NextRequest) {
                 payment_gateway: 'stripe',
                 updated_at: now,
             })
-            .eq('id', invoiceId)
+            .eq('id', targetInvoice.id)
             .eq('stripe_session_id', sessionId)
             .neq('status', 'paid')
             .select('*, clients(id, name, email)')
@@ -58,7 +55,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
             success: true,
             message: 'Payment verified and invoice marked as paid',
-            invoice,
+            status: invoice.status,
         });
     } catch (err: unknown) {
         console.error('Stripe verify error:', err);

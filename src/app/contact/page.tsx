@@ -13,8 +13,8 @@ const TOPICS = [
 ];
 
 const STATS = [
-    { value: '< 4 hrs', label: 'Avg. first response' },
-    { value: '98%', label: 'Issues resolved' },
+    { value: 'Email', label: 'Primary channel' },
+    { value: 'WhatsApp', label: 'Direct channel' },
     { value: 'Mon–Sat', label: 'Support hours' },
     { value: 'IST', label: 'Time zone' },
 ];
@@ -23,16 +23,15 @@ export default function ContactPage() {
     useReveal();
 
     const [activeTopic, setActiveTopic] = useState('support');
-    const [step, setStep] = useState<'form' | 'success'>('form');
-    const [loading, setLoading] = useState(false);
     const [form, setForm] = useState({ name: '', email: '', company: '', message: '' });
 
     const topic = TOPICS.find(t => t.id === activeTopic)!;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
-        setTimeout(() => { setLoading(false); setStep('success'); }, 900);
+        const subject = encodeURIComponent(`[Flowcent ${topic.label}] ${form.name}`);
+        const body = encodeURIComponent(`Name: ${form.name}\nEmail: ${form.email}\nCompany: ${form.company || 'Not provided'}\n\n${form.message}`);
+        window.location.href = `mailto:theravission@gmail.com?subject=${subject}&body=${body}`;
     };
 
     return (
@@ -181,23 +180,7 @@ export default function ContactPage() {
                         {/* Form card */}
                         <div className="glass-card rounded-2xl border border-white/[0.07] overflow-hidden">
 
-                            {step === 'success' ? (
-                                <div className="flex flex-col items-center justify-center text-center p-16 h-full">
-                                    <div className="w-16 h-16 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center text-3xl mb-6">
-                                        ✓
-                                    </div>
-                                    <h2 className="text-2xl font-bold text-white mb-3">Message Received</h2>
-                                    <p className="text-white/45 text-sm max-w-xs leading-relaxed mb-8">
-                                        We&apos;ll get back to you at <span className="text-white/70 font-medium">{form.email}</span> within 24 hours.
-                                    </p>
-                                    <button
-                                        onClick={() => { setStep('form'); setForm({ name: '', email: '', company: '', message: '' }); }}
-                                        className="text-sm text-blue-400 hover:text-blue-300 transition-colors font-medium">
-                                        Send another message →
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="p-8 sm:p-10">
+                            <div className="p-8 sm:p-10">
                                     {/* Topic breadcrumb */}
                                     <div className="flex items-center gap-2 mb-7">
                                         <span className="text-lg">{topic.icon}</span>
@@ -253,21 +236,15 @@ export default function ContactPage() {
 
                                         <div className="flex items-center justify-between pt-1">
                                             <p className="text-xs text-white/25">
-                                                🔒 Encrypted · Never shared
+                                                Opens a draft in your email app
                                             </p>
-                                            <button type="submit" disabled={loading}
-                                                className="btn-primary px-8 py-3 flex items-center gap-2.5 disabled:opacity-60">
-                                                {loading ? (
-                                                    <>
-                                                        <span className="w-3.5 h-3.5 border-2 border-white/25 border-t-white rounded-full animate-spin" />
-                                                        Sending…
-                                                    </>
-                                                ) : 'Send Message →'}
+                                            <button type="submit"
+                                                className="btn-primary px-8 py-3 flex items-center gap-2.5">
+                                                Open Email Draft →
                                             </button>
                                         </div>
                                     </form>
-                                </div>
-                            )}
+                            </div>
                         </div>
                     </div>
                 </div>

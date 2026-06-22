@@ -95,7 +95,7 @@ export default function LoginPage() {
                 </div>
 
                 <div className="flex items-center justify-between mt-1 mb-6">
-                    <a href="#" className="text-xs text-blue-400 hover:text-blue-300 font-medium transition-colors">Forgot password?</a>
+                    <Link href="/forgot-password" className="text-xs text-blue-400 hover:text-blue-300 font-medium transition-colors">Forgot password?</Link>
                 </div>
 
                 <button type="submit" disabled={isLoading} className="btn-primary w-full py-3 mt-2">

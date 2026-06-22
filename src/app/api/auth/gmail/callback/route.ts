@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { exchangeCodeForTokens, getGmailAddress } from '@/lib/gmail';
 import { requireUser } from '@/lib/auth/server';
+import { encryptSecret } from '@/lib/crypto/secrets';
 
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
@@ -30,12 +31,22 @@ export async function GET(req: NextRequest) {
         // Get Gmail address
         const gmailAddress = await getGmailAddress(tokens.access_token, tokens.refresh_token || undefined);
 
+        const { data: existingProfile } = await supabase
+            .from('users')
+            .select('gmail_refresh_token')
+            .eq('id', user.id)
+            .single();
+
+        const encryptedRefreshToken = tokens.refresh_token
+            ? encryptSecret(tokens.refresh_token)
+            : existingProfile?.gmail_refresh_token || null;
+
         const { error: updateError } = await supabase
             .from('users')
             .update({
                 gmail_connected: true,
-                gmail_access_token: tokens.access_token,
-                gmail_refresh_token: tokens.refresh_token || null,
+                gmail_access_token: encryptSecret(tokens.access_token),
+                gmail_refresh_token: encryptedRefreshToken,
                 gmail_token_expiry: tokens.expiry_date ? new Date(tokens.expiry_date).toISOString() : null,
                 gmail_email: gmailAddress,
                 updated_at: new Date().toISOString(),

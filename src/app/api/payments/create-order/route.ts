@@ -2,22 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getRazorpay } from '@/lib/razorpay';
 import { createAdminSupabaseClient } from '@/lib/supabase/admin';
 import { serverEnv } from '@/lib/env/server';
+import { createPaymentSchema } from '@/lib/validations/domain';
 
 export async function POST(req: NextRequest) {
     try {
-        const body = await req.json();
-        const { invoiceId } = body;
-
-        if (!invoiceId) {
-            return NextResponse.json({ error: 'Invoice ID is required' }, { status: 400 });
-        }
+        const parsed = createPaymentSchema.safeParse(await req.json());
+        if (!parsed.success) return NextResponse.json({ error: 'Invalid payment link' }, { status: 400 });
+        const { publicToken } = parsed.data;
 
         const supabaseAdmin = createAdminSupabaseClient();
         const razorpay = getRazorpay();
         const { data: invoice, error } = await supabaseAdmin
             .from('invoices')
             .select('*, clients(id, name, email, company)')
-            .eq('id', invoiceId)
+            .eq('public_token', publicToken)
             .single();
 
         if (error || !invoice) {
@@ -65,7 +63,7 @@ export async function POST(req: NextRequest) {
         await supabaseAdmin
             .from('invoices')
             .update({ razorpay_order_id: order.id, updated_at: new Date().toISOString() })
-            .eq('id', invoiceId);
+            .eq('id', invoice.id);
 
         return NextResponse.json({
             orderId: order.id,

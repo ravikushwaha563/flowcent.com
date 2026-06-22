@@ -3,6 +3,7 @@ import { createAdminSupabaseClient } from '@/lib/supabase/admin';
 import { sendFollowUpEmail, refreshAccessToken } from '@/lib/gmail';
 import { sendWhatsAppTemplate } from '@/lib/whatsapp';
 import { serverEnv } from '@/lib/env/server';
+import { decryptSecret, encryptSecret } from '@/lib/crypto/secrets';
 
 export async function GET(req: NextRequest) {
     try {
@@ -65,13 +66,14 @@ export async function GET(req: NextRequest) {
                 }
 
                 // Check and refresh token if needed
-                let accessToken = user.gmail_access_token;
+                const refreshToken = decryptSecret(user.gmail_refresh_token);
+                let accessToken = user.gmail_access_token ? decryptSecret(user.gmail_access_token) : null;
                 const expiry = user.gmail_token_expiry ? new Date(user.gmail_token_expiry) : new Date(0);
                 
                 if (expiry <= new Date()) {
                     console.log(`Refreshing token for user ${user.id}`);
                     try {
-                        const newTokens = await refreshAccessToken(user.gmail_refresh_token);
+                        const newTokens = await refreshAccessToken(refreshToken);
                         if (!newTokens.access_token) throw new Error('Refresh failed');
                         accessToken = newTokens.access_token;
                         
@@ -79,7 +81,8 @@ export async function GET(req: NextRequest) {
                         await supabaseAdmin
                             .from('users')
                             .update({
-                                gmail_access_token: newTokens.access_token,
+                                gmail_access_token: encryptSecret(newTokens.access_token),
+                                ...(newTokens.refresh_token ? { gmail_refresh_token: encryptSecret(newTokens.refresh_token) } : {}),
                                 gmail_token_expiry: newTokens.expiry_date ? new Date(newTokens.expiry_date).toISOString() : null,
                                 updated_at: new Date().toISOString()
                             })
@@ -96,7 +99,7 @@ export async function GET(req: NextRequest) {
                 const stage = invoice.current_stage || 1;
                 const amountFormatted = new Intl.NumberFormat('en-IN', { style: 'currency', currency: invoice.currency, maximumFractionDigits: 0 }).format(invoice.amount);
                 const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-                const payLink = `${appUrl}/pay/${invoice.id}`;
+                const payLink = `${appUrl}/pay/${invoice.public_token}`;
 
                 const subject = stage === 1 
                     ? `Payment Reminder: Invoice ${invoice.invoice_number}`
@@ -120,7 +123,7 @@ export async function GET(req: NextRequest) {
                 // Send the email
                 const emailResult = await sendFollowUpEmail({
                     accessToken,
-                    refreshToken: user.gmail_refresh_token,
+                    refreshToken,
                     to: client.email,
                     toName: client.name,
                     fromName: user.name || 'Your Partner',

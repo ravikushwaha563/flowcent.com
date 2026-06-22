@@ -7,7 +7,7 @@ import Image from 'next/image';
 const ANNOUNCEMENTS = [
     { text: '🎉 Flowcent v1.0 is live — Built for Indian freelancers', cta: 'Read more', href: '/blog/how-indian-freelancers-get-paid-faster' },
     { text: '⚡ New: AI Excuse Memory™ now detects 6 payment patterns', cta: 'Try it', href: '/dashboard/intelligence' },
-    { text: '📞 WhatsApp follow-ups coming Q2 2026 — Join the waitlist', cta: 'Join', href: '/contact' },
+    { text: '💳 Secure Razorpay and Stripe payment links are available', cta: 'Explore', href: '/features/integrations' },
 ];
 
 const NAV_FEATURES = [
@@ -188,7 +188,7 @@ export default function SiteNav({ activePage = '' }: { activePage?: string }) {
                                 </div>
                                 <div className="px-5 py-3 border-t border-white/[0.05] flex items-center justify-between"
                                     style={{ background: 'rgba(255,255,255,0.015)' }}>
-                                    <span className="text-xs text-white/25">9 features · More coming Q2 2026</span>
+                                    <span className="text-xs text-white/25">Core collection workflows in one place</span>
                                     <Link href="/features" className="text-xs text-blue-400 hover:text-blue-300 font-semibold transition-colors">
                                         See all features →
                                     </Link>

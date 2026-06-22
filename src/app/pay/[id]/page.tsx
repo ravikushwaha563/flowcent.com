@@ -6,7 +6,7 @@ import { CheckCircle2, Clock, AlertTriangle, Shield, CreditCard, ArrowRight, typ
 import { getErrorMessage } from '@/lib/errors';
 
 interface InvoiceData {
-    id: string; invoice_number: string; amount: number; currency: string;
+    invoice_number: string; amount: number; currency: string;
     due_date: string; status: string; created_at: string; paid_at?: string;
 }
 interface ClientData { id: string; name: string; email: string; company?: string; }
@@ -25,7 +25,7 @@ function getStatus(status: string, dueDate: string) {
 }
 
 export default function PublicPaymentPage({ params }: { params: Promise<{ id: string }> }) {
-    const { id: invoiceId } = use(params);
+    const { id: publicToken } = use(params);
     const searchParams = useSearchParams();
 
     const [invoice, setInvoice] = useState<InvoiceData | null>(null);
@@ -44,7 +44,7 @@ export default function PublicPaymentPage({ params }: { params: Promise<{ id: st
             fetch('/api/payments/stripe-verify', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sessionId, invoiceId }),
+                body: JSON.stringify({ sessionId, publicToken }),
             }).then(async (response) => {
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.error || 'Payment verification failed');
@@ -54,11 +54,11 @@ export default function PublicPaymentPage({ params }: { params: Promise<{ id: st
                 setPayError(error instanceof Error ? error.message : 'Payment verification failed');
             });
         }
-    }, [searchParams, invoiceId]);
+    }, [searchParams, publicToken]);
 
     // Fetch invoice data
     useEffect(() => {
-        fetch(`/api/invoices/public/${invoiceId}`)
+        fetch(`/api/invoices/public/${publicToken}`)
             .then(r => r.json())
             .then(data => {
                 if (data.error) { setNotFound(true); }
@@ -70,7 +70,7 @@ export default function PublicPaymentPage({ params }: { params: Promise<{ id: st
             })
             .catch(() => setNotFound(true))
             .finally(() => setLoading(false));
-    }, [invoiceId]);
+    }, [publicToken]);
 
     const fmt = (amount: number, currency: string) =>
         new Intl.NumberFormat('en-IN', { style: 'currency', currency, maximumFractionDigits: 0 }).format(amount);
@@ -94,7 +94,7 @@ export default function PublicPaymentPage({ params }: { params: Promise<{ id: st
             const res = await fetch('/api/payments/create-order', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ invoiceId: invoice.id }),
+                body: JSON.stringify({ publicToken }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error);
@@ -119,7 +119,7 @@ export default function PublicPaymentPage({ params }: { params: Promise<{ id: st
                                 razorpay_order_id: response.razorpay_order_id,
                                 razorpay_payment_id: response.razorpay_payment_id,
                                 razorpay_signature: response.razorpay_signature,
-                                invoiceId: invoice.id,
+                                publicToken,
                             }),
                         });
                         if (!v.ok) throw new Error('Verification failed');
@@ -141,7 +141,7 @@ export default function PublicPaymentPage({ params }: { params: Promise<{ id: st
             const res = await fetch('/api/payments/stripe-checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ invoiceId: invoice.id }),
+                body: JSON.stringify({ publicToken }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error);
@@ -299,7 +299,7 @@ export default function PublicPaymentPage({ params }: { params: Promise<{ id: st
 
                                 <div className="flex items-center justify-center gap-2 pt-1">
                                     <Shield className="w-3.5 h-3.5 text-white/20" />
-                                    <p className="text-[10px] text-white/20 font-medium">Secured with 256-bit SSL encryption · {invoice.currency === 'INR' ? 'Razorpay' : 'Stripe'}</p>
+                                    <p className="text-[10px] text-white/20 font-medium">Checkout processed by {invoice.currency === 'INR' ? 'Razorpay' : 'Stripe'}</p>
                                 </div>
                             </div>
                         )}
