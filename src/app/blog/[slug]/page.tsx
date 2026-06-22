@@ -1,6 +1,7 @@
 'use client';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
 import { useReveal } from '@/hooks/useReveal';
@@ -241,7 +242,7 @@ export default function BlogPostPage() {
 
                         <div className="flex items-center gap-3 pb-8 border-b border-white/[0.06]">
                             <div className="w-9 h-9 flex items-center justify-center">
-                                <img src="/logo.png" alt="Author Profile image" className="w-full h-full rounded-full object-cover shadow-lg" />
+                                <Image src="/logo.png" alt="Flowcent author" width={36} height={36} className="w-full h-full rounded-full object-cover shadow-lg" />
                             </div>
                             <div>
                                 <p className="text-sm font-semibold text-white">{post.author}</p>
@@ -256,9 +257,8 @@ export default function BlogPostPage() {
             <section className="relative z-10 px-6 pb-12">
                 <div className="max-w-4xl mx-auto">
                     <div className="rounded-2xl overflow-hidden border border-white/[0.07]" style={{ height: '420px' }}>
-                        <img src={post.image} alt={post.title}
-                            className="w-full h-full object-cover"
-                            loading="eager" />
+                        <Image src={post.image} alt={post.title} width={1200} height={630}
+                            className="w-full h-full object-cover" priority sizes="(max-width: 768px) 100vw, 896px" />
                     </div>
                 </div>
             </section>

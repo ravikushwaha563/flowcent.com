@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import Image from 'next/image';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
 import { useReveal } from '@/hooks/useReveal';
@@ -116,11 +117,13 @@ export default function SolutionsPage() {
 
                         <div className="relative reveal-right reveal-delay-2">
                             <div className="beam-container rounded-3xl">
-                                <img
+                                <Image
                                     src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=900&q=75"
                                     alt="Diverse creative professionals collaborating"
-                                    loading="eager"
-                                    fetchPriority="high"
+                                    width={900}
+                                    height={675}
+                                    sizes="(max-width: 1024px) 100vw, 50vw"
+                                    priority
                                     className="rounded-3xl border border-white/[0.08] shadow-2xl object-cover w-full aspect-[4/3]"
                                 />
                             </div>
@@ -150,8 +153,8 @@ export default function SolutionsPage() {
 
                                     {/* Image */}
                                     <div className="relative h-44 overflow-hidden">
-                                        <img src={s.image} alt={s.imageAlt}
-                                            loading="lazy"
+                                        <Image src={s.image} alt={s.imageAlt} width={700} height={400}
+                                            sizes="(max-width: 640px) 100vw, 33vw"
                                             className="feature-card-img w-full h-full object-cover" />
                                         <div className="absolute inset-0 bg-gradient-to-t from-[#09090f] via-[#09090f]/40 to-transparent" />
                                         <div className="absolute top-3 left-3">

@@ -1,5 +1,5 @@
 'use client';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, type TooltipContentProps } from 'recharts';
 import { TrendingUp } from 'lucide-react';
 
 // Using static data for the MVP to show visual polish.
@@ -13,9 +13,9 @@ const chartData = [
   { name: 'Mar', revenue: 68500 },
 ];
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload, label }: Partial<TooltipContentProps<number, string>>) => {
   if (active && payload && payload.length) {
-    const val = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(payload[0].value);
+    const val = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(Number(payload[0].value));
     return (
       <div className="bg-[#0a0f1c]/90 backdrop-blur-md p-3 rounded-xl border border-white/10 shadow-2xl">
         <p className="text-white/60 text-[10px] uppercase font-bold tracking-widest mb-1">{label}</p>

@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { signupSchema, type SignupInput } from '@/lib/validations/auth';
 import { useAuth } from '@/contexts/auth-context';
 import { toast } from 'sonner';
+import { getErrorMessage } from '@/lib/errors';
 
 export default function SignupPage() {
     const router = useRouter();
@@ -35,8 +36,8 @@ export default function SignupPage() {
                 await login();
                 router.push('/dashboard');
             }
-        } catch (err: any) {
-            toast.error(err.message || 'Signup failed');
+        } catch (error: unknown) {
+            toast.error(getErrorMessage(error, 'Signup failed'));
         } finally {
             setIsLoading(false);
         }

@@ -1,12 +1,10 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/auth-context';
-import dynamic from 'next/dynamic';
+import { useAuth, type User } from '@/contexts/auth-context';
 import { Home, FileText, Users, Bot, Settings, LineChart, MessageCircle, UsersRound } from 'lucide-react';
-
-const FlowcentLogo3D = dynamic(() => import('@/components/FlowcentLogo3D'), { ssr: false });
 
 const NAV = [
     { href: '/dashboard', label: 'Overview', exact: true, icon: <Home size={18} strokeWidth={1.5} /> },
@@ -22,29 +20,25 @@ const COMING_SOON_NAV = [
     { label: 'Team', icon: <UsersRound size={16} strokeWidth={1.5} /> },
 ];
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-    const pathname = usePathname();
-    const router = useRouter();
-    const { user, token, isLoading, logout } = useAuth();
-    const [sidebarOpen, setSidebarOpen] = useState(false);
-
-    useEffect(() => {
-        if (!isLoading && !token) {
-            router.push('/login');
-        }
-    }, [isLoading, token, router]);
-
-    useEffect(() => { setSidebarOpen(false); }, [pathname]);
-
+function DashboardSidebar({
+    pathname,
+    user,
+    onNavigate,
+    onLogout,
+}: {
+    pathname: string;
+    user: User | null;
+    onNavigate: () => void;
+    onLogout: () => void;
+}) {
     const isActive = (item: typeof NAV[0]) =>
         item.exact ? pathname === item.href : pathname.startsWith(item.href);
 
-    const Sidebar = () => (
+    return (
         <nav className="flex flex-col h-full overflow-hidden">
-            {/* Brand */}
             <div className="px-4 pt-5 pb-4 shrink-0">
-                <Link href="/" className="flex items-center gap-2.5 group mb-1">
-                    <img src="/logo.png" alt="Flowcent Logo" className="w-8 h-8 rounded-xl object-contain drop-shadow-md" />
+                <Link href="/" onClick={onNavigate} className="flex items-center gap-2.5 group mb-1">
+                    <Image src="/logo.png" alt="Flowcent Logo" width={32} height={32} className="w-8 h-8 rounded-xl object-contain drop-shadow-md" />
                     <div>
                         <span className="font-bold text-[15px] tracking-tight text-white block leading-none">Flowcent</span>
                         <span className="text-[9px] text-white/25 font-medium tracking-wider block mt-0.5">DASHBOARD</span>
@@ -53,41 +47,33 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </Link>
             </div>
 
-            {/* Divider */}
             <div className="mx-4 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent)' }} />
 
-            {/* Main nav */}
             <div className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5 scrollbar-hide">
                 <p className="text-[10px] font-semibold text-white/20 uppercase tracking-widest px-2 mb-2">Main</p>
                 {NAV.map((item) => {
                     const active = isActive(item);
                     return (
-                        <Link key={item.href} href={item.href}
+                        <Link key={item.href} href={item.href} onClick={onNavigate}
                             className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 relative group
                                 ${active
                                     ? 'bg-blue-500/10 text-white border border-blue-500/15'
                                     : 'text-white/40 hover:text-white/80 hover:bg-white/[0.04] border border-transparent'
                                 }`}>
-                            {active && (
-                                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 rounded-full" style={{ background: 'linear-gradient(180deg, #6b96ff, #7c3aed)' }} />
-                            )}
+                            {active && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 rounded-full grad-brand" />}
                             <span className={`shrink-0 transition-colors ${active ? 'text-blue-400' : 'text-white/30 group-hover:text-white/60'}`}>
                                 {item.icon}
                             </span>
                             <span>{item.label}</span>
-                            {active && (
-                                <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400" />
-                            )}
+                            {active && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400" />}
                         </Link>
                     );
                 })}
 
-                {/* Coming soon nav section */}
                 <div className="pt-4">
                     <p className="text-[10px] font-semibold text-white/20 uppercase tracking-widest px-2 mb-2">Coming Soon</p>
                     {COMING_SOON_NAV.map(item => (
-                        <div key={item.label}
-                            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-white/20 cursor-not-allowed select-none group">
+                        <div key={item.label} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-white/20 cursor-not-allowed select-none">
                             <span className="text-sm w-4 shrink-0">{item.icon}</span>
                             <span className="font-medium">{item.label}</span>
                             <span className="ml-auto text-[9px] px-1.5 py-0.5 rounded-md bg-white/5 text-white/25 border border-white/10 font-semibold">SOON</span>
@@ -96,24 +82,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </div>
             </div>
 
-            {/* Plan badge */}
             <div className="mx-3 mb-3 p-3 rounded-xl border border-white/[0.06] bg-white/[0.02]">
                 <div className="flex items-center gap-2 mb-2">
                     <span className="text-xs font-semibold text-white/60">Free Plan</span>
                     <span className="ml-auto text-[9px] px-1.5 py-0.5 rounded bg-green-500/15 text-green-400 font-bold">ACTIVE</span>
                 </div>
-                <div className="w-full h-1 rounded-full bg-white/[0.05] overflow-hidden">
-                    <div className="h-full rounded-full grad-brand" style={{ width: '40%' }} />
-                </div>
-                <p className="text-[10px] text-white/25 mt-1.5">2 / 5 invoices used</p>
-                <Link href="/pricing">
-                    <button className="mt-2.5 w-full py-1.5 rounded-lg grad-brand text-white text-[11px] font-semibold hover:opacity-90 transition-opacity">
-                        Upgrade →
+                <Link href="/dashboard/billing" onClick={onNavigate}>
+                    <button className="mt-1 w-full py-1.5 rounded-lg grad-brand text-white text-[11px] font-semibold hover:opacity-90 transition-opacity">
+                        View billing
                     </button>
                 </Link>
             </div>
 
-            {/* User strip */}
             <div className="border-t border-white/[0.06] px-3 py-3 shrink-0">
                 <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-lg grad-brand flex items-center justify-center text-white font-bold text-sm shrink-0">
@@ -123,11 +103,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         <p className="text-xs font-semibold text-white truncate">{user?.name || 'My Account'}</p>
                         <p className="text-[10px] text-white/30 truncate">{user?.email}</p>
                     </div>
-                    <button
-                        onClick={() => { logout(); router.push('/login'); }}
-                        className="text-white/25 hover:text-white/60 transition-colors p-1"
-                        title="Sign out"
-                    >
+                    <button onClick={onLogout} className="text-white/25 hover:text-white/60 transition-colors p-1" title="Sign out">
                         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                             <path d="M5 2H2.5A1.5 1.5 0 0 0 1 3.5v7A1.5 1.5 0 0 0 2.5 12H5M9.5 9.5 13 7l-3.5-2.5M5 7h8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
@@ -136,6 +112,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
         </nav>
     );
+}
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+    const pathname = usePathname();
+    const router = useRouter();
+    const { user, isLoading, logout } = useAuth();
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+
+    const handleLogout = async () => {
+        await logout();
+        router.replace('/login');
+    };
 
     if (isLoading) {
         return (
@@ -157,7 +145,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
             {/* ── Desktop Sidebar ── */}
             <aside className="hidden lg:flex flex-col w-60 shrink-0 border-r border-white/[0.06] fixed inset-y-0 left-0 z-30" style={{ background: 'linear-gradient(180deg, #09090f 0%, #0a0a13 100%)' }}>
-                <Sidebar />
+                <DashboardSidebar pathname={pathname} user={user} onNavigate={() => setSidebarOpen(false)} onLogout={() => void handleLogout()} />
             </aside>
 
             {/* ── Mobile overlay sidebar ── */}
@@ -165,7 +153,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <div className="lg:hidden fixed inset-0 z-50 flex">
                     <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
                     <aside className="relative z-10 w-60 border-r border-white/[0.06] flex flex-col" style={{ background: 'linear-gradient(180deg, #09090f 0%, #0a0a13 100%)' }}>
-                        <Sidebar />
+                        <DashboardSidebar pathname={pathname} user={user} onNavigate={() => setSidebarOpen(false)} onLogout={() => void handleLogout()} />
                     </aside>
                 </div>
             )}
@@ -181,7 +169,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         </svg>
                     </button>
                     <div className="flex items-center gap-2">
-                        <img src="/logo.png" alt="Flowcent Logo" className="w-6 h-6 rounded-md object-contain drop-shadow-[0_0_8px_rgba(61,97,255,0.3)]" />
+                        <Image src="/logo.png" alt="Flowcent Logo" width={24} height={24} className="w-6 h-6 rounded-md object-contain drop-shadow-[0_0_8px_rgba(61,97,255,0.3)]" />
                         <span className="font-bold text-white text-sm">Flowcent</span>
                     </div>
                 </header>

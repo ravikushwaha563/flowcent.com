@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { Users, Search, Plus, X, Building2, AlertTriangle } from 'lucide-react';
 import UpgradeModal from '@/components/dashboard/UpgradeModal';
+import { getErrorMessage } from '@/lib/errors';
 
 interface Client {
     id: string; name: string; email: string; phone?: string; company?: string;
@@ -34,15 +35,15 @@ export default function ClientsPage() {
     const [showUpgrade, setShowUpgrade] = useState(false);
     const [upgradeMessage, setUpgradeMessage] = useState('');
 
-    const fetchClients = async () => {
+    const fetchClients = useCallback(async () => {
         try {
             const res = await fetch('/api/clients', { headers: { Authorization: `Bearer ${token}` } });
             const data = await res.json();
             setClients(data.clients || []);
         } finally { setLoading(false); }
-    };
+    }, [token]);
 
-    useEffect(() => { if (token) fetchClients(); }, [token]);
+    useEffect(() => { if (token) fetchClients(); }, [token, fetchClients]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault(); setSubmitting(true); setError('');
@@ -65,7 +66,7 @@ export default function ClientsPage() {
             setClients(prev => [data.client, ...prev]);
             setShowForm(false);
             setFormData({ name: '', email: '', phone: '', company: '' });
-        } catch (err: any) { setError(err.message); } finally { setSubmitting(false); }
+        } catch (error: unknown) { setError(getErrorMessage(error, 'Failed to add client')); } finally { setSubmitting(false); }
     };
 
     const [search, setSearch] = useState('');

@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import Image from 'next/image';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
 import { useReveal } from '@/hooks/useReveal';
@@ -150,11 +151,10 @@ export default function ChangelogPage() {
 
                         <div className="relative reveal-right reveal-delay-2">
                             <div className="beam-container rounded-3xl">
-                                <img
+                                <Image
                                     src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=700&q=75"
                                     alt="Analytics and product metrics on a dashboard"
-                                    loading="eager"
-                                    fetchPriority="high"
+                                    width={700} height={394} sizes="(max-width: 1024px) 100vw, 50vw" priority
                                     className="rounded-3xl border border-white/[0.07] shadow-2xl object-cover w-full aspect-video"
                                 />
                             </div>
@@ -189,8 +189,8 @@ export default function ChangelogPage() {
                                 <div className="grid sm:grid-cols-3">
                                     {/* Image */}
                                     <div className="sm:col-span-1 h-40 sm:h-auto overflow-hidden">
-                                        <img src={entry.image} alt={entry.imageAlt}
-                                            loading="lazy"
+                                        <Image src={entry.image} alt={entry.imageAlt} width={600} height={400}
+                                            sizes="(max-width: 640px) 100vw, 33vw"
                                             className="feature-card-img w-full h-full object-cover" />
                                     </div>
                                     {/* Changes */}

@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
 
@@ -198,10 +199,13 @@ export default async function SolutionDetailPage({ params }: { params: Promise<{
                         {/* Hero image */}
                         <div className="relative reveal-right reveal-delay-2">
                             <div className="beam-container rounded-3xl">
-                                <img
+                                <Image
                                     src={solution.heroImage}
                                     alt={solution.heroImageAlt}
-                                    loading="lazy"
+                                    width={900}
+                                    height={675}
+                                    sizes="(max-width: 1024px) 100vw, 50vw"
+                                    priority
                                     className="rounded-3xl border border-white/[0.07] shadow-2xl object-cover w-full aspect-[4/3]"
                                 />
                             </div>
@@ -249,7 +253,7 @@ export default async function SolutionDetailPage({ params }: { params: Promise<{
             <section className="relative z-10 px-6 mb-4">
                 <div className="max-w-7xl mx-auto">
                     <div className="relative rounded-3xl overflow-hidden h-60">
-                        <img src={solution.moodImage} alt={solution.moodImageAlt} className="w-full h-full object-cover" />
+                        <Image src={solution.moodImage} alt={solution.moodImageAlt} width={1400} height={500} sizes="100vw" className="w-full h-full object-cover" />
                         <div className="absolute inset-0 bg-gradient-to-r from-[#09090f]/80 via-[#09090f]/40 to-transparent flex items-center px-10">
                             <div>
                                 <p className="text-2xl font-bold text-white mb-2">Here's how Flowcent fixes it</p>
@@ -295,7 +299,7 @@ export default async function SolutionDetailPage({ params }: { params: Promise<{
                             </div>
                             <div className="space-y-4">
                                 <div className="rounded-2xl overflow-hidden aspect-square beam-container">
-                                    <img src={solution.heroImage} alt={solution.heroImageAlt} loading="lazy" className="w-full h-full object-cover" />
+                                    <Image src={solution.heroImage} alt={solution.heroImageAlt} width={600} height={600} sizes="(max-width: 640px) 100vw, 50vw" className="w-full h-full object-cover" />
                                 </div>
                                 <div className="space-y-3">
                                     <Link href="/signup" className="block"><button className="btn-primary w-full py-3">{solution.cta}</button></Link>

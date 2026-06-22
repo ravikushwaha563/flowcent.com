@@ -1,6 +1,6 @@
 'use client';
-import { useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
 import { useReveal } from '@/hooks/useReveal';
@@ -91,11 +91,13 @@ export default function AboutPage() {
 
                         <div className="relative reveal-right reveal-delay-2">
                             <div className="beam-container rounded-3xl">
-                                <img
+                                <Image
                                     src="https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=900&q=75"
                                     alt="Team collaborating in a modern office"
-                                    loading="eager"
-                                    fetchPriority="high"
+                                    width={900}
+                                    height={675}
+                                    sizes="(max-width: 1024px) 100vw, 50vw"
+                                    priority
                                     className="rounded-3xl border border-white/[0.07] shadow-2xl object-cover w-full aspect-[4/3]"
                                 />
                             </div>
@@ -131,9 +133,9 @@ export default function AboutPage() {
             <section className="relative z-10 py-12 px-6">
                 <div className="max-w-7xl mx-auto reveal-up">
                     <div className="relative rounded-3xl overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&w=1400&q=75"
+                        <Image src="https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&w=1400&q=75"
                             alt="Team strategy session"
-                            loading="lazy"
+                            width={1400} height={560} sizes="100vw"
                             className="w-full h-64 object-cover" />
                         <div className="absolute inset-0 bg-gradient-to-r from-[#09090f]/90 via-[#09090f]/70 to-transparent flex items-center px-12">
                             <div className="max-w-2xl">
@@ -160,8 +162,8 @@ export default function AboutPage() {
                                 className={`feature-card glass-card overflow-hidden reveal-up reveal-delay-${i + 1}`}
                                 style={{ borderColor: `${m.color}20` }}>
                                 <div className="h-56 overflow-hidden">
-                                    <img src={m.image} alt={m.imageAlt}
-                                        loading="lazy"
+                                    <Image src={m.image} alt={m.imageAlt} width={600} height={400}
+                                        sizes="(max-width: 640px) 100vw, 33vw"
                                         className="feature-card-img w-full h-full object-cover object-top" />
                                 </div>
                                 <div className="p-6">

@@ -46,6 +46,8 @@ export default async function Image() {
 
                 {/* Logo row */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 40 }}>
+                    {/* ImageResponse renders this JSX outside the browser DOM. */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                         src="http://localhost:3000/logo.png"
                         alt="Logo"

@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { User, Mail, CheckCircle2, AlertTriangle, Bot, Smartphone } from 'lucide-react';
 import { toast } from 'sonner';
+import { getErrorMessage } from '@/lib/errors';
 
 interface UserProfile {
     name: string; email: string; company_name: string;
@@ -21,9 +22,9 @@ function ProfileEditForm({ token, profile, onSaved }: {
     const [saving, setSaving] = useState(false);
 
     // Sync when profile loads
-    useState(() => {
+    useEffect(() => {
         if (profile) { setName(profile.name || ''); setCompany(profile.company_name || ''); }
-    });
+    }, [profile]);
 
     const handleSave = async () => {
         setSaving(true);
@@ -37,8 +38,8 @@ function ProfileEditForm({ token, profile, onSaved }: {
             if (!res.ok) throw new Error(data.error || 'Save failed');
             onSaved({ name, company_name: company });
             toast.success('Profile updated successfully');
-        } catch (e: any) {
-            toast.error(e.message || 'Failed to securely save profile');
+        } catch (error: unknown) {
+            toast.error(getErrorMessage(error, 'Failed to securely save profile'));
         } finally {
             setSaving(false);
         }

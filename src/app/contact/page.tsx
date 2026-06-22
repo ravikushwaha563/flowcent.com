@@ -3,7 +3,6 @@ import { useState } from 'react';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
 import { useReveal } from '@/hooks/useReveal';
-import Link from 'next/link';
 
 const TOPICS = [
     { id: 'support', icon: '⚙️', label: 'Product Support', desc: 'Something isn\'t working the way it should.' },

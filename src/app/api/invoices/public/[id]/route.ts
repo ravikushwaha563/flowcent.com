@@ -29,6 +29,8 @@ export async function GET(
             return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
         }
 
+        const freelancer = Array.isArray(invoice.users) ? invoice.users[0] : invoice.users;
+
         // Return only safe, display-relevant data (no tokens, no user_ids, etc.)
         return NextResponse.json({
             invoice: {
@@ -43,9 +45,9 @@ export async function GET(
             },
             client: invoice.clients,
             freelancer: {
-                name: (invoice as any).users?.name || 'Business',
-                company: (invoice as any).users?.company_name || '',
-                email: (invoice as any).users?.email || '',
+                name: freelancer?.name || 'Business',
+                company: freelancer?.company_name || '',
+                email: freelancer?.email || '',
             },
         });
     } catch (err: unknown) {

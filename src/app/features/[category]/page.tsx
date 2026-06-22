@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
 
@@ -354,7 +355,7 @@ export default async function FeatureCategoryPage({ params }: { params: Promise<
 
                     {/* Category banner */}
                     <div className="relative rounded-3xl overflow-hidden mb-8 h-64">
-                        <img src={cat.heroImage} alt={cat.heroImageAlt} className="w-full h-full object-cover" />
+                        <Image src={cat.heroImage} alt={cat.heroImageAlt} width={1400} height={560} sizes="100vw" className="w-full h-full object-cover" priority />
                         <div className="absolute inset-0 bg-gradient-to-r from-[#09090f]/90 via-[#09090f]/60 to-transparent flex items-center px-10">
                             <div>
                                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border mb-4 text-sm font-medium"
@@ -407,7 +408,7 @@ export default async function FeatureCategoryPage({ params }: { params: Promise<
                             {/* Image + Benefits */}
                             <div className={`space-y-4 ${fi % 2 === 1 ? 'lg:col-start-1 lg:row-start-1' : ''} reveal-${fi % 2 === 0 ? 'right' : 'left'} reveal-delay-2`}>
                                 <div className="feature-card rounded-2xl overflow-hidden border border-white/[0.06] aspect-video shadow-xl">
-                                    <img src={feature.image} alt={feature.imageAlt} loading="lazy" className="feature-card-img w-full h-full object-cover" />
+                                    <Image src={feature.image} alt={feature.imageAlt} width={800} height={450} sizes="(max-width: 1024px) 100vw, 50vw" className="feature-card-img w-full h-full object-cover" />
                                 </div>
                                 <div className="glass-card p-6 feature-card" style={{ borderColor: `${cat.color}18` }}>
                                     <p className="text-[10px] font-bold tracking-[0.15em] uppercase mb-4" style={{ color: cat.color }}>
@@ -452,9 +453,12 @@ export default async function FeatureCategoryPage({ params }: { params: Promise<
             <section className="relative z-10 py-4 px-6 pb-20">
                 <div className="max-w-4xl mx-auto">
                     <div className="relative rounded-3xl overflow-hidden">
-                        <img
+                        <Image
                             src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80"
                             alt="Team celebrating"
+                            width={1200}
+                            height={500}
+                            sizes="100vw"
                             className="absolute inset-0 w-full h-full object-cover opacity-15"
                         />
                         <div className="relative glass-card p-12 text-center" style={{ borderColor: `${cat.color}20` }}>

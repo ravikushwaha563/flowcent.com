@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function SiteFooter() {
     const cols = [
@@ -39,7 +40,7 @@ export default function SiteFooter() {
                     {/* Brand */}
                     <div className="col-span-2 sm:col-span-1">
                         <Link href="/" className="flex items-center gap-2.5 mb-4">
-                            <img src="/logo.png" alt="Flowcent Logo" className="w-8 h-8 rounded-xl object-contain drop-shadow-md" />
+                            <Image src="/logo.png" alt="Flowcent Logo" width={32} height={32} className="w-8 h-8 rounded-xl object-contain drop-shadow-md" />
                             <span className="font-bold text-lg text-white">Flowcent</span>
                         </Link>
                         <p className="text-sm text-white/30 leading-relaxed mb-5">

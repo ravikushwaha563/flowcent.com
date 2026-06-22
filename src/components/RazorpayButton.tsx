@@ -2,12 +2,7 @@
 
 import { useState } from 'react';
 import { CreditCard } from 'lucide-react';
-
-declare global {
-    interface Window {
-        Razorpay: any;
-    }
-}
+import { getErrorMessage } from '@/lib/errors';
 
 interface RazorpayButtonProps {
     invoiceId: string;
@@ -75,7 +70,7 @@ export default function RazorpayButton({
                     confirm_close: true,
                     ondismiss: () => setLoading(false),
                 },
-                handler: async (response: any) => {
+                handler: async (response: RazorpayCheckoutResponse) => {
                     // 4. Verify payment on server
                     try {
                         const verifyRes = await fetch('/api/payments/verify', {
@@ -92,22 +87,23 @@ export default function RazorpayButton({
                         if (!verifyRes.ok) throw new Error(verifyData.error);
 
                         onSuccess();
-                    } catch (e: any) {
-                        setError(e.message || 'Payment verification failed');
+                    } catch (error: unknown) {
+                        setError(getErrorMessage(error, 'Payment verification failed'));
                     } finally {
                         setLoading(false);
                     }
                 },
             };
 
+            if (!window.Razorpay) throw new Error('Razorpay SDK is unavailable');
             const rzp = new window.Razorpay(options);
-            rzp.on('payment.failed', (response: any) => {
+            rzp.on('payment.failed', (response: RazorpayFailureResponse) => {
                 setError(response.error?.description || 'Payment failed');
                 setLoading(false);
             });
             rzp.open();
-        } catch (e: any) {
-            setError(e.message);
+        } catch (error: unknown) {
+            setError(getErrorMessage(error, 'Unable to start payment'));
             setLoading(false);
         }
     };

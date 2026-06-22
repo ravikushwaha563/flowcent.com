@@ -23,10 +23,10 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
                                 style={{ background: 'linear-gradient(135deg, #3d61ff, #7c3aed)', color: 'white', border: 'none', padding: '10px 24px', borderRadius: '10px', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}>
                                 Try again
                             </button>
-                            <a href="/"
+                            <Link href="/"
                                 style={{ background: 'rgba(255,255,255,0.06)', color: 'white', border: '1px solid rgba(255,255,255,0.1)', padding: '10px 24px', borderRadius: '10px', textDecoration: 'none', fontWeight: 600, fontSize: '14px' }}>
                                 Go home
-                            </a>
+                            </Link>
                         </div>
                         {error.digest && (
                             <p style={{ color: 'rgba(255,255,255,0.15)', fontSize: '11px', marginTop: '24px', fontFamily: 'monospace' }}>

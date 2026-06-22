@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getGmailAuthUrl } from '@/lib/gmail';
 import { requireUser } from '@/lib/auth/server';
 import { randomBytes } from 'crypto';
 
-export async function GET(req: NextRequest) {
+export async function GET() {
     try {
         const { user, response } = await requireUser();
         if (!user) return response!;

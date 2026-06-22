@@ -1,14 +1,16 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useCallback } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { useSearchParams } from 'next/navigation';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import { InvoicePDF } from '@/components/InvoicePDF';
 import RazorpayButton from '@/components/RazorpayButton';
-import { CreditCard, CheckCircle2, Link2, Copy } from 'lucide-react';
+import { CreditCard, CheckCircle2, Link2 } from 'lucide-react';
 import ExcuseAnalyzerModal from '@/components/dashboard/ExcuseAnalyzerModal';
 import { toast } from 'sonner';
+import Link from 'next/link';
+import { getErrorMessage } from '@/lib/errors';
 
 interface Client { id: string; name: string; email: string; company?: string; }
 interface Invoice {
@@ -33,12 +35,6 @@ const PROMISE_TYPE_CONFIG: Record<string, { label: string; color: string; icon: 
     dispute: { label: 'Dispute', color: '#f87171', icon: '⚠️' },
     will_pay: { label: 'Will Pay', color: '#a78bfa', icon: '✋' },
     other: { label: 'Other', color: '#94a3b8', icon: '📝' },
-};
-
-const INTENT_CONFIG: Record<string, { label: string; color: string }> = {
-    high: { label: 'High Intent', color: '#34d399' },
-    medium: { label: 'Medium Intent', color: '#fbbf24' },
-    low: { label: 'Low Intent', color: '#f87171' },
 };
 
 function IntentBar({ score }: { score: number }) {
@@ -74,8 +70,8 @@ function StripeCheckoutButton({ invoiceId, amount, currency, token }: {
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Failed to create Stripe session');
             window.location.href = data.url;
-        } catch (e: any) {
-            setError(e.message);
+        } catch (error: unknown) {
+            setError(getErrorMessage(error, 'Failed to create Stripe session'));
             setLoading(false);
         }
     };
@@ -110,10 +106,6 @@ export default function InvoiceDetailPage({ params }: { params: PageParams }) {
     const [invoice, setInvoice] = useState<Invoice | null>(null);
     const [promises, setPromises] = useState<ClientPromise[]>([]);
     const [loading, setLoading] = useState(true);
-    const [emailInput, setEmailInput] = useState('');
-    const [analyzing, setAnalyzing] = useState(false);
-    const [analysisResult, setAnalysisResult] = useState<any>(null);
-    const [analyzeError, setAnalyzeError] = useState('');
     const [successMsg, setSuccessMsg] = useState('');
     const [scoreResult, setScoreResult] = useState<ScoreResult | null>(null);
     const [scoringLoading, setScoringLoading] = useState(false);
@@ -121,6 +113,20 @@ export default function InvoiceDetailPage({ params }: { params: PageParams }) {
     const [isExcuseModalOpen, setIsExcuseModalOpen] = useState(false);
 
     useEffect(() => { setIsClient(true); }, []);
+
+    const fetchData = useCallback(async (invoiceId: string) => {
+        try {
+            const [invoiceResponse, promisesResponse] = await globalThis.Promise.all([
+                fetch(`/api/invoices/${invoiceId}`, { headers: { Authorization: `Bearer ${token}` } }),
+                fetch(`/api/invoices/analyze-excuse?invoiceId=${invoiceId}`, { headers: { Authorization: `Bearer ${token}` } }),
+            ]);
+            const [invoiceData, promisesData] = await globalThis.Promise.all([invoiceResponse.json(), promisesResponse.json()]);
+            setInvoice(invoiceData.invoice);
+            setPromises(promisesData.promises || []);
+        } finally {
+            setLoading(false);
+        }
+    }, [token]);
 
     // Handle Stripe redirect success
     useEffect(() => {
@@ -146,7 +152,7 @@ export default function InvoiceDetailPage({ params }: { params: PageParams }) {
         if (payment === 'cancelled') {
             setSuccessMsg('');
         }
-    }, [searchParams, token]);
+    }, [searchParams, token, id, fetchData]);
 
     const calculateScore = async () => {
         if (!id) return;
@@ -170,40 +176,7 @@ export default function InvoiceDetailPage({ params }: { params: PageParams }) {
         setSuccessMsg(msg); setTimeout(() => setSuccessMsg(''), 4000);
     };
 
-    const fetchData = async (invoiceId: string) => {
-        try {
-            const [ir, pr] = await globalThis.Promise.all([
-                fetch(`/api/invoices/${invoiceId}`, { headers: { Authorization: `Bearer ${token}` } }),
-                fetch(`/api/invoices/analyze-excuse?invoiceId=${invoiceId}`, { headers: { Authorization: `Bearer ${token}` } }),
-            ]);
-            const [invData, promData] = await globalThis.Promise.all([ir.json(), pr.json()]);
-            setInvoice(invData.invoice);
-            setPromises(promData.promises || []);
-        } finally { setLoading(false); }
-    };
-
-    useEffect(() => { if (token && id) fetchData(id); }, [token, id]);
-
-    const analyzeEmail = async () => {
-        if (!emailInput.trim()) return;
-        setAnalyzing(true); setAnalyzeError(''); setAnalysisResult(null);
-        try {
-            const res = await fetch('/api/invoices/analyze-excuse', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                body: JSON.stringify({ invoiceId: id, emailContent: emailInput }),
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error);
-            setAnalysisResult(data.analysis);
-            setPromises(prev => [...(data.savedPromises || []), ...prev]);
-            if (invoice) setInvoice({ ...invoice, payment_intent_score: data.analysis.intent_score });
-            setEmailInput('');
-            showSuccess(`✅ ${data.message}`);
-        } catch (err: any) {
-            setAnalyzeError(err.message);
-        } finally { setAnalyzing(false); }
-    };
+    useEffect(() => { if (token && id) fetchData(id); }, [token, id, fetchData]);
 
     const toggleFulfilled = async (promiseId: string, current: boolean) => {
         await fetch('/api/invoices/analyze-excuse', {
@@ -228,7 +201,7 @@ export default function InvoiceDetailPage({ params }: { params: PageParams }) {
         <div className="glass-card p-16 text-center">
             <div className="text-5xl mb-4">🔍</div>
             <p className="text-white/60">Invoice not found</p>
-            <a href="/dashboard/invoices" className="btn-primary mt-4 inline-block text-xs px-4 py-2">← Back</a>
+            <Link href="/dashboard/invoices" className="btn-primary mt-4 inline-block text-xs px-4 py-2">← Back</Link>
         </div>
     );
 
@@ -239,9 +212,9 @@ export default function InvoiceDetailPage({ params }: { params: PageParams }) {
         <div className="space-y-6 anim-fade max-w-3xl">
             {/* Back + Header */}
             <div>
-                <a href="/dashboard/invoices" className="text-xs text-white/30 hover:text-white/60 transition-colors flex items-center gap-1 mb-4">
+                <Link href="/dashboard/invoices" className="text-xs text-white/30 hover:text-white/60 transition-colors flex items-center gap-1 mb-4">
                     ← Back to Invoices
-                </a>
+                </Link>
                 <div className="flex items-start justify-between gap-4 flex-wrap">
                     <div>
                         <h1 className="text-2xl font-bold text-white tracking-tight font-mono">{invoice.invoice_number}</h1>
@@ -260,11 +233,11 @@ export default function InvoiceDetailPage({ params }: { params: PageParams }) {
                         </button>
                         {isClient && (
                             <PDFDownloadLink
-                                document={<InvoicePDF invoice={invoice as any} />}
+                                document={<InvoicePDF invoice={invoice} />}
                                 fileName={`${invoice.invoice_number}-flowcent.pdf`}
                                 className="btn-outline text-xs px-4 py-1.5 flex items-center gap-2 hover:bg-white/[0.04]"
                             >
-                                {({ blob, url, loading, error }) =>
+                                {({ loading }) =>
                                     loading ? (
                                         <><span className="w-3 h-3 border-2 border-white/20 border-t-white rounded-full animate-spin"></span> Generating...</>
                                     ) : (

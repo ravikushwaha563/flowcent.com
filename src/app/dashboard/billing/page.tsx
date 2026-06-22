@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/auth-context';
-import { Crown, Zap, CreditCard, Shield, TrendingUp, Brain, Mail, FileText, Users, BarChart3, CheckCircle2, Sparkles } from 'lucide-react';
+import { Crown, Zap, CreditCard, Brain, Mail, FileText, Users, BarChart3, CheckCircle2, Sparkles, type LucideIcon } from 'lucide-react';
 import UpgradeModal from '@/components/dashboard/UpgradeModal';
 import { toast } from 'sonner';
 
@@ -14,9 +14,9 @@ interface BillingStatus {
     expiresAt: string | null;
     isExpired: boolean;
     usage: {
-        invoices: { used: number; limit: number };
-        clients: { used: number; limit: number };
-        aiAnalyses: { used: number; limit: number };
+        invoices: { used: number; limit: number | null; unlimited: boolean };
+        clients: { used: number; limit: number | null; unlimited: boolean };
+        aiAnalyses: { used: number; limit: number | null; unlimited: boolean };
     };
     features: {
         autoFollowups: boolean;
@@ -31,12 +31,11 @@ const PLAN_COLORS: Record<string, string> = {
     agency: '#34d399',
 };
 
-function UsageMeter({ label, used, limit, icon: Icon, color }: {
-    label: string; used: number; limit: number; icon: any; color: string;
+function UsageMeter({ label, used, limit, unlimited, icon: Icon, color }: {
+    label: string; used: number; limit: number | null; unlimited: boolean; icon: LucideIcon; color: string;
 }) {
-    const isUnlimited = !isFinite(limit);
-    const pct = isUnlimited ? 15 : Math.min((used / limit) * 100, 100);
-    const isNearLimit = !isUnlimited && used >= limit * 0.8;
+    const pct = unlimited ? 15 : Math.min((used / Math.max(limit ?? 1, 1)) * 100, 100);
+    const isNearLimit = !unlimited && limit !== null && used >= limit * 0.8;
     const barColor = isNearLimit ? '#f87171' : color;
 
     return (
@@ -50,14 +49,14 @@ function UsageMeter({ label, used, limit, icon: Icon, color }: {
                     <span className="text-sm font-medium text-white/70">{label}</span>
                 </div>
                 <span className="text-sm font-bold" style={{ color: barColor }}>
-                    {used}{isUnlimited ? '' : `/${limit}`}
+                    {used}{unlimited ? '' : `/${limit}`}
                 </span>
             </div>
             <div className="h-1.5 rounded-full bg-white/[0.05] overflow-hidden">
                 <div className="h-full rounded-full transition-all duration-700"
                     style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${barColor}99, ${barColor})` }} />
             </div>
-            {isUnlimited && (
+            {unlimited && (
                 <p className="text-[10px] text-white/20 flex items-center gap-1">
                     <Sparkles size={10} /> Unlimited on your plan
                 </p>
@@ -66,7 +65,7 @@ function UsageMeter({ label, used, limit, icon: Icon, color }: {
     );
 }
 
-function FeatureRow({ label, enabled, icon: Icon }: { label: string; enabled: boolean; icon: any }) {
+function FeatureRow({ label, enabled, icon: Icon }: { label: string; enabled: boolean; icon: LucideIcon }) {
     return (
         <div className="flex items-center justify-between py-2.5 border-b border-white/[0.04] last:border-0">
             <div className="flex items-center gap-2.5">
@@ -88,7 +87,7 @@ export default function BillingPage() {
     const [loading, setLoading] = useState(true);
     const [showUpgrade, setShowUpgrade] = useState(false);
 
-    const fetchStatus = async () => {
+    const fetchStatus = useCallback(async () => {
         if (!token) return;
         try {
             const res = await fetch('/api/billing/status', {
@@ -98,9 +97,9 @@ export default function BillingPage() {
             if (res.ok) setStatus(data);
         } catch { toast.error('Failed to load billing status'); }
         finally { setLoading(false); }
-    };
+    }, [token]);
 
-    useEffect(() => { if (token) fetchStatus(); }, [token]);
+    useEffect(() => { if (token) fetchStatus(); }, [token, fetchStatus]);
 
     const planColor = PLAN_COLORS[status?.plan || 'free'] || '#6b96ff';
 
@@ -185,9 +184,9 @@ export default function BillingPage() {
                 <div>
                     <h2 className="text-xs font-bold text-white/30 uppercase tracking-widest mb-4">This Month's Usage</h2>
                     <div className="grid sm:grid-cols-3 gap-4">
-                        <UsageMeter label="Invoices" used={status.usage.invoices.used} limit={status.usage.invoices.limit} icon={FileText} color="#6b96ff" />
-                        <UsageMeter label="Clients" used={status.usage.clients.used} limit={status.usage.clients.limit} icon={Users} color="#a78bfa" />
-                        <UsageMeter label="AI Analyses" used={status.usage.aiAnalyses.used} limit={status.usage.aiAnalyses.limit} icon={Brain} color="#34d399" />
+                        <UsageMeter label="Invoices" {...status.usage.invoices} icon={FileText} color="#6b96ff" />
+                        <UsageMeter label="Clients" {...status.usage.clients} icon={Users} color="#a78bfa" />
+                        <UsageMeter label="AI Analyses" {...status.usage.aiAnalyses} icon={Brain} color="#34d399" />
                     </div>
                 </div>
 

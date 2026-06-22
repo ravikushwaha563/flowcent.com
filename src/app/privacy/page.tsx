@@ -2,7 +2,6 @@
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
 import { useReveal } from '@/hooks/useReveal';
-import Link from 'next/link';
 
 const SECTIONS = [
     {

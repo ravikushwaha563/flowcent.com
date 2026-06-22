@@ -4,18 +4,17 @@ import { useAuth } from '@/contexts/auth-context';
 import {
     CalendarClock, Coins, Building2, CircleDashed, Scale, Ghost,
     Puzzle, Mail, AlertTriangle, Phone, Search, BookOpen, Rocket,
-    Bot, Brain, BarChart3, FileText, Users, ShieldCheck, TrendingUp, TrendingDown, Minus, Sparkles, RefreshCw
+    Bot, Brain, BarChart3, FileText, Users, TrendingUp, TrendingDown, Minus, Sparkles, RefreshCw
 } from 'lucide-react';
 import { toast } from 'sonner';
 import UpgradeModal from '@/components/dashboard/UpgradeModal';
+import { getErrorMessage } from '@/lib/errors';
 
 interface AnalysisResult {
-    score: number;
-    label: string;
-    summary: string;
-    excuses: string[];
-    commitment?: string;
-    recommendedStage?: number;
+    truth_probability: number;
+    intent_category: string;
+    analysis: string;
+    suggested_response: string;
 }
 
 interface TrustClient {
@@ -79,7 +78,7 @@ export default function IntelligencePage() {
                 .catch(() => toast.error('Failed to load clients'))
                 .finally(() => setTrustLoading(false));
         }
-    }, [activeTab, token]);
+    }, [activeTab, token, trustClients.length]);
 
     const scoreClient = async (clientId: string) => {
         setScoringId(clientId);
@@ -109,8 +108,8 @@ export default function IntelligencePage() {
             setExpandedId(clientId);
             setExpandedAnalysis(data.analysis);
             toast.success(`Trust score generated for ${trustClients.find(c => c.id === clientId)?.name}`);
-        } catch (e: any) {
-            toast.error(e.message || 'Failed to generate trust score');
+        } catch (error: unknown) {
+            toast.error(getErrorMessage(error, 'Failed to generate trust score'));
         } finally {
             setScoringId(null);
         }
@@ -120,10 +119,10 @@ export default function IntelligencePage() {
         if (!input.trim()) return;
         setLoading(true); setError(''); setResult(null);
         try {
-            const res = await fetch('/api/invoices/analyze-excuse', {
+            const res = await fetch('/api/ai/analyze-excuse', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                body: JSON.stringify({ clientReply: input, invoiceId: invoiceId || undefined }),
+                body: JSON.stringify({ excuse: input, invoiceId: invoiceId || undefined }),
             });
             const data = await res.json();
             if (!res.ok) {
@@ -135,14 +134,14 @@ export default function IntelligencePage() {
                 throw new Error(data.error || 'Analysis failed');
             }
             setResult(data);
-        } catch (e: any) {
-            setError(e.message);
+        } catch (error: unknown) {
+            setError(getErrorMessage(error, 'Analysis failed'));
         } finally {
             setLoading(false);
         }
     };
 
-    const scoreColor = result ? result.score >= 70 ? '#34d399' : result.score >= 40 ? '#fbbf24' : '#f87171' : '#6b96ff';
+    const scoreColor = result ? result.truth_probability >= 70 ? '#34d399' : result.truth_probability >= 40 ? '#fbbf24' : '#f87171' : '#6b96ff';
 
     return (
         <div className="min-h-screen bg-[#09090f] text-white">
@@ -270,24 +269,24 @@ export default function IntelligencePage() {
                                     <p className="text-xs font-bold text-white/30 uppercase tracking-widest">Analysis Complete</p>
                                     <span className="text-xs font-bold px-3 py-1 rounded-full"
                                         style={{ color: scoreColor, background: `${scoreColor}15`, border: `1px solid ${scoreColor}25` }}>
-                                        {result.label}
+                                        {result.intent_category}
                                     </span>
                                 </div>
 
                                 {/* Score gauge */}
                                 <div className="p-5 rounded-xl border" style={{ borderColor: `${scoreColor}15`, background: `${scoreColor}06` }}>
                                     <div className="flex items-center justify-between mb-3">
-                                        <span className="text-sm font-semibold text-white">Payment Intent Score</span>
-                                        <span className="text-3xl font-black" style={{ color: scoreColor }}>{result.score}</span>
+                                        <span className="text-sm font-semibold text-white">Excuse Credibility</span>
+                                        <span className="text-3xl font-black" style={{ color: scoreColor }}>{result.truth_probability}</span>
                                     </div>
                                     <div className="h-2.5 rounded-full bg-white/[0.07] overflow-hidden">
                                         <div className="h-full rounded-full transition-all duration-700"
-                                            style={{ width: `${result.score}%`, background: `linear-gradient(90deg, ${scoreColor}80, ${scoreColor})` }} />
+                                            style={{ width: `${result.truth_probability}%`, background: `linear-gradient(90deg, ${scoreColor}80, ${scoreColor})` }} />
                                     </div>
                                     <div className="flex justify-between mt-2">
                                         <span className="text-[10px] text-white/25">Low risk</span>
                                         <span className="text-xs font-medium" style={{ color: scoreColor }}>
-                                            {result.score >= 70 ? '✓ High intent — likely to pay soon' : result.score >= 40 ? '⚡ Moderate — continue follow-ups' : '⚠ Low intent — escalate now'}
+                                            {result.truth_probability >= 70 ? 'Likely genuine' : result.truth_probability >= 40 ? 'Uncertain, verify commitment' : 'Likely a delay tactic'}
                                         </span>
                                         <span className="text-[10px] text-white/25">High risk</span>
                                     </div>
@@ -296,39 +295,13 @@ export default function IntelligencePage() {
                                 {/* Summary */}
                                 <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
                                     <p className="text-[11px] font-bold text-white/30 uppercase tracking-widest mb-2">AI Summary</p>
-                                    <p className="text-sm text-white/70 leading-relaxed">{result.summary}</p>
+                                    <p className="text-sm text-white/70 leading-relaxed">{result.analysis}</p>
                                 </div>
 
-                                {/* Commitment extracted */}
-                                {result.commitment && (
-                                    <div className="p-4 rounded-xl bg-green-500/[0.06] border border-green-500/20">
-                                        <p className="text-[11px] font-bold text-green-400/60 uppercase tracking-widest mb-1.5">Commitment Extracted</p>
-                                        <p className="text-sm text-green-400 font-medium">"{result.commitment}"</p>
-                                    </div>
-                                )}
-
-                                {/* Detected excuses */}
-                                {result.excuses?.length > 0 && (
-                                    <div>
-                                        <p className="text-[11px] font-bold text-white/30 uppercase tracking-widest mb-3">Detected Patterns</p>
-                                        <div className="space-y-2">
-                                            {result.excuses.map((e, i) => (
-                                                <div key={i} className="flex items-start gap-2.5 text-sm text-white/60 p-3 rounded-xl bg-yellow-500/[0.05] border border-yellow-500/15">
-                                                    <AlertTriangle size={14} className="text-yellow-400 shrink-0 mt-0.5" />
-                                                    <span>{e}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Recommended action */}
-                                {result.recommendedStage && (
-                                    <div className="p-4 rounded-xl bg-blue-500/[0.06] border border-blue-500/20">
-                                        <p className="text-[11px] font-bold text-blue-400/60 uppercase tracking-widest mb-1">Recommended</p>
-                                        <p className="text-sm text-blue-400 font-medium">Move to Stage {result.recommendedStage} follow-up</p>
-                                    </div>
-                                )}
+                                <div className="p-4 rounded-xl bg-blue-500/[0.06] border border-blue-500/20">
+                                    <p className="text-[11px] font-bold text-blue-400/60 uppercase tracking-widest mb-2">Suggested Response</p>
+                                    <p className="text-sm text-blue-200/80 whitespace-pre-wrap leading-relaxed">{result.suggested_response}</p>
+                                </div>
                             </div>
                         )}
                     </div>

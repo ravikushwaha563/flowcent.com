@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireUser } from '@/lib/auth/server';
 import { updateProfileSchema, validationError } from '@/lib/validations/domain';
 import { ZodError } from 'zod';
+import { getErrorMessage } from '@/lib/errors';
 
-export async function GET(req: NextRequest) {
+export async function GET() {
     try {
         const { supabase, user: authUser, response } = await requireUser();
         if (!authUser) return response!;
@@ -16,8 +17,8 @@ export async function GET(req: NextRequest) {
         if (error) return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
 
         return NextResponse.json({ user });
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
+    } catch (error: unknown) {
+        return NextResponse.json({ error: getErrorMessage(error, 'Internal server error') }, { status: 500 });
     }
 }
 

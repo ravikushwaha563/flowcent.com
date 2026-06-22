@@ -1,6 +1,7 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 // Announcement bar items (rotate)
 const ANNOUNCEMENTS = [
@@ -155,7 +156,7 @@ export default function SiteNav({ activePage = '' }: { activePage?: string }) {
 
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-2.5 group shrink-0">
-                        <img src="/logo.png" alt="Flowcent Logo" className="w-8 h-8 rounded-xl object-contain drop-shadow-md" />
+                        <Image src="/logo.png" alt="Flowcent Logo" width={32} height={32} className="w-8 h-8 rounded-xl object-contain drop-shadow-md" />
                         <span className="font-bold text-[15px] tracking-tight text-white group-hover:text-white/80 transition-colors">Flowcent</span>
                         <span className="hidden sm:inline text-[9px] px-1.5 py-0.5 rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20 font-bold uppercase tracking-widest">BETA</span>
                     </Link>

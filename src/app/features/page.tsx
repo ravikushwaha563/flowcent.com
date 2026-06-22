@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useEffect, useRef } from 'react';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
@@ -139,11 +140,10 @@ export default function FeaturesIndexPage() {
                         {/* Hero image */}
                         <div className="relative reveal-right reveal-delay-2">
                             <div className="beam-container rounded-3xl">
-                                <img
+                                <Image
                                     src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=900&q=75"
                                     alt="Analytics dashboard showing payment collection metrics"
-                                    loading="eager"
-                                    fetchPriority="high"
+                                    width={900} height={675} sizes="(max-width: 1024px) 100vw, 50vw" priority
                                     className="rounded-3xl border border-white/[0.07] shadow-2xl object-cover w-full aspect-[4/3]"
                                 />
                             </div>
@@ -177,10 +177,10 @@ export default function FeaturesIndexPage() {
                                 >
                                     {/* Image */}
                                     <div className="relative h-48 overflow-hidden">
-                                        <img
+                                        <Image
                                             src={cat.image}
                                             alt={cat.imageAlt}
-                                            loading="lazy"
+                                            width={700} height={400} sizes="(max-width: 640px) 100vw, 50vw"
                                             className="feature-card-img w-full h-full object-cover"
                                         />
                                         <div className="absolute inset-0 bg-gradient-to-t from-[#09090f] via-[#09090f]/25 to-transparent" />

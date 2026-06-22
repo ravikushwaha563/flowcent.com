@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+
 /* ─── Flowcent 3D Logo ────────────────────────────────────────────────────────
    Pure CSS @keyframes – NO JavaScript rAF loop.
    Runs entirely on the GPU compositor thread → zero jank.
@@ -66,7 +68,7 @@ export default function FlowcentLogo3D({ size = 36 }: { size?: number }) {
                     {/* Front */}
                     <div className="fc-face"
                         style={faceStyle('linear-gradient(135deg,#3d61ff,#7c3aed)', `translateZ(${half}px)`)}>
-                        <img src="/logo.png" alt="Logo" className="w-[60%] h-[60%] object-contain drop-shadow-md" />
+                        <Image src="/logo.png" alt="Flowcent" width={96} height={96} className="w-[60%] h-[60%] object-contain drop-shadow-md" />
                     </div>
                     {/* Back */}
                     <div className="fc-face"

@@ -228,9 +228,9 @@ export default function BlogPage() {
             <section className="relative z-10 py-12 px-6 pb-24">
                 <div className="max-w-3xl mx-auto reveal-up">
                     <div className="relative rounded-3xl overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=70"
+                        <Image src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=70"
                             alt="Developer working"
-                            loading="lazy"
+                            width={1200} height={600} sizes="100vw"
                             className="absolute inset-0 w-full h-full object-cover opacity-15" />
                         <div className="relative border-glow-card glass-card p-12 text-center" style={{ borderColor: 'rgba(167,139,250,0.2)' }}>
                             <h2 className="text-2xl font-bold mb-3">Get articles in your inbox</h2>

@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, type LoginInput } from '@/lib/validations/auth';
 import { useAuth } from '@/contexts/auth-context';
 import { toast } from 'sonner';
+import { getErrorMessage } from '@/lib/errors';
 
 export default function LoginPage() {
     const router = useRouter();
@@ -30,8 +31,8 @@ export default function LoginPage() {
             if (!response.ok) throw new Error(result.error || 'Login failed');
             await login();
             router.push('/dashboard');
-        } catch (err: any) {
-            toast.error(err.message || 'Login failed');
+        } catch (error: unknown) {
+            toast.error(getErrorMessage(error, 'Login failed'));
         } finally {
             setIsLoading(false);
         }

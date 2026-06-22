@@ -5,11 +5,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Bot, X, Sparkles, Copy, CheckCircle2, AlertTriangle, ShieldAlert, ShieldCheck, Thermometer } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { toast } from 'sonner';
+import { getErrorMessage } from '@/lib/errors';
+
+interface InvoiceContext {
+    id?: string;
+    amount: number;
+    currency: string;
+    due_date: string;
+    status: string;
+}
 
 interface ExcuseAnalyzerModalProps {
     isOpen: boolean;
     onClose: () => void;
-    invoiceContext?: any; // To pass context to AI
+    invoiceContext?: InvoiceContext;
 }
 
 interface AnalysisResult {
@@ -38,17 +47,13 @@ export default function ExcuseAnalyzerModal({ isOpen, onClose, invoiceContext }:
         setResult(null);
 
         try {
-            const contextStr = invoiceContext 
-                ? `Invoice for ${invoiceContext.amount} ${invoiceContext.currency}, initially due on ${new Date(invoiceContext.due_date).toLocaleDateString()}, status is ${invoiceContext.status}.`
-                : 'No specific invoice context provided.';
-
             const res = await fetch('/api/ai/analyze-excuse', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ excuse, context: contextStr })
+                body: JSON.stringify({ excuse, invoiceId: invoiceContext?.id })
             });
 
             const data = await res.json();
@@ -57,8 +62,8 @@ export default function ExcuseAnalyzerModal({ isOpen, onClose, invoiceContext }:
 
             setResult(data);
             toast.success('Analysis complete');
-        } catch (err: any) {
-            toast.error(err.message || 'Failed to analyze excuse');
+        } catch (error: unknown) {
+            toast.error(getErrorMessage(error, 'Failed to analyze excuse'));
         } finally {
             setIsAnalyzing(false);
         }

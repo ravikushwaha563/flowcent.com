@@ -1,6 +1,7 @@
 import { google } from 'googleapis';
 import { publicEnv } from '@/lib/env/public';
 import { requireServerEnv, serverEnv } from '@/lib/env/server';
+import { getErrorMessage } from '@/lib/errors';
 
 export function getOAuthClient() {
     return new google.auth.OAuth2(
@@ -105,8 +106,8 @@ export async function sendFollowUpEmail({
         });
 
         return { success: true, messageId: res.data.id || undefined };
-    } catch (err: any) {
-        return { success: false, error: err.message };
+    } catch (error: unknown) {
+        return { success: false, error: getErrorMessage(error, 'Failed to send email') };
     }
 }
 

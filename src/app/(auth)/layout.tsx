@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { ReactNode } from 'react';
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
@@ -16,7 +17,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                 <div className="relative z-10 flex flex-col h-full p-12 justify-between">
                     {/* Logo Area */}
                     <Link href="/" className="flex items-center gap-2.5 group w-fit">
-                        <img src="/logo.png" alt="Flowcent Logo" className="w-9 h-9 rounded-xl object-contain drop-shadow-[0_0_12px_rgba(61,97,255,0.4)]" />
+                        <Image src="/logo.png" alt="Flowcent Logo" width={36} height={36} className="w-9 h-9 rounded-xl object-contain drop-shadow-[0_0_12px_rgba(61,97,255,0.4)]" />
                         <span className="font-bold text-xl tracking-tight text-white group-hover:text-white/80 transition-colors">Flowcent</span>
                     </Link>
 
@@ -56,7 +57,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                 {/* Mobile Header Logo */}
                 <div className="absolute top-8 left-6 sm:left-10 flex items-center gap-2.5 lg:hidden z-20">
                     <Link href="/" className="flex items-center gap-2">
-                        <img src="/logo.png" alt="Flowcent Logo" className="w-8 h-8 rounded-xl object-contain drop-shadow-md" />
+                        <Image src="/logo.png" alt="Flowcent Logo" width={32} height={32} className="w-8 h-8 rounded-xl object-contain drop-shadow-md" />
                         <span className="font-bold text-white tracking-tight">Flowcent</span>
                     </Link>
                 </div>

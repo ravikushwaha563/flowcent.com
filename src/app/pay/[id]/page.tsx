@@ -2,11 +2,8 @@
 
 import { useState, useEffect, use } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { CheckCircle2, Clock, AlertTriangle, Shield, CreditCard, ArrowRight } from 'lucide-react';
-
-declare global {
-    interface Window { Razorpay: any; }
-}
+import { CheckCircle2, Clock, AlertTriangle, Shield, CreditCard, ArrowRight, type LucideIcon } from 'lucide-react';
+import { getErrorMessage } from '@/lib/errors';
 
 interface InvoiceData {
     id: string; invoice_number: string; amount: number; currency: string;
@@ -15,7 +12,7 @@ interface InvoiceData {
 interface ClientData { id: string; name: string; email: string; company?: string; }
 interface FreelancerData { name: string; company: string; email: string; }
 
-const STATUS_MAP: Record<string, { label: string; color: string; bg: string; icon: any }> = {
+const STATUS_MAP: Record<string, { label: string; color: string; bg: string; icon: LucideIcon }> = {
     paid:    { label: 'Paid',    color: '#34d399', bg: 'rgba(52,211,153,0.08)', icon: CheckCircle2 },
     pending: { label: 'Pending', color: '#fbbf24', bg: 'rgba(251,191,36,0.08)', icon: Clock },
     overdue: { label: 'Overdue', color: '#f87171', bg: 'rgba(248,113,113,0.08)', icon: AlertTriangle },
@@ -102,6 +99,7 @@ export default function PublicPaymentPage({ params }: { params: Promise<{ id: st
             const data = await res.json();
             if (!res.ok) throw new Error(data.error);
 
+            if (!window.Razorpay) throw new Error('Razorpay SDK is unavailable');
             const rzp = new window.Razorpay({
                 key: data.keyId,
                 amount: data.amount,
@@ -112,7 +110,7 @@ export default function PublicPaymentPage({ params }: { params: Promise<{ id: st
                 prefill: { name: client.name, email: client.email },
                 theme: { color: '#3b82f6', backdrop_color: 'rgba(0,0,0,0.85)' },
                 modal: { confirm_close: true, ondismiss: () => setPayLoading(false) },
-                handler: async (response: any) => {
+                handler: async (response: RazorpayCheckoutResponse) => {
                     try {
                         const v = await fetch('/api/payments/verify', {
                             method: 'POST',
@@ -131,9 +129,9 @@ export default function PublicPaymentPage({ params }: { params: Promise<{ id: st
                     finally { setPayLoading(false); }
                 },
             });
-            rzp.on('payment.failed', (r: any) => { setPayError(r.error?.description || 'Payment failed'); setPayLoading(false); });
+            rzp.on('payment.failed', (response: RazorpayFailureResponse) => { setPayError(response.error?.description || 'Payment failed'); setPayLoading(false); });
             rzp.open();
-        } catch (e: any) { setPayError(e.message); setPayLoading(false); }
+        } catch (error: unknown) { setPayError(getErrorMessage(error, 'Unable to start payment')); setPayLoading(false); }
     };
 
     const handleStripe = async () => {
@@ -148,7 +146,7 @@ export default function PublicPaymentPage({ params }: { params: Promise<{ id: st
             const data = await res.json();
             if (!res.ok) throw new Error(data.error);
             window.location.href = data.url;
-        } catch (e: any) { setPayError(e.message); setPayLoading(false); }
+        } catch (error: unknown) { setPayError(getErrorMessage(error, 'Unable to start payment')); setPayLoading(false); }
     };
 
     const handlePay = () => {

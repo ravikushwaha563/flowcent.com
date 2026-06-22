@@ -5,7 +5,7 @@ import { createClientSchema, validationError } from '@/lib/validations/domain';
 import { ZodError } from 'zod';
 
 // GET /api/clients - List all clients for current user
-export async function GET(req: NextRequest) {
+export async function GET() {
     try {
         const { supabase, user, response } = await requireUser();
         if (!user) return response!;

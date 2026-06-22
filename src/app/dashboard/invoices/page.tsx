@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { FileText, Zap, Plus, X, Bot, Mail, Check, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import UpgradeModal from '@/components/dashboard/UpgradeModal';
+import { getErrorMessage } from '@/lib/errors';
 
 interface Client { id: string; name: string; email: string; company?: string; }
 interface Invoice {
@@ -47,8 +48,8 @@ function FollowUpModal({
             if (!res.ok) throw new Error(data.error);
             onSent(`✉️ Stage ${stage} follow-up sent to ${invoice.clients.email}!`);
             onClose();
-        } catch (err: any) {
-            toast.error(err.message || 'Failed to send follow-up');
+        } catch (error: unknown) {
+            toast.error(getErrorMessage(error, 'Failed to send follow-up'));
         } finally {
             setSending(false);
         }
@@ -156,7 +157,7 @@ export default function InvoicesPage() {
                 throw new Error(data.error);
             }
             setScores(prev => ({ ...prev, [invoiceId]: data }));
-        } catch (e: any) { toast.error(e.message || 'Failed to score'); }
+        } catch (error: unknown) { toast.error(getErrorMessage(error, 'Failed to score')); }
         finally { setScoreLoading(null); }
     };
 
@@ -178,7 +179,7 @@ export default function InvoicesPage() {
         }
     };
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             const [ir, cr] = await Promise.all([
                 fetch('/api/invoices', { headers: { Authorization: `Bearer ${token}` } }),
@@ -188,9 +189,9 @@ export default function InvoicesPage() {
             setInvoices(id.invoices || []);
             setClients(cd.clients || []);
         } finally { setLoading(false); }
-    };
+    }, [token]);
 
-    useEffect(() => { if (token) fetchData(); }, [token]);
+    useEffect(() => { if (token) fetchData(); }, [token, fetchData]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault(); setSubmitting(true);
@@ -214,8 +215,8 @@ export default function InvoicesPage() {
             setShowForm(false);
             setFormData({ clientId: '', invoiceNumber: '', amount: '', currency: 'INR', dueDate: '', autoFollowup: false });
             toast.success('Invoice created!');
-        } catch (err: any) { 
-            toast.error(err.message || 'Failed to create invoice'); 
+        } catch (error: unknown) { 
+            toast.error(getErrorMessage(error, 'Failed to create invoice')); 
         } finally { setSubmitting(false); }
     };
 

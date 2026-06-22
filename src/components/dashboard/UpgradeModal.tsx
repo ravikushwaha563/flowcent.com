@@ -1,12 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Crown, Zap, Shield, CreditCard, Sparkles, Check } from 'lucide-react';
+import { X, Crown, Shield, Sparkles, Check } from 'lucide-react';
 import { toast } from 'sonner';
-
-declare global {
-    interface Window { Razorpay: any; }
-}
+import { getErrorMessage } from '@/lib/errors';
 
 interface UpgradeModalProps {
     isOpen: boolean;
@@ -31,7 +28,6 @@ export default function UpgradeModal({ isOpen, onClose, token, message, onSucces
     const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly');
     const [loading, setLoading] = useState(false);
 
-    const price = billing === 'monthly' ? 499 : 399;
     const totalPrice = billing === 'annual' ? 399 * 12 : 499;
     const savings = billing === 'annual' ? (499 - 399) * 12 : 0;
 
@@ -58,6 +54,7 @@ export default function UpgradeModal({ isOpen, onClose, token, message, onSucces
             const data = await res.json();
             if (!res.ok) throw new Error(data.error);
 
+            if (!window.Razorpay) throw new Error('Razorpay SDK is unavailable');
             const rzp = new window.Razorpay({
                 key: data.keyId,
                 amount: data.amount,
@@ -67,7 +64,7 @@ export default function UpgradeModal({ isOpen, onClose, token, message, onSucces
                 order_id: data.orderId,
                 theme: { color: '#a78bfa', backdrop_color: 'rgba(0,0,0,0.85)' },
                 modal: { confirm_close: true, ondismiss: () => setLoading(false) },
-                handler: async (response: any) => {
+                handler: async (response: RazorpayCheckoutResponse) => {
                     try {
                         const v = await fetch('/api/billing/upgrade', {
                             method: 'PATCH',
@@ -89,10 +86,10 @@ export default function UpgradeModal({ isOpen, onClose, token, message, onSucces
                     finally { setLoading(false); }
                 },
             });
-            rzp.on('payment.failed', (r: any) => { toast.error(r.error?.description || 'Payment failed'); setLoading(false); });
+            rzp.on('payment.failed', (response: RazorpayFailureResponse) => { toast.error(response.error?.description || 'Payment failed'); setLoading(false); });
             rzp.open();
-        } catch (e: any) {
-            toast.error(e.message);
+        } catch (error: unknown) {
+            toast.error(getErrorMessage(error, 'Unable to start upgrade'));
             setLoading(false);
         }
     };
