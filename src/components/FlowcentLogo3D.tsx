@@ -34,7 +34,7 @@ const CSS = `
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: Inter, sans-serif;
+  font-family: "Segoe UI", Arial, sans-serif;
   font-weight: 800;
   color: rgba(255,255,255,0.95);
   border: 1px solid rgba(255,255,255,0.13);

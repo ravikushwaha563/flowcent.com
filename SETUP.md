@@ -27,7 +27,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 Apply every file in `supabase/migrations/` in filename order using the Supabase
 SQL editor or CLI. The migration creates tables, indexes, auth profile triggers,
 row-level security policies, API-only write grants, transactional plan limits,
-billing activation, and webhook claim functions.
+billing activation, webhook claims, and concurrency-safe follow-up worker claims.
 
 Do not serve user traffic until the migration has completed successfully. See
 `supabase/README.md` for verification queries.

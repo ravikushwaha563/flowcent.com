@@ -1,15 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/auth-context";
 import ScrollToTop from "@/components/ScrollToTop";
 import { Toaster } from 'sonner';
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-sans",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: {
@@ -24,7 +17,7 @@ export const metadata: Metadata = {
     locale: "en_IN",
     url: "https://flowcent.in",
     siteName: "Flowcent",
-    title: "Flowcent – Get Paid Automatically",
+    title: "Flowcent – Consistent Invoice Follow-up",
     description: "AI-assisted invoice tracking, payment links, and follow-up automation for Indian freelancers and small agencies.",
     images: [
       {
@@ -37,8 +30,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Flowcent – Get Paid Automatically",
-    description: "AI-powered invoice tracking and follow-ups for Indian freelancers. Stop chasing payments.",
+    title: "Flowcent – Consistent Invoice Follow-up",
+    description: "Track invoices, review replies with AI assistance, and send staged follow-ups from your Gmail account.",
     images: ["/og-image.png"],
     creator: "@flowcentin",
   },
@@ -91,7 +84,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://images.unsplash.com" />
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
       </head>
-      <body className={`${inter.variable} font-sans antialiased bg-[#09090f]`} style={{ background: "#09090f" }}>
+      <body className="font-sans antialiased bg-[#09090f]" style={{ background: "#09090f" }}>
         <script dangerouslySetInnerHTML={{ __html: revealScript }} />
         <div className="fixed inset-0 pointer-events-none noise z-[-1] opacity-50"></div>
         <AuthProvider>
@@ -107,7 +100,7 @@ export default function RootLayout({
                 background: '#0a0f1c', 
                 border: '1px solid rgba(255,255,255,0.1)',
                 color: '#fff',
-                fontFamily: 'var(--font-sans)',
+                fontFamily: 'var(--font-ui)',
               } 
             }} 
           />

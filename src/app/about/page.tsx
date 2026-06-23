@@ -193,11 +193,11 @@ export default function AboutPage() {
                                 Start on the Free plan. Upgrade to Pro when you need automation and higher limits.
                             </p>
                             <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-                                <Link href="/signup">
-                                    <button className="btn-primary px-8 py-3.5 text-sm font-semibold">Get started for free →</button>
+                                <Link href="/signup" className="btn-primary px-8 py-3.5 text-sm font-semibold">
+                                    Get started for free →
                                 </Link>
-                                <Link href="/features">
-                                    <button className="btn-outline px-8 py-3.5 text-sm font-semibold">See all features →</button>
+                                <Link href="/features" className="btn-outline px-8 py-3.5 text-sm font-semibold">
+                                    See all features →
                                 </Link>
                             </div>
                         </div>

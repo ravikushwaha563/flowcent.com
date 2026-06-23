@@ -38,8 +38,8 @@ After applying migrations to a configured Supabase project, run:
 npm run verify:deployment
 ```
 
-This fails if anonymous table reads or the protected billing activation RPC
-remain reachable.
+This fails if anonymous table reads remain open or required billing and
+follow-up worker RPCs are missing or reachable by anonymous callers.
 
 ## Production requirements
 

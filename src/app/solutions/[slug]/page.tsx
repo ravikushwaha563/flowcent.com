@@ -191,8 +191,8 @@ export default async function SolutionDetailPage({ params }: { params: Promise<{
                             <p className="text-xl mb-4 font-medium" style={{ color: solution.color }}>{solution.subtitle}</p>
                             <p className="text-white/50 text-lg leading-relaxed mb-8">{solution.heroDesc}</p>
                             <div className="flex flex-col sm:flex-row gap-4">
-                                <Link href="/signup"><button className="btn-primary px-8 py-3.5">{solution.cta}</button></Link>
-                                <Link href="/features"><button className="btn-outline px-8 py-3.5">See all features →</button></Link>
+                                <Link href="/signup" className="btn-primary px-8 py-3.5 text-center">{solution.cta}</Link>
+                                <Link href="/features" className="btn-outline px-8 py-3.5 text-center">See all features →</Link>
                             </div>
                         </div>
 
@@ -302,8 +302,8 @@ export default async function SolutionDetailPage({ params }: { params: Promise<{
                                     <Image src={solution.heroImage} alt={solution.heroImageAlt} width={600} height={600} sizes="(max-width: 640px) 100vw, 50vw" className="w-full h-full object-cover" />
                                 </div>
                                 <div className="space-y-3">
-                                    <Link href="/signup" className="block"><button className="btn-primary w-full py-3">{solution.cta}</button></Link>
-                                    <Link href="/pricing" className="block"><button className="btn-outline w-full py-3">View pricing →</button></Link>
+                                    <Link href="/signup" className="btn-primary block w-full py-3 text-center">{solution.cta}</Link>
+                                    <Link href="/pricing" className="btn-outline block w-full py-3 text-center">View pricing →</Link>
                                 </div>
                             </div>
                         </div>
@@ -314,7 +314,7 @@ export default async function SolutionDetailPage({ params }: { params: Promise<{
             {/* ── Other solutions ── */}
             <section className="relative z-10 py-4 px-6 pb-16 text-center">
                 <p className="text-sm text-white/35 mb-4">Not quite what you're looking for?</p>
-                <Link href="/solutions"><button className="btn-outline text-sm px-6 py-2.5">See all solution types →</button></Link>
+                <Link href="/solutions" className="btn-outline text-sm px-6 py-2.5 inline-flex">See all solution types →</Link>
             </section>
 
             <SiteFooter />

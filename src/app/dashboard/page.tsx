@@ -152,10 +152,8 @@ export default function DashboardPage() {
                             {currentTime.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                         </p>
                     </div>
-                    <Link href="/dashboard/invoices">
-                        <button className="btn-primary flex items-center gap-2 px-5 py-2.5 text-sm whitespace-nowrap">
-                            <span>＋</span> New Invoice
-                        </button>
+                    <Link href="/dashboard/invoices" className="btn-primary flex items-center gap-2 px-5 py-2.5 text-sm whitespace-nowrap">
+                        <span>＋</span> New Invoice
                     </Link>
                 </div>
 
@@ -247,8 +245,8 @@ export default function DashboardPage() {
                                 </div>
                                 <p className="text-white/40 text-sm font-medium">No invoices yet</p>
                                 <p className="text-white/20 text-xs mt-1 mb-4">Create your first invoice to get started</p>
-                                <Link href="/dashboard/invoices">
-                                    <button className="btn-primary text-xs px-5 py-2">Create first invoice →</button>
+                                <Link href="/dashboard/invoices" className="btn-primary text-xs px-5 py-2 inline-flex">
+                                    Create first invoice →
                                 </Link>
                             </div>
                         ) : (
@@ -330,10 +328,8 @@ export default function DashboardPage() {
                                 </div>
                             </div>
                             <p className="text-xs text-white/35 mb-3">Connect Gmail to enable automated follow-ups sent from your address.</p>
-                            <Link href="/dashboard/settings">
-                                <button className="w-full py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.08] text-xs font-semibold text-white/60 hover:text-white transition-all">
-                                    Connect Gmail →
-                                </button>
+                            <Link href="/dashboard/settings" className="block w-full py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.08] text-xs text-center font-semibold text-white/60 hover:text-white transition-all">
+                                Connect Gmail →
                             </Link>
                         </div>
                     </div>
@@ -391,8 +387,8 @@ export default function DashboardPage() {
                             <p className="text-sm font-semibold text-white">Run consistent follow-ups with Gmail automation</p>
                             <p className="text-xs text-white/40 mt-0.5">Connect your Gmail now and let Flowcent follow up while you focus on work.</p>
                         </div>
-                        <Link href="/dashboard/settings" className="shrink-0">
-                            <button className="btn-primary px-6 py-2.5 text-sm whitespace-nowrap">Connect Gmail →</button>
+                        <Link href="/dashboard/settings" className="btn-primary px-6 py-2.5 text-sm whitespace-nowrap shrink-0">
+                            Connect Gmail →
                         </Link>
                     </div>
                 </div>

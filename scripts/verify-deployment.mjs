@@ -28,15 +28,29 @@ for (const table of ['users', 'clients', 'invoices']) {
     else if (![401, 403].includes(response.status)) failures.push(`${table} probe returned unexpected HTTP ${response.status}`);
 }
 
-const protectedRpc = await fetch(`${supabaseUrl}/rest/v1/rpc/activate_billing_order`, {
-    method: 'POST',
-    headers: { ...headers, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ p_order_id: 'deployment-probe', p_payment_id: 'deployment-probe' }),
-});
-if (protectedRpc.status === 404) {
-    failures.push('billing activation RPC is missing; the security migration is not applied');
-} else if (![401, 403].includes(protectedRpc.status)) {
-    failures.push(`billing activation RPC is reachable anonymously (HTTP ${protectedRpc.status})`);
+for (const [rpc, body] of [
+    ['activate_billing_order', { p_order_id: 'deployment-probe', p_payment_id: 'deployment-probe' }],
+    ['claim_due_followup_invoices', { p_limit: 1 }],
+    ['record_followup_delivery', {
+        p_invoice_id: '00000000-0000-0000-0000-000000000000',
+        p_claim_token: '00000000-0000-0000-0000-000000000000',
+        p_expected_stage: 1,
+        p_email_subject: 'deployment-probe',
+        p_message_content: 'deployment-probe',
+        p_channel: 'email',
+        p_provider_message_id: null,
+    }],
+]) {
+    const protectedRpc = await fetch(`${supabaseUrl}/rest/v1/rpc/${rpc}`, {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+    });
+    if (protectedRpc.status === 404) {
+        failures.push(`${rpc} RPC is missing; the security migration is not applied`);
+    } else if (![401, 403].includes(protectedRpc.status)) {
+        failures.push(`${rpc} RPC is reachable anonymously (HTTP ${protectedRpc.status})`);
+    }
 }
 
 if (failures.length > 0) {

@@ -18,6 +18,7 @@ interface ExcuseAnalyzerModalProps {
     isOpen: boolean;
     onClose: () => void;
     invoiceContext?: InvoiceContext;
+    onAnalyzed?: () => void;
 }
 
 interface AnalysisResult {
@@ -27,7 +28,7 @@ interface AnalysisResult {
     suggested_response: string;
 }
 
-export default function ExcuseAnalyzerModal({ isOpen, onClose, invoiceContext }: ExcuseAnalyzerModalProps) {
+export default function ExcuseAnalyzerModal({ isOpen, onClose, invoiceContext, onAnalyzed }: ExcuseAnalyzerModalProps) {
     const [excuse, setExcuse] = useState('');
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -58,7 +59,8 @@ export default function ExcuseAnalyzerModal({ isOpen, onClose, invoiceContext }:
             if (!res.ok) throw new Error(data.error || 'Failed to analyze excuse');
 
             setResult(data);
-            toast.success('Analysis complete');
+            onAnalyzed?.();
+            toast.success(data.savedPromise ? 'Analysis complete and added to promise history' : 'Analysis complete');
         } catch (error: unknown) {
             toast.error(getErrorMessage(error, 'Failed to analyze excuse'));
         } finally {

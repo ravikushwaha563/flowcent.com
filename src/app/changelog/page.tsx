@@ -11,7 +11,7 @@ const ENTRIES = [
         image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=600&q=75',
         imageAlt: 'Analytics dashboard showing payment intent score',
         changes: [
-            { type: 'new', text: 'Payment Intent Score — AI-calculated 0–100 score per invoice' },
+            { type: 'new', text: 'Payment Intent Score — deterministic 0–100 follow-up priority signal per invoice' },
             { type: 'new', text: 'Score breakdown card on invoice detail page with factor analysis' },
             { type: 'new', text: 'Recalculate score button on invoice list and detail pages' },
             { type: 'improve', text: 'Invoice list now shows color-coded intent badge with score number' },
@@ -229,10 +229,10 @@ export default function ChangelogPage() {
                                 <span className="grad-text">we ship fast.</span>
                             </h2>
                             <p className="text-white/40 text-sm mb-8 max-w-sm mx-auto">
-                                Join the beta and get every new feature as it launches. Focus on work, let Flowcent collect.
+                                Join the beta and try new collection workflows as they become available.
                             </p>
-                            <Link href="/signup">
-                                <button className="btn-primary px-8 py-3.5 text-sm font-semibold">Get early access →</button>
+                            <Link href="/signup" className="btn-primary px-8 py-3.5 text-sm font-semibold inline-flex">
+                                Get early access →
                             </Link>
                         </div>
                     </div>

@@ -216,13 +216,11 @@ export default function PricingPage() {
                                     </div>
 
                                     {/* CTA */}
-                                    <Link href={plan.href}>
-                                        <button className={`w-full py-3 rounded-xl text-sm font-bold transition-all duration-200 ${plan.popular
+                                    <Link href={plan.href} className={`block w-full py-3 rounded-xl text-sm text-center font-bold transition-all duration-200 ${plan.popular
                                             ? 'btn-primary text-white'
                                             : 'border border-white/[0.1] bg-white/[0.04] text-white/70 hover:bg-white/[0.08] hover:text-white hover:border-white/20'
                                             }`}>
-                                            {plan.cta}
-                                        </button>
+                                        {plan.cta}
                                     </Link>
                                     {plan.name === 'Free' && <p className="text-center text-[11px] text-white/25">No credit card required</p>}
                                     {plan.name === 'Pro' && <p className="text-center text-[11px] text-white/25">Secure checkout via Razorpay</p>}
@@ -338,11 +336,11 @@ export default function PricingPage() {
                                 Start with the free plan and upgrade only when your collection workflow grows.
                             </p>
                             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                                <Link href="/signup">
-                                    <button className="btn-primary px-8 py-3.5 text-sm font-semibold">Start free →</button>
+                                <Link href="/signup" className="btn-primary px-8 py-3.5 text-sm font-semibold">
+                                    Start free →
                                 </Link>
-                                <Link href="/dashboard">
-                                    <button className="btn-outline px-8 py-3.5 text-sm font-semibold">View demo dashboard</button>
+                                <Link href="/dashboard" className="btn-outline px-8 py-3.5 text-sm font-semibold">
+                                    Open dashboard
                                 </Link>
                             </div>
                             <p className="text-xs text-white/20 mt-4">Free plan available forever · No credit card required</p>

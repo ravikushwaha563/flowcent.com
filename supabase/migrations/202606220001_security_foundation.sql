@@ -69,6 +69,8 @@ alter table public.invoices add column if not exists razorpay_payment_id text;
 alter table public.invoices add column if not exists stripe_session_id text;
 alter table public.invoices add column if not exists stripe_payment_id text;
 alter table public.invoices add column if not exists payment_gateway text;
+alter table public.invoices add column if not exists followup_claim_token uuid;
+alter table public.invoices add column if not exists followup_claimed_at timestamptz;
 
 do $$
 begin
@@ -91,6 +93,10 @@ create table if not exists public.promises (
     created_at timestamptz not null default now()
 );
 
+create unique index if not exists promises_manual_analysis_once
+    on public.promises(invoice_id, email_id)
+    where email_id like 'manual-analysis:%';
+
 create table if not exists public.followups (
     id uuid primary key default gen_random_uuid(),
     invoice_id uuid not null references public.invoices(id) on delete cascade,
@@ -110,6 +116,7 @@ alter table public.followups add column if not exists email_subject text;
 alter table public.followups add column if not exists status text not null default 'sent';
 alter table public.followups add column if not exists message_content text;
 alter table public.followups add column if not exists channel text not null default 'email';
+alter table public.followups add column if not exists provider_message_id text;
 
 update public.followups f
 set user_id = i.user_id
@@ -156,6 +163,8 @@ create unique index if not exists invoices_public_token_idx on public.invoices(p
 create unique index if not exists invoices_user_number_idx on public.invoices(user_id, lower(invoice_number));
 create index if not exists promises_invoice_id_idx on public.promises(invoice_id);
 create index if not exists followups_invoice_id_idx on public.followups(invoice_id);
+create unique index if not exists followups_invoice_provider_message_id_idx on public.followups(invoice_id, provider_message_id)
+    where provider_message_id is not null;
 create index if not exists billing_orders_user_id_idx on public.billing_orders(user_id);
 
 do $$
@@ -402,6 +411,94 @@ $$;
 
 revoke all on function public.claim_webhook_event(text, text, text, jsonb) from public, anon, authenticated;
 grant execute on function public.claim_webhook_event(text, text, text, jsonb) to service_role;
+
+create or replace function public.claim_due_followup_invoices(p_limit integer default 50)
+returns table(invoice_id uuid, claim_token uuid)
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+    return query
+    with candidates as (
+        select i.id
+        from public.invoices i
+        join public.users u on u.id = i.user_id
+        where i.status = 'pending'
+          and i.auto_followup = true
+          and i.next_followup_date <= now()
+          and i.current_stage between 1 and 5
+          and (i.followup_claimed_at is null or i.followup_claimed_at < now() - interval '15 minutes')
+          and coalesce(u.subscription_plan, 'free') <> 'free'
+          and (u.plan_expires_at is null or u.plan_expires_at > now())
+          and u.gmail_connected = true
+          and u.gmail_refresh_token is not null
+        order by i.next_followup_date asc
+        for update of i skip locked
+        limit greatest(1, least(coalesce(p_limit, 50), 100))
+    ), claimed as (
+        update public.invoices i
+        set followup_claim_token = gen_random_uuid(), followup_claimed_at = now(), updated_at = now()
+        from candidates c
+        where i.id = c.id
+        returning i.id, i.followup_claim_token
+    )
+    select claimed.id, claimed.followup_claim_token from claimed;
+end;
+$$;
+
+revoke all on function public.claim_due_followup_invoices(integer) from public, anon, authenticated;
+grant execute on function public.claim_due_followup_invoices(integer) to service_role;
+
+create or replace function public.record_followup_delivery(
+    p_invoice_id uuid,
+    p_claim_token uuid,
+    p_expected_stage integer,
+    p_email_subject text,
+    p_message_content text,
+    p_channel text,
+    p_provider_message_id text
+)
+returns boolean
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+    target_user_id uuid;
+begin
+    if p_expected_stage not between 1 and 5 then return false; end if;
+
+    select user_id into target_user_id
+    from public.invoices
+    where id = p_invoice_id
+      and followup_claim_token = p_claim_token
+      and status = 'pending'
+      and current_stage = p_expected_stage
+    for update;
+    if not found then return false; end if;
+
+    insert into public.followups (
+        invoice_id, user_id, stage, email_subject, message_content,
+        channel, status, sent_at, provider_message_id
+    ) values (
+        p_invoice_id, target_user_id, p_expected_stage, p_email_subject, p_message_content,
+        p_channel, 'sent', now(), p_provider_message_id
+    );
+
+    update public.invoices
+    set current_stage = p_expected_stage + 1,
+        next_followup_date = case when p_expected_stage >= 5 then null else now() + interval '3 days' end,
+        auto_followup = p_expected_stage < 5,
+        followup_claim_token = null,
+        followup_claimed_at = null,
+        updated_at = now()
+    where id = p_invoice_id;
+
+    return true;
+end;
+$$;
+
+revoke all on function public.record_followup_delivery(uuid, uuid, integer, text, text, text, text) from public, anon, authenticated;
+grant execute on function public.record_followup_delivery(uuid, uuid, integer, text, text, text, text) to service_role;
 
 revoke all on public.users, public.clients, public.invoices, public.promises,
     public.followups, public.billing_orders, public.webhook_events from anon;

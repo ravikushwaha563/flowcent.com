@@ -404,6 +404,7 @@ export default function InvoiceDetailPage({ params }: { params: PageParams }) {
                 isOpen={isExcuseModalOpen} 
                 onClose={() => setIsExcuseModalOpen(false)} 
                 invoiceContext={invoice} 
+                onAnalyzed={() => fetchData(id)}
             />
             {/* Promise History */}
             <div className="glass-card p-6 space-y-4">

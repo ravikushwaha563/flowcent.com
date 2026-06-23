@@ -102,7 +102,7 @@ const POSTS: Record<string, {
             '## Step 2: Enable auto follow-up on an invoice',
             'When you create or edit an invoice on Pro, toggle "Auto Follow-up" on. Flowcent schedules the first stage after the due date and later stages at three-day intervals, all from your connected Gmail.',
             '## What the client receives',
-            'From their perspective, they receive a regular, professional email from your Gmail address. There\'s no indication it was sent automatically. The email uses your name, references the invoice details, and is contextually appropriate for the stage.',
+            'From their perspective, they receive a professional email from your Gmail address. The email uses your name, references the invoice details, and may include a small Flowcent attribution in the footer.',
             '## Why this matters',
             'Sending from your connected Gmail keeps the sender identity familiar to the client. Flowcent does not claim a guaranteed improvement in open or response rates.',
             '## Privacy and security',
@@ -124,7 +124,7 @@ const POSTS: Record<string, {
             '## How to improve a low score',
             'A written commitment can make follow-up clearer. If a client says "will pay by Friday", paste the reply into Flowcent and link it to the invoice. The system can extract the date for review and keep the commitment with the payment history.',
             '## The portfolio view',
-            'On your Flowcent dashboard, you can see all your invoices ranked by Payment Intent Score. This gives you an instant triage view of where to focus: high-score invoices run automatically, low-score ones need your attention.',
+            'Flowcent shows a Payment Intent Score on each invoice. Use it as one triage signal alongside the due date, client communication, disputes, and your own judgment.',
         ],
     },
     // Legacy slugs (backward compatibility)
@@ -277,8 +277,8 @@ export default function BlogPostPage() {
                         <p className="text-white/45 text-sm mb-6 max-w-sm mx-auto">
                             Build a more consistent payment collection workflow with Flowcent.
                         </p>
-                        <Link href="/signup">
-                            <button className="btn-primary px-8 py-3">Get started free →</button>
+                        <Link href="/signup" className="btn-primary px-8 py-3 inline-flex">
+                            Get started free →
                         </Link>
                         <p className="text-xs text-white/25 mt-3">No credit card required · Free forever plan</p>
                     </div>

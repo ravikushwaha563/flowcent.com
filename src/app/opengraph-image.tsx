@@ -63,9 +63,9 @@ export default async function Image() {
                     letterSpacing: '-1.5px', marginBottom: 20,
                     color: 'white', maxWidth: 700,
                 }}>
-                    Stop chasing payments.{' '}
+                    Track every invoice.{' '}
                     <span style={{ background: 'linear-gradient(90deg, #6b96ff, #a78bfa)', WebkitBackgroundClip: 'text', color: 'transparent' }}>
-                        Get paid automatically.
+                        Follow up consistently.
                     </span>
                 </div>
 

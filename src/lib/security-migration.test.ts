@@ -17,6 +17,19 @@ describe('database security migration', () => {
         );
     });
 
+    it('keeps follow-up worker claims and delivery recording service-role only', () => {
+        expect(migration).toContain(
+            'revoke all on function public.claim_due_followup_invoices(integer) from public, anon, authenticated;',
+        );
+        expect(migration).toContain(
+            'grant execute on function public.claim_due_followup_invoices(integer) to service_role;',
+        );
+        expect(migration).toContain(
+            'revoke all on function public.record_followup_delivery(uuid, uuid, integer, text, text, text, text) from public, anon, authenticated;',
+        );
+        expect(migration).toContain('for update of i skip locked');
+    });
+
     it('does not grant authenticated users direct access to sensitive profile columns', () => {
         const profileUpdateGrant = migration.match(/grant update \(([^)]+)\)\s+on public\.users to authenticated;/)?.[1] || '';
         expect(profileUpdateGrant).toContain('name');

@@ -4,6 +4,8 @@ import { requireUser } from '@/lib/auth/server';
 import { requireServerEnv, serverEnv } from '@/lib/env/server';
 import { z } from 'zod';
 import { consumeAiAnalysis } from '@/lib/usage';
+import { createAdminSupabaseClient } from '@/lib/supabase/admin';
+import { createHash } from 'node:crypto';
 
 const requestSchema = z.object({
     excuse: z.string().trim().min(3).max(10_000),
@@ -15,6 +17,9 @@ const analysisSchema = z.object({
     intent_category: z.enum(['Specific Commitment', 'Process Delay', 'Cashflow Constraint', 'Invoice Dispute', 'Vague Commitment', 'Other']),
     analysis: z.string().min(1).max(2_000),
     suggested_response: z.string().min(1).max(5_000),
+    promise_text: z.string().min(1).max(1_000),
+    promise_type: z.enum(['date_commitment', 'partial_payment', 'excuse', 'dispute', 'will_pay', 'other']),
+    promised_date: z.string().date().nullable(),
 });
 
 export async function POST(req: NextRequest) {
@@ -64,7 +69,10 @@ export async function POST(req: NextRequest) {
                 "credibility_signal": integer (0 to 100; higher means the message contains more specific dates, amounts, owners, or verifiable next steps),
                 "intent_category": one of "Specific Commitment", "Process Delay", "Cashflow Constraint", "Invoice Dispute", "Vague Commitment", "Other",
                 "analysis": string (A concise, objective 2-3 sentence analysis grounded only in the message; identify missing details and avoid asserting deception),
-                "suggested_response": string (A professional, firm, polite response asking for a concrete payment date or clarification)
+                "suggested_response": string (A professional, firm, polite response asking for a concrete payment date or clarification),
+                "promise_text": string (A concise close paraphrase of the payment commitment, dispute, delay reason, or other relevant statement),
+                "promise_type": one of "date_commitment", "partial_payment", "excuse", "dispute", "will_pay", "other",
+                "promised_date": "YYYY-MM-DD" only when the client explicitly states a date that can be resolved from the message, otherwise null
             }
         `;
 
@@ -74,7 +82,39 @@ export async function POST(req: NextRequest) {
         // Ensure the response is parsed as JSON
         const parsedAnalysis = analysisSchema.parse(JSON.parse(responseText));
 
-        return NextResponse.json(parsedAnalysis);
+        let savedPromise = null;
+        if (invoiceId) {
+            const sourceId = `manual-analysis:${createHash('sha256').update(`${invoiceId}\0${excuse}`).digest('hex')}`;
+            const admin = createAdminSupabaseClient();
+            const { data: existingPromise, error: existingPromiseError } = await admin
+                .from('promises')
+                .select('id, promise_text, promise_type, promised_date, fulfilled, created_at')
+                .eq('invoice_id', invoiceId)
+                .eq('email_id', sourceId)
+                .maybeSingle();
+            if (existingPromiseError) throw existingPromiseError;
+
+            if (existingPromise) {
+                savedPromise = existingPromise;
+            } else {
+                const { data, error } = await admin
+                    .from('promises')
+                    .insert({
+                        invoice_id: invoiceId,
+                        promise_text: parsedAnalysis.promise_text,
+                        promise_type: parsedAnalysis.promise_type,
+                        promised_date: parsedAnalysis.promised_date,
+                        fulfilled: false,
+                        email_id: sourceId,
+                    })
+                    .select('id, promise_text, promise_type, promised_date, fulfilled, created_at')
+                    .single();
+                if (error) throw error;
+                savedPromise = data;
+            }
+        }
+
+        return NextResponse.json({ ...parsedAnalysis, savedPromise });
 
     } catch (error: unknown) {
         console.error('AI Analysis error:', error);

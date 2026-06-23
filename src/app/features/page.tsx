@@ -11,7 +11,7 @@ const CATEGORIES = [
         icon: '📄',
         label: 'Invoice Management',
         color: '#6b96ff',
-        tagline: 'Create, track, and get paid without the spreadsheet chaos',
+        tagline: 'Create and track invoices without spreadsheet chaos',
         desc: 'Smart invoice creation, auto overdue detection, multi-currency support, and PDF export. Every invoice has a real-time status your whole workflow depends on.',
         count: 4,
         features: ['Smart Invoice Tracking', 'Multi-Currency (INR/USD/EUR/GBP)', 'Auto Overdue Detection', 'PDF Invoice Export'],
@@ -35,10 +35,10 @@ const CATEGORIES = [
         icon: '👥',
         label: 'Client Intelligence',
         color: '#34d399',
-        tagline: 'Know every client\'s payment personality before you chase them',
-        desc: 'Full client profiles, payment risk scoring, promise & excuse logging with timelines, and an analytics dashboard that shows your payment health at a glance.',
+        tagline: 'Review client payment records before following up',
+        desc: 'Client records, advisory payment reliability analysis, promise and excuse timelines, and collection analytics keep follow-up context together.',
         count: 4,
-        features: ['Client Profiles with Risk Score', 'Promise & Excuse Tracker', 'Collection Analytics Dashboard', 'Client Payment History'],
+        features: ['Client Records with Reliability Signals', 'Promise & Excuse Tracker', 'Collection Analytics Dashboard', 'Invoice History'],
         image: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=700&q=75',
         imageAlt: 'Business professionals reviewing client intelligence data',
     },
@@ -57,10 +57,10 @@ const CATEGORIES = [
 ];
 
 const STATS = [
-    { v: '12', l: 'Total Features', color: '#6b96ff' },
-    { v: '4', l: 'Categories', color: '#a78bfa' },
-    { v: '₹0', l: 'To Start', color: '#34d399' },
-    { v: '5 min', l: 'Setup Time', color: '#fbbf24' },
+    { v: '4', l: 'Categories', color: '#6b96ff' },
+    { v: '4', l: 'Currencies', color: '#a78bfa' },
+    { v: '5', l: 'Follow-up stages', color: '#34d399' },
+    { v: '₹0', l: 'To start', color: '#fbbf24' },
 ];
 
 /* ── Lightweight client-side reveal hook ─────────────────────────────────── */
@@ -109,11 +109,11 @@ export default function FeaturesIndexPage() {
                                 All Features
                             </span>
                             <h1 className="text-5xl sm:text-6xl font-bold mb-6 tracking-tighter leading-[1.05]">
-                                12 features,<br />
+                                Core workflows,<br />
                                 <span className="grad-text tracking-tighter">4 categories</span>
                             </h1>
                             <p className="text-white/50 text-xl leading-relaxed mb-8">
-                                Every feature in Flowcent is built around one goal: reducing the time between sending an invoice and getting paid.
+                                Every workflow in Flowcent is designed to make invoice tracking and payment follow-up more consistent.
                             </p>
 
                             {/* Stat pills */}
@@ -128,11 +128,11 @@ export default function FeaturesIndexPage() {
                             </div>
 
                             <div className="flex flex-col sm:flex-row gap-3">
-                                <Link href="/signup">
-                                    <button className="btn-primary px-8 py-3.5">Get all features free →</button>
+                                <Link href="/signup" className="btn-primary px-8 py-3.5 text-center">
+                                    Start with the Free plan →
                                 </Link>
-                                <Link href="/pricing">
-                                    <button className="btn-outline px-8 py-3.5">View pricing</button>
+                                <Link href="/pricing" className="btn-outline px-8 py-3.5 text-center">
+                                    View pricing
                                 </Link>
                             </div>
                         </div>
@@ -151,8 +151,8 @@ export default function FeaturesIndexPage() {
                             <div className="absolute -bottom-4 -right-4 glass-card px-5 py-3 flex items-center gap-2.5 anim-bounce-in">
                                 <span className="text-lg">💸</span>
                                 <div>
-                                    <p className="text-xs font-bold text-white">Overdue collected</p>
-                                    <p className="text-sm font-bold text-green-400">₹2,40,000</p>
+                                    <p className="text-xs font-bold text-white">Illustrative overdue total</p>
+                                    <p className="text-sm font-bold text-amber-400">₹2,40,000</p>
                                 </div>
                             </div>
                         </div>
@@ -252,14 +252,14 @@ export default function FeaturesIndexPage() {
                         <div className="relative">
                             <p className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-4">Start collecting today</p>
                             <h2 className="text-3xl sm:text-4xl font-bold tracking-tighter text-white mb-4 leading-tight">
-                                All 12 features ·<br />
+                                Core workflows ·<br />
                                 <span className="grad-text tracking-tighter">free to start.</span>
                             </h2>
                             <p className="text-white/40 text-sm mb-8 max-w-sm mx-auto">
-                                No credit card. No catch. 5-invoice free plan forever — upgrade only when you need to.
+                                No credit card required. The Free plan includes up to 5 invoices per month; upgrade for higher limits and automation.
                             </p>
-                            <Link href="/signup">
-                                <button className="btn-primary px-8 py-3.5 text-sm font-semibold">Start free →</button>
+                            <Link href="/signup" className="btn-primary px-8 py-3.5 text-sm font-semibold inline-flex">
+                                Start free →
                             </Link>
                         </div>
                     </div>

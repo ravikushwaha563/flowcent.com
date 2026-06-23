@@ -196,8 +196,8 @@ export default function SolutionsPage() {
                             <p className="text-white/40 text-sm mb-8 max-w-sm mx-auto">
                                 Build a repeatable collection workflow for your profession. Start with the free plan.
                             </p>
-                            <Link href="/signup">
-                                <button className="btn-primary px-8 py-3.5 text-sm font-semibold">Get started free →</button>
+                            <Link href="/signup" className="btn-primary px-8 py-3.5 text-sm font-semibold inline-flex">
+                                Get started free →
                             </Link>
                         </div>
                     </div>

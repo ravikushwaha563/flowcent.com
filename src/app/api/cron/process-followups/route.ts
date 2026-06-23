@@ -30,29 +30,30 @@ async function processFollowups(req: NextRequest) {
         }
 
         const supabaseAdmin = createAdminSupabaseClient();
-        const now = new Date().toISOString();
+        // 2. Atomically claim due work so overlapping cron runs cannot send the same stage.
+        const { data: claims, error: claimError } = await supabaseAdmin.rpc('claim_due_followup_invoices', { p_limit: 50 });
+        if (claimError) {
+            console.error('Error claiming invoices for cron:', claimError);
+            return NextResponse.json({ error: 'Database error' }, { status: 500 });
+        }
 
-        // 2. Fetch overdue invoices that need follow-up
+        if (!claims || claims.length === 0) {
+            return NextResponse.json({ message: 'No invoices require follow-up at this time', processed: 0 });
+        }
+
+        const claimTokens = new Map<string, string>(claims.map((claim: { invoice_id: string; claim_token: string }) => [claim.invoice_id, claim.claim_token]));
         const { data: invoices, error: invoiceError } = await supabaseAdmin
             .from('invoices')
             .select(`
                 *,
-                clients(id, name, email, company, phone),
+                clients(id, name, email, company, phone, whatsapp_opt_in),
                 users(id, email, name, subscription_plan, plan_expires_at, gmail_connected, gmail_access_token, gmail_refresh_token, gmail_token_expiry)
             `)
-            .eq('status', 'pending')
-            .eq('auto_followup', true)
-            .lte('next_followup_date', now)
-            .lte('current_stage', 5)
-            .limit(50); // Batch process
+            .in('id', [...claimTokens.keys()]);
 
         if (invoiceError) {
             console.error('Error fetching invoices for cron:', invoiceError);
             return NextResponse.json({ error: 'Database error' }, { status: 500 });
-        }
-
-        if (!invoices || invoices.length === 0) {
-            return NextResponse.json({ message: 'No invoices require follow-up at this time', processed: 0 });
         }
 
         let processedCount = 0;
@@ -60,18 +61,19 @@ async function processFollowups(req: NextRequest) {
 
         // 3. Process each invoice
         for (const invoice of invoices) {
+            const claimToken = claimTokens.get(invoice.id);
+            if (!claimToken) continue;
             try {
                 const user = invoice.users;
                 const client = invoice.clients;
 
                 const paidPlanActive = user?.subscription_plan !== 'free'
                     && (!user?.plan_expires_at || new Date(user.plan_expires_at) > new Date());
-                if (!paidPlanActive) continue;
+                if (!paidPlanActive) throw new Error('Paid automation plan is no longer active');
 
                 // Ensure user has connected Gmail
                 if (!user || !user.gmail_connected || !user.gmail_refresh_token) {
-                    console.log(`Skipping invoice ${invoice.id}: User ${user?.id} has no Gmail connected`);
-                    continue; // Skip silently
+                    throw new Error(`User ${user?.id || 'unknown'} no longer has Gmail connected`);
                 }
 
                 // Check and refresh token if needed
@@ -87,7 +89,7 @@ async function processFollowups(req: NextRequest) {
                         accessToken = newTokens.access_token;
                         
                         // Update in DB
-                        await supabaseAdmin
+                        const { error: tokenUpdateError } = await supabaseAdmin
                             .from('users')
                             .update({
                                 gmail_access_token: encryptSecret(newTokens.access_token),
@@ -96,13 +98,14 @@ async function processFollowups(req: NextRequest) {
                                 updated_at: new Date().toISOString()
                             })
                             .eq('id', user.id);
+                        if (tokenUpdateError) throw tokenUpdateError;
                     } catch (refreshErr) {
                         console.error(`Failed to refresh token for user ${user.id}:`, refreshErr);
-                        continue; // Skip this invoice if token refresh fails
+                        throw refreshErr;
                     }
                 }
 
-                if (!accessToken) continue;
+                if (!accessToken) throw new Error('Gmail access token is unavailable');
 
                 // Generate Email Content based on stage
                 const stage = Math.min(Math.max(invoice.current_stage || 1, 1), 5) as 1 | 2 | 3 | 4 | 5;
@@ -155,36 +158,26 @@ async function processFollowups(req: NextRequest) {
                 }
                 // --- End WhatsApp ---
 
-                // Calculate next follow-up date (e.g., +3 days)
-                const isFinalStage = stage >= 5;
-                const nextDate = new Date();
-                nextDate.setDate(nextDate.getDate() + 3);
-
-                // Update invoice stage and next follow-up
-                await supabaseAdmin
-                    .from('invoices')
-                    .update({
-                        current_stage: stage + 1,
-                        next_followup_date: isFinalStage ? null : nextDate.toISOString(),
-                        auto_followup: !isFinalStage,
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq('id', invoice.id);
-
-                await supabaseAdmin.from('followups').insert({
-                    invoice_id: invoice.id,
-                    user_id: user.id,
-                    stage,
-                    email_subject: emailContent.subject,
-                    message_content: emailContent.html,
-                    channel: client.phone && client.whatsapp_opt_in && whatsappStatus === 'sent' ? 'email+whatsapp' : 'email',
-                    status: 'sent',
-                    sent_at: new Date().toISOString(),
+                const { data: recorded, error: recordError } = await supabaseAdmin.rpc('record_followup_delivery', {
+                    p_invoice_id: invoice.id,
+                    p_claim_token: claimToken,
+                    p_expected_stage: stage,
+                    p_email_subject: emailContent.subject,
+                    p_message_content: emailContent.html,
+                    p_channel: client.phone && client.whatsapp_opt_in && whatsappStatus === 'sent' ? 'email+whatsapp' : 'email',
+                    p_provider_message_id: emailResult.messageId || null,
                 });
+                if (recordError || !recorded) throw recordError || new Error('Follow-up claim was no longer valid');
 
                 processedCount++;
             } catch (processErr) {
                 console.error(`Error processing invoice ${invoice.id}:`, processErr);
+                const { error: releaseError } = await supabaseAdmin
+                    .from('invoices')
+                    .update({ followup_claim_token: null, followup_claimed_at: null })
+                    .eq('id', invoice.id)
+                    .eq('followup_claim_token', claimToken);
+                if (releaseError) console.error(`Failed to release invoice ${invoice.id} claim:`, releaseError);
                 errorCount++;
             }
         }
@@ -193,7 +186,7 @@ async function processFollowups(req: NextRequest) {
             message: 'Cron job completed successfully',
             processed: processedCount,
             errors: errorCount,
-            checked: invoices.length
+            checked: claims.length
         });
 
     } catch (err: unknown) {

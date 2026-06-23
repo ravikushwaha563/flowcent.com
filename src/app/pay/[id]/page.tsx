@@ -10,7 +10,7 @@ interface InvoiceData {
     due_date: string; status: string; created_at: string; paid_at?: string;
 }
 interface ClientData { id: string; name: string; email: string; company?: string; }
-interface FreelancerData { name: string; company: string; email: string; }
+interface FreelancerData { name: string; company: string; }
 
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string; icon: LucideIcon }> = {
     paid:    { label: 'Paid',    color: '#34d399', bg: 'rgba(52,211,153,0.08)', icon: CheckCircle2 },
@@ -320,7 +320,7 @@ export default function PublicPaymentPage({ params }: { params: Promise<{ id: st
                 {/* Footer */}
                 <div className="mt-8 text-center" style={{ animation: 'revealUp 0.6s cubic-bezier(0.22,1,0.36,1) 160ms both' }}>
                     <p className="text-[11px] text-white/15 font-medium">
-                        Powered by <span className="text-white/25 font-semibold">Flowcent</span> · AI-Powered Payment Collection
+                        Powered by <span className="text-white/25 font-semibold">Flowcent</span> · AI-assisted invoice follow-up
                     </p>
                 </div>
             </div>

@@ -8,11 +8,11 @@ import SiteFooter from '@/components/SiteFooter';
 // ── Hero ──────────────────────────────────────────────────────────────────────
 function Hero() {
   const TICKER_ITEMS = [
-    '⚡ Fully automated follow-ups',
+    '⚡ Pro automated follow-ups',
     'AI-assisted reply analysis',
     '📊 Payment Intent Score 0–100',
     '📧 Gmail Integration',
-    '🔒 No client awkwardness',
+    '🔒 Professional follow-up records',
     '🇮🇳 Built for Indian freelancers',
   ];
   return (
@@ -28,27 +28,23 @@ function Hero() {
       </div>
       <h1 className="text-[2.8rem] sm:text-6xl lg:text-[5rem] font-bold tracking-tighter leading-[1.04] mb-6"
         style={{ animation: 'revealUp 0.6s cubic-bezier(0.22,1,0.36,1) 80ms both' }}>
-        Stop chasing payments.<br />
-        <span className="grad-text shimmer-text tracking-tighter">Get paid automatically.</span>
+        Spend less time chasing.<br />
+        <span className="grad-text shimmer-text tracking-tighter">Follow up with confidence.</span>
       </h1>
       <p className="text-white/45 text-lg sm:text-xl max-w-2xl mx-auto mb-10 leading-relaxed"
         style={{ animation: 'revealUp 0.6s cubic-bezier(0.22,1,0.36,1) 160ms both' }}>
-        Flowcent tracks every invoice, reads client excuses with AI, and sends the perfect follow-up email
-        — so you focus on your work, not chasing money.
+        Flowcent tracks invoices, reviews payment replies with AI, and sends staged follow-ups from your Gmail
+        — so you can stay professional without losing sight of overdue work.
       </p>
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10"
         style={{ animation: 'revealUp 0.6s cubic-bezier(0.22,1,0.36,1) 240ms both' }}>
-        <Link href="/signup">
-          <button className="btn-primary px-8 py-3.5 text-base flex items-center gap-2">
-            Start for free
-            <span className="text-white/50 text-sm font-normal">· no credit card</span>
-          </button>
+        <Link href="/signup" className="btn-primary px-8 py-3.5 text-base flex items-center gap-2">
+          Start for free
+          <span className="text-white/50 text-sm font-normal">· no credit card</span>
         </Link>
-        <a href="#how">
-          <button className="btn-outline px-8 py-3.5 text-base flex items-center gap-2">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            See how it works
-          </button>
+        <a href="#how" className="btn-outline px-8 py-3.5 text-base flex items-center gap-2">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M8 4l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          See how it works
         </a>
       </div>
 
@@ -138,17 +134,17 @@ function Features() {
     // Invoice Management
     { icon: '📄', title: 'Smart Invoice Tracking', desc: 'Create invoices, assign to clients, and track real-time payment status — pending, overdue, paid.', color: 'rgba(95,135,255,0.12)', border: 'rgba(95,135,255,0.2)', tag: 'Invoicing' },
     { icon: '💱', title: 'Multi-Currency Support', desc: 'Bill in INR, USD, EUR, or GBP. Flowcent auto-formats currency for each invoice.', color: 'rgba(95,135,255,0.08)', border: 'rgba(95,135,255,0.15)', tag: 'Invoicing' },
-    { icon: '⏰', title: 'Automatic Overdue Detection', desc: 'The moment a due date passes, Flowcent flags the invoice and begins the follow-up sequence.', color: 'rgba(248,113,113,0.1)', border: 'rgba(248,113,113,0.18)', tag: 'Invoicing' },
+    { icon: '⏰', title: 'Automatic Overdue Detection', desc: 'When a due date passes, Flowcent flags the invoice. Enabled Pro automations can send the next scheduled follow-up.', color: 'rgba(248,113,113,0.1)', border: 'rgba(248,113,113,0.18)', tag: 'Invoicing' },
     // AI & Automation
     { icon: '🤖', title: 'AI Reply Analysis', desc: 'Paste a payment reply to identify specific commitments, record promises, and draft a professional response.', color: 'rgba(124,58,237,0.12)', border: 'rgba(124,58,237,0.22)', tag: 'AI' },
     { icon: '✉️', title: '5-Stage Auto Follow-ups', desc: 'Friendly Reminder → Follow-up → 2nd Follow-up → Urgent → Final Notice. Sent from your Gmail.', color: 'rgba(6,182,212,0.12)', border: 'rgba(6,182,212,0.2)', tag: 'Automation' },
-    { icon: '📊', title: 'Payment Intent Score', desc: 'AI-powered 0–100 score per invoice: based on overdue days, client history, and follow-up stage.', color: 'rgba(52,211,153,0.12)', border: 'rgba(52,211,153,0.2)', tag: 'AI' },
-    { icon: '⚡', title: 'One-Click Automation Run', desc: 'Manually trigger the automation engine to process all overdue invoices in one click.', color: 'rgba(251,191,36,0.1)', border: 'rgba(251,191,36,0.2)', tag: 'Automation' },
+    { icon: '📊', title: 'Payment Intent Score', desc: 'A deterministic 0–100 follow-up priority signal based on overdue days, client history, and follow-up stage.', color: 'rgba(52,211,153,0.12)', border: 'rgba(52,211,153,0.2)', tag: 'Analytics' },
+    { icon: '🔗', title: 'Secure Payment Links', desc: 'Share an unguessable invoice link with INR checkout through Razorpay or supported international currencies through Stripe.', color: 'rgba(251,191,36,0.1)', border: 'rgba(251,191,36,0.2)', tag: 'Integration' },
     { icon: '📧', title: 'Gmail Integration', desc: 'OAuth-connected Gmail sends all follow-up emails from your personal account — not a generic address.', color: 'rgba(248,113,113,0.1)', border: 'rgba(248,113,113,0.18)', tag: 'Integration' },
     // Client Intelligence
-    { icon: '👥', title: 'Client Management', desc: 'Full client profiles — name, email, company, payment history, risk score, and all associated invoices.', color: 'rgba(95,135,255,0.1)', border: 'rgba(95,135,255,0.18)', tag: 'Clients' },
-    { icon: '📝', title: 'Promise & Excuse Tracker', desc: 'Every commitment a client makes is logged with date, type (promise/excuse/dispute), and fulfillment status.', color: 'rgba(124,58,237,0.1)', border: 'rgba(124,58,237,0.18)', tag: 'Clients' },
-    { icon: '🏆', title: 'Client Risk Scoring', desc: 'Clients get payment reliability scores based on historical invoices — so you know who to trust.', color: 'rgba(248,113,113,0.1)', border: 'rgba(248,113,113,0.2)', tag: 'AI' },
+    { icon: '👥', title: 'Client Management', desc: 'Keep contact details, company information, payment settings, and reliability signals organized per client.', color: 'rgba(95,135,255,0.1)', border: 'rgba(95,135,255,0.18)', tag: 'Clients' },
+    { icon: '📝', title: 'Promise & Excuse Tracker', desc: 'Invoice-linked AI analysis logs the relevant promise, excuse, or dispute with its date and fulfillment status.', color: 'rgba(124,58,237,0.1)', border: 'rgba(124,58,237,0.18)', tag: 'Clients' },
+    { icon: '🏆', title: 'Payment Reliability Review', desc: 'Review invoice history and recorded commitments as an advisory signal for follow-up prioritization.', color: 'rgba(248,113,113,0.1)', border: 'rgba(248,113,113,0.2)', tag: 'AI' },
     // Analytics
     { icon: '📈', title: 'Collection Analytics Dashboard', desc: 'Visual breakdown of total invoices, pending, overdue, paid, avg payment delay, and collection rate.', color: 'rgba(52,211,153,0.1)', border: 'rgba(52,211,153,0.18)', tag: 'Analytics' },
   ];
@@ -168,9 +164,9 @@ function Features() {
         <div className="text-center mb-16">
           <span className="text-xs font-semibold tracking-[0.2em] text-blue-400 uppercase mb-4 block">All Features</span>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tighter mb-4">
-            Everything you need to<br /><span className="grad-text tracking-tighter">get paid on time</span>
+            Everything you need for<br /><span className="grad-text tracking-tighter">consistent follow-up</span>
           </h2>
-          <p className="text-white/40 max-w-lg mx-auto text-lg">Built for Indian freelancers and agencies tired of chasing payments. Every feature ships in the free plan.</p>
+          <p className="text-white/40 max-w-lg mx-auto text-lg">Built for Indian freelancers and agencies. Start free, then add higher limits and automation when you need them.</p>
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -267,10 +263,10 @@ function Solutions() {
 // ── How It Works ───────────────────────────────────────────────────────────────
 function HowItWorks() {
   const steps = [
-    { num: '01', icon: '👤', title: 'Add your clients', desc: 'Import or manually add clients. Flowcent builds a payment profile for each one automatically.' },
-    { num: '02', icon: '📄', title: 'Create an invoice', desc: 'Create an invoice in seconds. Enable auto-follow-ups and Flowcent does the rest from day one.' },
+    { num: '01', icon: '👤', title: 'Add your clients', desc: 'Add each client with their contact and company details, then keep their payment records organized.' },
+    { num: '02', icon: '📄', title: 'Create an invoice', desc: 'Create an invoice, choose its currency and due date, and enable Pro auto-follow-ups when appropriate.' },
     { num: '03', icon: '🤖', title: 'Review payment replies', desc: 'Paste a client reply to identify commitments and draft a professional response for review.' },
-    { num: '04', icon: '💰', title: 'Get paid, automatically', desc: 'Staged emails remind clients at the right time, with the right tone. You get paid.' },
+    { num: '04', icon: '💰', title: 'Keep collection moving', desc: 'Enabled staged emails send with deliberate timing while you retain control over each invoice.' },
   ];
   return (
     <section id="how" className="relative z-10 py-24 px-6">
@@ -306,7 +302,7 @@ function Testimonials() {
     { name: 'Gmail follow-up', role: 'Illustrative workflow', text: 'The reminder is sent from the connected Gmail account, preserving the sender identity and client relationship.', initials: '03', grad: 'from-emerald-500 to-teal-600' },
     { name: 'Secure payment link', role: 'Illustrative workflow', text: 'The client opens an unguessable payment link and checks out through Razorpay or Stripe without seeing internal invoice IDs.', initials: '04', grad: 'from-amber-500 to-orange-600' },
     { name: 'Payment verification', role: 'Illustrative workflow', text: 'Flowcent verifies the provider signature and amount before marking the invoice paid.', initials: '05', grad: 'from-cyan-500 to-blue-600' },
-    { name: 'Client insight', role: 'Illustrative workflow', text: 'Invoice history, delays and logged promises remain together so future credit decisions have useful context.', initials: '06', grad: 'from-rose-500 to-red-600' },
+    { name: 'Client insight', role: 'Illustrative workflow', text: 'Invoice history, delays and logged promises remain together so follow-up decisions have useful context.', initials: '06', grad: 'from-rose-500 to-red-600' },
   ];
   return (
     <section id="testimonials" className="relative z-10 py-24 px-6">
@@ -342,7 +338,7 @@ function FAQ() {
   const faqs = [
     { q: 'Is Flowcent really free to start?', a: 'Yes! The Free plan is completely free — no credit card required. You get 5 invoices, manual follow-ups, Gmail integration, and 5 AI analyses per month. Upgrade anytime when you grow.' },
     { q: 'How does AI reply analysis work?', a: 'Paste a client reply into Flowcent. The configured AI provider identifies specific payment commitments and suggests a professional response. Invoice-linked analysis can also log extracted promises. AI output is advisory and should be verified.' },
-    { q: 'Will my clients know I\'m using Flowcent?', a: 'No. All emails are sent from your own Gmail account via OAuth. Your clients see your name and address — not Flowcent\'s.' },
+    { q: 'How do Flowcent emails appear to clients?', a: 'Follow-ups are sent from your connected Gmail account, so clients see your sender name and address. Templates may include a small Flowcent attribution in the footer.' },
     { q: 'Will Flowcent spam my clients with emails?', a: 'Absolutely not. The system is careful — it sends staged emails (Friendly → Firm → Urgent → Final) with deliberate multi-day gaps. You can disable automation per invoice anytime.' },
     { q: 'What Gmail access does Flowcent request?', a: 'Flowcent requests Gmail send access and your Google account email. It does not request inbox-read access. You can disconnect Gmail or revoke access from Google at any time.' },
     { q: 'Can I use Flowcent for USD or EUR invoices?', a: 'Yes! Flowcent supports INR, USD, EUR, and GBP. Multi-currency display is automatic — the format follows each invoice\'s currency setting.' },
@@ -398,11 +394,11 @@ function FinalCTA() {
               <h2 className="text-3xl sm:text-5xl font-bold tracking-tighter text-white mb-4">Ready to get paid faster?</h2>
               <p className="text-white/70 mb-10 text-lg max-w-md mx-auto">Create your first client and invoice, then choose exactly how and when Flowcent follows up.</p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Link href="/signup">
-                  <button className="bg-white text-[#3d61ff] font-bold px-8 py-3.5 rounded-xl text-sm hover:bg-white/90 transition-colors shadow-2xl hover:-translate-y-0.5" style={{ transition: 'transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease' }}>Start for free — no credit card →</button>
+                <Link href="/signup" className="bg-white text-[#3d61ff] font-bold px-8 py-3.5 rounded-xl text-sm hover:bg-white/90 transition-colors shadow-2xl hover:-translate-y-0.5" style={{ transition: 'transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease' }}>
+                  Start for free — no credit card →
                 </Link>
-                <Link href="/login">
-                  <button className="text-white/70 hover:text-white transition-colors text-sm underline underline-offset-4">Already have an account? Sign in</button>
+                <Link href="/login" className="text-white/70 hover:text-white transition-colors text-sm underline underline-offset-4">
+                  Already have an account? Sign in
                 </Link>
               </div>
             </div>

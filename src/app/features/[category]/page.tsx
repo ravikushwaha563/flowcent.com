@@ -28,7 +28,7 @@ const CATEGORIES: Record<string, {
         label: 'Invoice Management',
         color: '#6b96ff',
         icon: '📄',
-        tagline: 'Create, track and get paid — without the spreadsheet chaos',
+        tagline: 'Create and track invoices without spreadsheet chaos',
         heroImage: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=1200&q=80',
         heroImageAlt: 'Financial invoices and calculator organised on a desk',
         items: [
@@ -57,7 +57,7 @@ const CATEGORIES: Record<string, {
                 benefits: [
                     'Supports INR ₹, USD $, EUR €, and GBP £',
                     'Currency selection per invoice — works globally',
-                    'Dashboard totals shown in your primary currency',
+                    'Dashboard totals kept separate by invoice currency',
                     'Download a professional PDF with invoice and client details',
                 ],
             },
@@ -85,7 +85,7 @@ const CATEGORIES: Record<string, {
                 imageAlt: 'PDF document with professional invoice formatting',
                 benefits: [
                     'One-click PDF generation from any invoice',
-                    'Includes invoice number, client details, line items and totals',
+                    'Includes invoice number, client details, service summary and total',
                     'Branded with your business name and details',
                     'Roadmap feature — availability is not yet guaranteed',
                 ],
@@ -121,7 +121,7 @@ const CATEGORIES: Record<string, {
             {
                 icon: '✉️',
                 title: '5-Stage Automated Follow-ups',
-                tagline: 'Perfect tone, perfect timing — sent automatically from your Gmail',
+                tagline: 'Staged timing and editable templates from your Gmail',
                 desc: 'Flowcent sends staged follow-up emails from your own Gmail address. Each stage escalates professionally — from a gentle nudge to a firm final notice — with smart timing between each stage.',
                 image: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=800&q=80',
                 imageAlt: 'Email inbox with professional payment follow-up messages visible',
@@ -130,7 +130,7 @@ const CATEGORIES: Record<string, {
                     'Stages 2–5: progressively firmer follow-ups at 3-day intervals',
                     'All emails sent FROM YOUR real Gmail address, not a system address',
                     'Toggle auto follow-up ON or OFF per individual invoice at creation',
-                    'Manual "Run Now" button to trigger the current stage immediately',
+                    'Automation can be disabled per invoice whenever follow-up should pause',
                 ],
             },
             {
@@ -173,7 +173,7 @@ const CATEGORIES: Record<string, {
         label: 'Client Intelligence',
         color: '#34d399',
         icon: '👥',
-        tagline: 'Know every client\'s payment personality before you chase them',
+        tagline: 'Review client payment records before following up',
         heroImage: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=1200&q=80',
         heroImageAlt: 'Business professionals reviewing client information and data',
         items: [
@@ -187,7 +187,7 @@ const CATEGORIES: Record<string, {
                 benefits: [
                     'Client record: name, email, phone, company, and WhatsApp consent',
                     'Clients are linked to every invoice created for them',
-                    'Payment risk score shown on client card and profile',
+                    'Payment reliability signal shown on each client card',
                     'Create, edit, search, and safely delete eligible client records',
                     'Clients with invoice history are protected from deletion',
                 ],
@@ -202,7 +202,7 @@ const CATEGORIES: Record<string, {
                 benefits: [
                     'Score based on: payment delay history, overdue frequency, excuse count',
                     'Colour-coded risk badge on every client card (🟢 Low · 🟡 Medium · 🔴 High)',
-                    'Sort client list by risk score to prioritise your collections effort',
+                    'Review the reliability badge while planning follow-up priority',
                     'Analysis can be refreshed when you need an updated review',
                     'Use the output alongside contracts, disputes, and direct communication',
                 ],
@@ -216,7 +216,7 @@ const CATEGORIES: Record<string, {
                 imageAlt: 'Notebook and digital tracker showing client commitments logged',
                 benefits: [
                     '6 promise types: Date Commitment, Partial Payment, Excuse, Dispute, Will Pay, Other',
-                    'Exact quote from client email stored verbatim',
+                    'Concise quote or close paraphrase stored for operational review',
                     'Date logged + optional promised payment date fields',
                     'Fulfill/unfulfill toggle — mark when the promise was kept (or wasn\'t)',
                     'Full promise timeline on every invoice detail page',
@@ -227,17 +227,17 @@ const CATEGORIES: Record<string, {
                 icon: '📈',
                 title: 'Collection Analytics Dashboard',
                 tagline: 'Your payment health at a glance — every time you log in',
-                desc: 'The home dashboard shows your complete financial health snapshot — total invoices, pending amount, overdue amount, average payment delay, and a visual health breakdown bar.',
+                desc: 'The home dashboard shows invoice counts, currency-separated pending and overdue amounts, average payment delay, and collection activity.',
                 image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80',
                 imageAlt: 'Collection analytics dashboard showing payment health metrics',
                 benefits: [
                     'Total Invoices card: all-time count with paid/pending split',
                     'Pending Amount: total outstanding with invoice count',
                     '"Overdue" amount shown in red with days overdue breakdown',
-                    'Total Clients count with per-client average payment delay',
+                    'Total client count and average delay across paid invoices',
                     'Payment Health Bar: split % Paid / Pending / Overdue visually',
                     'Collection Rate %: what fraction of billed revenue is collected',
-                    'Data refreshes on every page load — always real-time',
+                    'Data refreshes from current invoice records on each page load',
                 ],
             },
         ],
@@ -295,7 +295,7 @@ const CATEGORIES: Record<string, {
                     'Triggered alongside configured automated follow-ups',
                     'Professional message templates with invoice details',
                     'Supports payment link inclusion in WhatsApp messages',
-                    'Opt-out respected — clients can DND at any time',
+                    'Messages are attempted only when WhatsApp consent is recorded for the client',
                 ],
             },
             {
@@ -395,8 +395,8 @@ export default async function FeatureCategoryPage({ params }: { params: Promise<
                                 <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3 leading-snug">{feature.title}</h2>
                                 <p className="text-lg font-medium mb-4" style={{ color: cat.color }}>{feature.tagline}</p>
                                 <p className="text-white/50 leading-relaxed mb-7">{feature.desc}</p>
-                                <Link href="/signup">
-                                    <button className="btn-primary text-sm px-7 py-3">Try this feature free →</button>
+                                <Link href="/signup" className="btn-primary text-sm px-7 py-3 inline-flex">
+                                    Explore the Free plan →
                                 </Link>
                             </div>
 
@@ -462,8 +462,8 @@ export default async function FeatureCategoryPage({ params }: { params: Promise<
                             </h2>
                             <p className="text-white/50 mb-8 max-w-md mx-auto">No credit card required for the Free plan. Upgrade anytime.</p>
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                                <Link href="/signup"><button className="btn-primary px-8 py-3.5">Get started free →</button></Link>
-                                <Link href="/features"><button className="btn-outline px-8 py-3.5">Back to all features</button></Link>
+                                <Link href="/signup" className="btn-primary px-8 py-3.5 text-center">Get started free →</Link>
+                                <Link href="/features" className="btn-outline px-8 py-3.5 text-center">Back to all features</Link>
                             </div>
                         </div>
                     </div>

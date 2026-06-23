@@ -25,11 +25,11 @@ export default function NotFound() {
                 </p>
 
                 <div className="flex items-center justify-center gap-3 flex-wrap">
-                    <Link href="/">
-                        <button className="btn-primary px-6 py-3 text-sm">← Back to home</button>
+                    <Link href="/" className="btn-primary px-6 py-3 text-sm">
+                        ← Back to home
                     </Link>
-                    <Link href="/dashboard">
-                        <button className="btn-outline px-6 py-3 text-sm">Go to Dashboard</button>
+                    <Link href="/dashboard" className="btn-outline px-6 py-3 text-sm">
+                        Go to Dashboard
                     </Link>
                 </div>
 

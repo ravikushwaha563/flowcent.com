@@ -5,7 +5,7 @@ import Image from 'next/image';
 
 // Announcement bar items (rotate)
 const ANNOUNCEMENTS = [
-    { text: '🎉 Flowcent v1.0 is live — Built for Indian freelancers', cta: 'Read more', href: '/blog/how-indian-freelancers-get-paid-faster' },
+    { text: 'Built for focused, professional invoice follow-up', cta: 'Read more', href: '/blog/how-indian-freelancers-get-paid-faster' },
     { text: 'New: AI-assisted payment reply analysis', cta: 'Try it', href: '/dashboard/intelligence' },
     { text: '💳 Secure Razorpay and Stripe payment links are available', cta: 'Explore', href: '/features/integrations' },
 ];
@@ -20,7 +20,7 @@ const NAV_FEATURES = [
                 )
             },
             {
-                label: 'Multi-Currency', desc: 'INR, USD, EUR, GBP and 20+ more', href: '/features', icon: (
+                label: 'Multi-Currency', desc: 'INR, USD, EUR and GBP', href: '/features', icon: (
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.2" /><path d="M5 7h4M7 5v4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" /></svg>
                 )
             },
@@ -55,7 +55,7 @@ const NAV_FEATURES = [
         group: 'Client Intelligence',
         items: [
             {
-                label: 'Client Profiles', desc: 'Full payment history & risk score', href: '/dashboard/clients', icon: (
+                label: 'Client Records', desc: 'Contact details and payment signals', href: '/dashboard/clients', icon: (
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="4.5" r="2" stroke="currentColor" strokeWidth="1.2" /><path d="M1.5 12c0-2 2-3.5 4.5-3.5s4.5 1.5 4.5 3.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" /></svg>
                 )
             },
@@ -236,16 +236,12 @@ export default function SiteNav({ activePage = '' }: { activePage?: string }) {
 
                     {/* CTAs */}
                     <div className="hidden lg:flex items-center gap-2 shrink-0">
-                        <Link href="/login">
-                            <button className="text-[13.5px] font-medium text-white/55 hover:text-white px-4 py-2 rounded-lg hover:bg-white/[0.05] transition-all">
-                                Sign in
-                            </button>
+                        <Link href="/login" className="text-[13.5px] font-medium text-white/55 hover:text-white px-4 py-2 rounded-lg hover:bg-white/[0.05] transition-all">
+                            Sign in
                         </Link>
-                        <Link href="/signup">
-                            <button className="btn-primary text-[13px] px-4 py-2 flex items-center gap-1.5">
-                                Get started
-                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6h7M6.5 3l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                            </button>
+                        <Link href="/signup" className="btn-primary text-[13px] px-4 py-2 flex items-center gap-1.5">
+                            Get started
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6h7M6.5 3l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                         </Link>
                     </div>
 
@@ -284,11 +280,11 @@ export default function SiteNav({ activePage = '' }: { activePage?: string }) {
                         ))}
                     </div>
                     <div className="px-5 pb-8 flex flex-col gap-3 pt-4 border-t border-white/[0.06] mt-2">
-                        <Link href="/login" onClick={() => setMenuOpen(false)}>
-                            <button className="btn-outline text-sm w-full py-3">Sign in</button>
+                        <Link href="/login" onClick={() => setMenuOpen(false)} className="btn-outline text-sm w-full py-3 text-center">
+                            Sign in
                         </Link>
-                        <Link href="/signup" onClick={() => setMenuOpen(false)}>
-                            <button className="btn-primary text-sm w-full py-3">Get started free →</button>
+                        <Link href="/signup" onClick={() => setMenuOpen(false)} className="btn-primary text-sm w-full py-3 text-center">
+                            Get started free →
                         </Link>
                     </div>
                 </div>
