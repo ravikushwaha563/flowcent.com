@@ -31,10 +31,10 @@ interface TrustAnalysis {
 }
 
 const EXCUSE_TYPES = [
-    { icon: <CalendarClock size={24} strokeWidth={1.5} />, title: 'Date Commitment', desc: '"Will pay by Friday" — tracked & scored high', risk: 'low', example: '"I will transfer by end of this week."' },
+    { icon: <CalendarClock size={24} strokeWidth={1.5} />, title: 'Date Commitment', desc: '"Will pay by Friday" — specific and reviewable', risk: 'low', example: '"I will transfer by end of this week."' },
     { icon: <Coins size={24} strokeWidth={1.5} />, title: 'Partial Payment', desc: '"Can I send half now?" — partial intent', risk: 'medium', example: '"Can I do ₹25,000 now and the rest next month?"' },
     { icon: <Building2 size={24} strokeWidth={1.5} />, title: 'Process Delay', desc: '"Our accounts team handles this" — request an owner and date', risk: 'medium', example: '"Please send to our finance department."' },
-    { icon: <CircleDashed size={24} strokeWidth={1.5} />, title: 'Vague Promise', desc: '"Will sort it out soon" — high risk', risk: 'high', example: '"We\'ll take care of it this week."' },
+    { icon: <CircleDashed size={24} strokeWidth={1.5} />, title: 'Vague Promise', desc: '"Will sort it out soon" — missing a firm date', risk: 'high', example: '"We\'ll take care of it this week."' },
     { icon: <Scale size={24} strokeWidth={1.5} />, title: 'Dispute', desc: '"Had feedback on the work" — very high risk', risk: 'critical', example: '"Actually, we had some issues with delivery."' },
     { icon: <Ghost size={24} strokeWidth={1.5} />, title: 'No Response', desc: 'No reply after reminders — review the next escalation step', risk: 'critical', example: '(No reply after 7+ days)' },
 ];
@@ -221,8 +221,9 @@ export default function IntelligencePage() {
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-white/35 uppercase tracking-widest">Client Reply or Message</label>
+                                <label htmlFor="intelligence-message" className="text-xs font-semibold text-white/35 uppercase tracking-widest">Client Reply or Message</label>
                                 <textarea
+                                    id="intelligence-message"
                                     rows={5}
                                     className="input-premium w-full resize-none text-sm"
                                     placeholder={`Paste the client's email or WhatsApp message here…\n\nExample: "Hi, I'll transfer the payment by Friday, the accounts team is processing it."`}
@@ -233,8 +234,9 @@ export default function IntelligencePage() {
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-white/35 uppercase tracking-widest">Invoice ID (optional)</label>
+                                <label htmlFor="intelligence-invoice" className="text-xs font-semibold text-white/35 uppercase tracking-widest">Invoice ID (optional)</label>
                                 <input
+                                    id="intelligence-invoice"
                                     className="input-premium"
                                     placeholder="Link to a specific invoice to log this to its timeline"
                                     value={invoiceId}

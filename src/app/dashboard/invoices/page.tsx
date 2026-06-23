@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/auth-context';
-import { FileText, Plus, X, Bot, Mail, Check, AlertTriangle, Pencil, Ban, RotateCcw } from 'lucide-react';
+import { FileText, Plus, X, Bot, Mail, Check, AlertTriangle, Pencil, Ban, RotateCcw, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import UpgradeModal from '@/components/dashboard/UpgradeModal';
 import { getErrorMessage } from '@/lib/errors';
@@ -143,6 +143,8 @@ export default function InvoicesPage() {
     const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
     const [statusLoading, setStatusLoading] = useState<string | null>(null);
     const [selectedCurrency, setSelectedCurrency] = useState('INR');
+    const [csvExportEnabled, setCsvExportEnabled] = useState(false);
+    const [exporting, setExporting] = useState(false);
 
     const calculateScore = async (invoiceId: string) => {
         setScoreLoading(invoiceId);
@@ -168,13 +170,15 @@ export default function InvoicesPage() {
 
     const fetchData = useCallback(async () => {
         try {
-            const [ir, cr] = await Promise.all([
+            const [ir, cr, br] = await Promise.all([
                 fetch('/api/invoices'),
                 fetch('/api/clients'),
+                fetch('/api/billing/status'),
             ]);
-            const [id, cd] = await Promise.all([ir.json(), cr.json()]);
+            const [id, cd, bd] = await Promise.all([ir.json(), cr.json(), br.json()]);
             setInvoices(id.invoices || []);
             setClients(cd.clients || []);
+            setCsvExportEnabled(Boolean(br.ok && bd.features?.csvExport));
         } finally { setLoading(false); }
     }, []);
 
@@ -271,6 +275,40 @@ export default function InvoicesPage() {
         setEditingInvoice(null);
     };
 
+    const exportCsv = async () => {
+        if (!csvExportEnabled) {
+            setUpgradeMessage('CSV export is available on Pro.');
+            setShowUpgrade(true);
+            return;
+        }
+        setExporting(true);
+        try {
+            const response = await fetch('/api/invoices/export');
+            if (!response.ok) {
+                const data = await response.json();
+                if (data.error === 'LIMIT_EXCEEDED') {
+                    setUpgradeMessage(data.message || 'CSV export is available on Pro.');
+                    setShowUpgrade(true);
+                    return;
+                }
+                throw new Error(data.error || 'Failed to export invoices');
+            }
+            const url = URL.createObjectURL(await response.blob());
+            const anchor = document.createElement('a');
+            anchor.href = url;
+            anchor.download = `flowcent-invoices-${new Date().toISOString().slice(0, 10)}.csv`;
+            document.body.appendChild(anchor);
+            anchor.click();
+            anchor.remove();
+            window.setTimeout(() => URL.revokeObjectURL(url), 0);
+            toast.success('Invoice CSV exported');
+        } catch (error: unknown) {
+            toast.error(getErrorMessage(error, 'Failed to export invoices'));
+        } finally {
+            setExporting(false);
+        }
+    };
+
     const getStatus = (status: string, dueDate: string) => {
         if (status === 'paid') return { label: '✓ Paid', cls: 'badge-paid' };
         if (status === 'cancelled') return { label: 'Cancelled', cls: 'bg-white/[0.06] text-white/45 border border-white/10' };
@@ -304,6 +342,7 @@ export default function InvoicesPage() {
                 isOpen={showUpgrade}
                 onClose={() => setShowUpgrade(false)}
                 message={upgradeMessage}
+                onSuccess={fetchData}
             />
 
             <div className="relative z-10 p-5 sm:p-7 max-w-7xl mx-auto space-y-6">
@@ -323,6 +362,10 @@ export default function InvoicesPage() {
                         <p className="text-sm text-white/35 mt-1">{invoices.length} total · {fmt(totalPending, selectedCurrency)} outstanding</p>
                     </div>
                     <div className="flex gap-3">
+                        <button type="button" onClick={exportCsv} disabled={exporting || invoices.length === 0}
+                            className="btn-outline text-xs px-4 py-2 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2">
+                            <Download size={14} /> {exporting ? 'Exporting...' : 'Export CSV'}
+                        </button>
                         <button
                             onClick={showForm ? closeForm : startCreate}
                             disabled={clients.length === 0}

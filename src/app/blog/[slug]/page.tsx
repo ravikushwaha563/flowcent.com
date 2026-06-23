@@ -46,7 +46,7 @@ const POSTS: Record<string, {
             '## How the AI works',
             'Flowcent uses a configured AI provider with a structured prompt for payment-conversation analysis. It can identify dates or commitments, flag vague or disputed language, produce a heuristic signal, and save invoice-linked promises when that workflow is used.',
             '## The compounding benefit',
-            'Client trust analysis can use invoice history, payment delays, and logged promises as context. Treat its output as decision support rather than a guarantee that a client will pay.',
+            'Payment reliability analysis can use invoice history, payment delays, and logged promises as context. Treat its output as decision support rather than a guarantee that a client will pay.',
         ],
     },
     'invoice-templates-for-indian-freelancers': {
@@ -90,11 +90,11 @@ const POSTS: Record<string, {
         ],
     },
     'gmail-automation-for-freelancers': {
-        title: 'Gmail Automation for Freelancers: Send Follow-ups You\'ll Never Have to Write',
+        title: 'Gmail Automation for Freelancers: Use Consistent Follow-up Templates',
         date: 'Feb 10, 2026', readTime: '4 min read', category: 'Automation', categoryColor: '#f87171',
         author: 'Flowcent Team', authorRole: 'Product and Collections',
         image: 'https://images.unsplash.com/photo-1596526131083-e8c633c948d2?auto=format&fit=crop&w=1200&q=80',
-        excerpt: 'How to set up Gmail OAuth with Flowcent so all your payment follow-ups go out from your real email automatically.',
+        excerpt: 'How to connect Gmail so enabled payment follow-ups can be sent from your own address.',
         content: [
             'The most powerful thing about Flowcent\'s Gmail integration is that follow-up emails go out from your real Gmail address — not from a generic "no-reply" system. Clients think you\'re personally following up. You\'re not.',
             '## Step 1: Connect your Gmail',
@@ -154,7 +154,7 @@ const POSTS: Record<string, {
         content: [
             'A common collections problem is uncertainty: an overdue invoice may have a clear payment commitment, a genuine dispute, or only a vague reply. Keeping those signals with the invoice makes follow-up more consistent.',
             '## The 6 Types of Payment Responses',
-            '1. Date Commitment — "Will pay by Friday." (Most reliable). 2. Partial Payment — "Can I send half now?" (Second most reliable). 3. Process Excuse — "Our accounts team handles this." (Moderate risk). 4. Vague Promise — "Will sort it out this week." (High risk). 5. Dispute — "Actually, we had some feedback." (Very high risk). 6. Ghost — No response. (Highest risk).',
+            'Flowcent groups reply details into operational categories such as Date Commitment, Partial Payment, Process Delay, Vague Promise and Dispute. These categories help organize follow-up; they do not determine whether a client is trustworthy or predict payment.',
             '## The Payment Intent Score',
             'The analyzer can return a 0–100 heuristic signal based on specificity. Use it as a prompt for review, not as an automatic escalation rule or proof of intent.',
         ],

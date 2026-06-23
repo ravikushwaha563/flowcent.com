@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     description: "AI-assisted invoice tracking, payment links, and follow-up automation for Indian freelancers and small agencies.",
     images: [
       {
-        url: "/og-image.png",
+        url: "/opengraph-image",
         width: 1200,
         height: 630,
         alt: "Flowcent – AI Payment Intelligence Platform",
@@ -32,8 +32,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Flowcent – Consistent Invoice Follow-up",
     description: "Track invoices, review replies with AI assistance, and send staged follow-ups from your Gmail account.",
-    images: ["/og-image.png"],
-    creator: "@flowcentin",
+    images: ["/opengraph-image"],
   },
   robots: {
     index: true,
@@ -80,7 +79,6 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark" style={{ colorScheme: "dark" }}>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://images.unsplash.com" />
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
       </head>

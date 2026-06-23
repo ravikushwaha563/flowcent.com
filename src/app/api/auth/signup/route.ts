@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
 
         if (authError) {
             return NextResponse.json(
-                { error: authError.message },
+                { error: 'Unable to create account. Check your details or sign in if the account already exists.' },
                 { status: 400 }
             );
         }

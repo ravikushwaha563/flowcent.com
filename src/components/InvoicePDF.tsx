@@ -4,9 +4,9 @@ import { Page, Text, View, Document, StyleSheet } from '@react-pdf/renderer';
 const styles = StyleSheet.create({
     page: { padding: 40, fontFamily: 'Helvetica', backgroundColor: '#ffffff', color: '#111827' },
     header: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 40, borderBottom: '1pt solid #e5e7eb', paddingBottom: 20 },
-    brand: { fontSize: 24, fontWeight: 'bold', color: '#111827', letterSpacing: -0.5 },
+    brand: { fontSize: 24, fontWeight: 'bold', color: '#111827', letterSpacing: 0 },
     brandSub: { fontSize: 10, color: '#6b7280', marginTop: 4 },
-    invoiceTitle: { fontSize: 28, fontWeight: 'bold', color: '#6366f1', textAlign: 'right', letterSpacing: -0.5 },
+    invoiceTitle: { fontSize: 28, fontWeight: 'bold', color: '#6366f1', textAlign: 'right', letterSpacing: 0 },
     invoiceInfo: { fontSize: 10, color: '#6b7280', textAlign: 'right', marginTop: 4 },
     section: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 40 },
     billTo: { width: '50%' },

@@ -5,6 +5,7 @@ import { serverEnv } from '@/lib/env/server';
 import { z } from 'zod';
 import { consumeAiAnalysis } from '@/lib/usage';
 import { createAdminSupabaseClient } from '@/lib/supabase/admin';
+import { consumeRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 const analyzeRequestSchema = z.object({
     invoiceId: z.string().uuid(),
@@ -21,6 +22,9 @@ export async function POST(req: NextRequest) {
     try {
         const { supabase, user: authUser, response } = await requireUser();
         if (!authUser) return response!;
+        if (!await consumeRateLimit(createAdminSupabaseClient(), 'ai-invoice-analysis', authUser.id, 20, 300)) {
+            return rateLimitResponse(300);
+        }
 
         const parsedRequest = analyzeRequestSchema.safeParse(await req.json());
         if (!parsedRequest.success) return NextResponse.json({ error: 'Valid invoice and email content are required' }, { status: 400 });

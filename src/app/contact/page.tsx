@@ -15,8 +15,8 @@ const TOPICS = [
 const STATS = [
     { value: 'Email', label: 'Primary channel' },
     { value: 'WhatsApp', label: 'Direct channel' },
-    { value: 'Mon–Sat', label: 'Support hours' },
-    { value: 'IST', label: 'Time zone' },
+    { value: 'IST', label: 'Primary time zone' },
+    { value: 'Draft', label: 'Form opens email' },
 ];
 
 export default function ContactPage() {
@@ -97,7 +97,7 @@ export default function ContactPage() {
                                 <p className="text-sm font-semibold text-white group-hover:text-blue-300 transition-colors truncate">
                                     theravission@gmail.com
                                 </p>
-                                <p className="text-xs text-white/35 mt-0.5">Replies within 24 hours · Mon–Sat</p>
+                                <p className="text-xs text-white/35 mt-0.5">Response time depends on request volume</p>
                             </div>
                             <span className="text-white/20 group-hover:text-white/50 transition-colors text-lg shrink-0">›</span>
                         </a>
@@ -116,7 +116,7 @@ export default function ContactPage() {
                                 <p className="text-sm font-semibold text-white group-hover:text-green-300 transition-colors">
                                     +91 98301 52769
                                 </p>
-                                <p className="text-xs text-white/35 mt-0.5">Fastest response · 10 am – 7 pm IST</p>
+                                <p className="text-xs text-white/35 mt-0.5">Direct message channel · availability varies</p>
                             </div>
                             <span className="text-white/20 group-hover:text-white/50 transition-colors text-lg shrink-0">›</span>
                         </a>
@@ -193,16 +193,16 @@ export default function ContactPage() {
                                     <form onSubmit={handleSubmit} className="space-y-5">
                                         <div className="grid sm:grid-cols-2 gap-5">
                                             <div className="space-y-1.5">
-                                                <label className="text-[11px] font-semibold text-white/35 uppercase tracking-widest">Full Name</label>
-                                                <input type="text" required
+                                                <label htmlFor="contact-name" className="text-[11px] font-semibold text-white/35 uppercase tracking-widest">Full Name</label>
+                                                <input id="contact-name" type="text" required
                                                     placeholder="Your full name"
                                                     className="input-premium"
                                                     value={form.name}
                                                     onChange={e => setForm({ ...form, name: e.target.value })} />
                                             </div>
                                             <div className="space-y-1.5">
-                                                <label className="text-[11px] font-semibold text-white/35 uppercase tracking-widest">Work Email</label>
-                                                <input type="email" required
+                                                <label htmlFor="contact-email" className="text-[11px] font-semibold text-white/35 uppercase tracking-widest">Work Email</label>
+                                                <input id="contact-email" type="email" required
                                                     placeholder="you@company.com"
                                                     className="input-premium"
                                                     value={form.email}
@@ -211,8 +211,8 @@ export default function ContactPage() {
                                         </div>
 
                                         <div className="space-y-1.5">
-                                            <label className="text-[11px] font-semibold text-white/35 uppercase tracking-widest">Company / Freelance Name <span className="text-white/20 normal-case">(optional)</span></label>
-                                            <input type="text"
+                                            <label htmlFor="contact-company" className="text-[11px] font-semibold text-white/35 uppercase tracking-widest">Company / Freelance Name <span className="text-white/20 normal-case">(optional)</span></label>
+                                            <input id="contact-company" type="text"
                                                 placeholder="Acme Studio"
                                                 className="input-premium"
                                                 value={form.company}
@@ -220,11 +220,11 @@ export default function ContactPage() {
                                         </div>
 
                                         <div className="space-y-1.5">
-                                            <label className="text-[11px] font-semibold text-white/35 uppercase tracking-widest">Your Message</label>
-                                            <textarea required rows={6}
+                                            <label htmlFor="contact-message" className="text-[11px] font-semibold text-white/35 uppercase tracking-widest">Your Message</label>
+                                            <textarea id="contact-message" required rows={6}
                                                 placeholder={
                                                     activeTopic === 'support' ? 'Describe what happened and the steps to reproduce it...' :
-                                                        activeTopic === 'billing' ? 'Tell us about your billing issue or subscription question...' :
+                                                        activeTopic === 'billing' ? 'Tell us about your billing issue or plan question...' :
                                                             activeTopic === 'partnership' ? 'Tell us about your company and what kind of collaboration you have in mind...' :
                                                                 activeTopic === 'feedback' ? 'Describe the feature or improvement you\'d like to see...' :
                                                                     'Write your message here...'

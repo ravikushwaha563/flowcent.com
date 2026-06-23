@@ -40,8 +40,8 @@ export default function ForgotPasswordPage() {
             ) : (
                 <form onSubmit={submit} className="space-y-4">
                     <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-white/40 uppercase tracking-widest">Email</label>
-                        <input type="email" required value={email} onChange={event => setEmail(event.target.value)}
+                        <label htmlFor="forgot-email" className="text-xs font-semibold text-white/40 uppercase tracking-widest">Email</label>
+                        <input id="forgot-email" type="email" required value={email} onChange={event => setEmail(event.target.value)}
                             className="input-premium" placeholder="you@company.com" autoComplete="email" />
                     </div>
                     <button type="submit" disabled={loading} className="btn-primary w-full py-3 disabled:opacity-50">

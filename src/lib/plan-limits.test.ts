@@ -8,6 +8,8 @@ describe('plan limits', () => {
         expect(checkClientLimit('free', 3).upgradeRequired).toBe(true);
         expect(checkAiLimit('free', 5).allowed).toBe(false);
         expect(checkAutoFollowup('free').allowed).toBe(false);
+        expect(getPlanLimits('free').csvExport).toBe(false);
+        expect(getPlanLimits('free').advancedAnalytics).toBe(true);
     });
 
     it('represents paid-plan usage as unlimited', () => {
@@ -15,5 +17,6 @@ describe('plan limits', () => {
         expect(checkInvoiceLimit('pro', 1_000_000).allowed).toBe(true);
         expect(checkClientLimit('agency', 1_000_000).allowed).toBe(true);
         expect(checkAutoFollowup('agency').allowed).toBe(true);
+        expect(getPlanLimits('pro').csvExport).toBe(true);
     });
 });

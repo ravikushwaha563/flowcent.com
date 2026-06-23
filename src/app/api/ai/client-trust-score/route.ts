@@ -5,6 +5,7 @@ import { requireServerEnv, serverEnv } from '@/lib/env/server';
 import { z } from 'zod';
 import { consumeAiAnalysis } from '@/lib/usage';
 import { createAdminSupabaseClient } from '@/lib/supabase/admin';
+import { consumeRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 const requestSchema = z.object({ clientId: z.string().uuid() });
 const trustAnalysisSchema = z.object({
@@ -24,6 +25,9 @@ export async function POST(req: NextRequest) {
     try {
         const { supabase, user: authUser, response } = await requireUser();
         if (!authUser) return response!;
+        if (!await consumeRateLimit(createAdminSupabaseClient(), 'ai-client-reliability', authUser.id, 20, 300)) {
+            return rateLimitResponse(300);
+        }
 
         const parsedRequest = requestSchema.safeParse(await req.json());
         if (!parsedRequest.success) return NextResponse.json({ error: 'A valid client ID is required' }, { status: 400 });

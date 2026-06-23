@@ -22,8 +22,8 @@ export async function GET(
             .from('invoices')
             .select(`
                 id, invoice_number, amount, currency, due_date, status, created_at, paid_at,
-                clients ( id, name, email, company ),
-                users ( name, company_name, email )
+                clients ( name, email, company ),
+                users ( name, company_name )
             `)
             .eq('public_token', parsedToken.data)
             .single();

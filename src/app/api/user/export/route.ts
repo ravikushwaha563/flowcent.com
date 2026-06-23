@@ -5,7 +5,7 @@ export async function GET() {
     if (!user) return response!;
 
     const [profileResult, clientsResult, invoicesResult, promisesResult, followupsResult, billingResult] = await Promise.all([
-        supabase.from('users').select('id, email, name, company_name, subscription_plan, plan_started_at, plan_expires_at, created_at, updated_at').eq('id', user.id).single(),
+        supabase.from('users').select('id, email, name, company_name, gmail_connected, gmail_email, subscription_plan, plan_started_at, plan_expires_at, invoice_count_this_month, ai_usage_this_month, usage_reset_at, created_at, updated_at').eq('id', user.id).single(),
         supabase.from('clients').select('*').eq('user_id', user.id).order('created_at'),
         supabase.from('invoices').select('*').eq('user_id', user.id).order('created_at'),
         supabase.from('promises').select('*').order('created_at'),

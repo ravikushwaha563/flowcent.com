@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getStripe } from '@/lib/stripe';
 import { createAdminSupabaseClient } from '@/lib/supabase/admin';
 import { verifyStripePaymentSchema } from '@/lib/validations/domain';
+import { consumeRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
     try {
@@ -11,6 +12,9 @@ export async function POST(req: NextRequest) {
 
         const stripe = getStripe();
         const supabaseAdmin = createAdminSupabaseClient();
+        if (!await consumeRateLimit(supabaseAdmin, 'stripe-verify', publicToken, 20, 300)) {
+            return rateLimitResponse(300);
+        }
         const session = await stripe.checkout.sessions.retrieve(sessionId);
 
         if (session.payment_status !== 'paid') {
@@ -19,7 +23,7 @@ export async function POST(req: NextRequest) {
 
         const { data: targetInvoice } = await supabaseAdmin
             .from('invoices')
-            .select('id, status, stripe_session_id')
+            .select('id, amount, currency, status, stripe_session_id')
             .eq('public_token', publicToken)
             .eq('stripe_session_id', sessionId)
             .single();
@@ -27,7 +31,16 @@ export async function POST(req: NextRequest) {
         if (session.metadata?.invoice_id !== targetInvoice.id) {
             return NextResponse.json({ error: 'Stripe session does not belong to this invoice' }, { status: 400 });
         }
+        if (session.amount_total === null
+            || Math.round(Number(targetInvoice.amount) * 100) !== session.amount_total
+            || !session.currency
+            || targetInvoice.currency.toLowerCase() !== session.currency.toLowerCase()) {
+            return NextResponse.json({ error: 'Stripe amount or currency does not match the invoice' }, { status: 400 });
+        }
         if (targetInvoice.status === 'paid') return NextResponse.json({ success: true, alreadyProcessed: true });
+
+        const paymentIntentId = typeof session.payment_intent === 'string' ? session.payment_intent : null;
+        if (!paymentIntentId) return NextResponse.json({ error: 'Stripe payment intent is missing' }, { status: 400 });
 
         // Mark invoice as paid
         const now = new Date().toISOString();
@@ -36,7 +49,7 @@ export async function POST(req: NextRequest) {
             .update({
                 status: 'paid',
                 paid_at: now,
-                stripe_payment_id: session.payment_intent as string,
+                stripe_payment_id: paymentIntentId,
                 payment_intent_score: 100,
                 payment_gateway: 'stripe',
                 updated_at: now,

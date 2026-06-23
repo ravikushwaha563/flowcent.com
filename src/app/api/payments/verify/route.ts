@@ -4,6 +4,7 @@ import { requireServerEnv } from '@/lib/env/server';
 import { getRazorpay } from '@/lib/razorpay';
 import { verifyRazorpayPaymentSchema } from '@/lib/validations/domain';
 import { verifyRazorpaySignature } from '@/lib/payments/razorpay-signature';
+import { consumeRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
     try {
@@ -12,6 +13,9 @@ export async function POST(req: NextRequest) {
         const { razorpay_order_id, razorpay_payment_id, razorpay_signature, publicToken } = parsed.data;
 
         const supabaseAdmin = createAdminSupabaseClient();
+        if (!await consumeRateLimit(supabaseAdmin, 'razorpay-verify', publicToken, 20, 300)) {
+            return rateLimitResponse(300);
+        }
         if (!verifyRazorpaySignature({
             orderId: razorpay_order_id,
             paymentId: razorpay_payment_id,

@@ -31,6 +31,7 @@ for (const table of ['users', 'clients', 'invoices']) {
 for (const [rpc, body] of [
     ['activate_billing_order', { p_order_id: 'deployment-probe', p_payment_id: 'deployment-probe' }],
     ['claim_due_followup_invoices', { p_limit: 1 }],
+    ['consume_rate_limit', { p_key: '0'.repeat(64), p_limit: 1, p_window_seconds: 60 }],
     ['record_followup_delivery', {
         p_invoice_id: '00000000-0000-0000-0000-000000000000',
         p_claim_token: '00000000-0000-0000-0000-000000000000',

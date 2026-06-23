@@ -15,7 +15,7 @@ const NAV_FEATURES = [
         group: 'Invoice Management',
         items: [
             {
-                label: 'Smart Invoice Tracking', desc: 'Create, send & track with real-time status', href: '/features', icon: (
+                label: 'Smart Invoice Tracking', desc: 'Create and track current payment status', href: '/features', icon: (
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 1.5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-11z" stroke="currentColor" strokeWidth="1.2" /><path d="M4.5 4.5h5M4.5 6.5h5M4.5 8.5h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" /></svg>
                 )
             },

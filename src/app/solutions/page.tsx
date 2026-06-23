@@ -11,7 +11,7 @@ const SOLUTIONS = [
         icon: '💻',
         title: 'For Freelancers',
         tagline: 'Stop sending awkward payment chase messages',
-        desc: 'Built for solo developers, designers, and consultants who do great work but struggle to get paid on time. Flowcent automates the uncomfortable part.',
+        desc: 'Built for solo developers, designers, and consultants who need a repeatable invoice and follow-up workflow.',
         color: '#6b96ff',
         stat: { v: '5-stage', l: 'follow-up sequence' },
         image: 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&w=600&q=75',
@@ -22,7 +22,7 @@ const SOLUTIONS = [
         icon: '🏢',
         title: 'For Agencies',
         tagline: 'Scale your collections without scaling your team',
-        desc: 'Managing 10+ client invoices manually is impossible. Flowcent gives your agency a centralized collection engine — automated, professional, and consistent.',
+        desc: 'Managing many client invoices manually is difficult. Flowcent keeps invoice status, payment links and follow-up records in one workspace.',
         color: '#a78bfa',
         stat: { v: '1 view', l: 'for all client invoices' },
         image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=600&q=75',
@@ -32,8 +32,8 @@ const SOLUTIONS = [
         slug: 'designers',
         icon: '🎨',
         title: 'For Designers & Creatives',
-        tagline: 'Focus on creativity. Let AI handle the money.',
-        desc: 'Creatives are the worst at chasing payments — not because they don\'t care, but because it feels awkward. Flowcent removes that friction entirely.',
+        tagline: 'Focus on creativity. Keep payment follow-up organized.',
+        desc: 'Flowcent gives creative professionals a consistent place for invoices, client replies and staged reminders.',
         color: '#fbbf24',
         stat: { v: 'AI', l: 'reply analysis' },
         image: 'https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&w=600&q=75',
@@ -44,7 +44,7 @@ const SOLUTIONS = [
         icon: '👨‍💼',
         title: 'For Consultants',
         tagline: 'Professional follow-ups that protect your relationships',
-        desc: 'Consulting relationships are built on trust. Flowcent lets you follow up firmly without being aggressive — staged emails with just the right tone.',
+        desc: 'Consulting relationships benefit from clear communication. Flowcent provides editable staged templates and invoice-level control.',
         color: '#34d399',
         stat: { v: '5-stage', l: 'escalation system' },
         image: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=600&q=75',
@@ -55,9 +55,9 @@ const SOLUTIONS = [
         icon: '🛠️',
         title: 'For Developers',
         tagline: 'Stop hearing "will transfer this week" — automate it',
-        desc: 'Connect Gmail, create an invoice, enable automation — Flowcent handles the rest while you code.',
+        desc: 'Connect Gmail, create an invoice and optionally enable a controlled reminder sequence while you focus on delivery work.',
         color: '#6b96ff',
-        stat: { v: '5 min', l: 'setup time' },
+        stat: { v: '5-stage', l: 'optional sequence' },
         image: 'https://images.unsplash.com/photo-1593104547489-5cfb3839a3b5?auto=format&fit=crop&w=600&q=75',
         imageAlt: 'Developer coding on a dark-themed workstation',
     },
@@ -128,7 +128,7 @@ export default function SolutionsPage() {
                                 />
                             </div>
                             <div className="absolute -bottom-4 -left-4 glass-card px-5 py-3 anim-bounce-in">
-                                <p className="text-xs text-white/50">Trusted by</p>
+                                <p className="text-xs text-white/50">Designed for</p>
                                 <p className="text-sm font-bold text-white">Freelancers and small agencies</p>
                             </div>
                         </div>

@@ -33,15 +33,17 @@ export async function GET(req: NextRequest) {
         const gmailAddress = await getGmailAddress(tokens.access_token, tokens.refresh_token || undefined);
 
         const admin = createAdminSupabaseClient();
-        const { data: existingProfile } = await admin
+        const { data: existingProfile, error: profileError } = await admin
             .from('users')
             .select('gmail_refresh_token')
             .eq('id', user.id)
             .single();
+        if (profileError) throw profileError;
 
         const encryptedRefreshToken = tokens.refresh_token
             ? encryptSecret(tokens.refresh_token)
             : existingProfile?.gmail_refresh_token || null;
+        if (!encryptedRefreshToken) throw new Error('Google did not return a refresh token');
 
         const { error: updateError } = await admin
             .from('users')

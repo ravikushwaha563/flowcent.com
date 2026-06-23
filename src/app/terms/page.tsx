@@ -56,7 +56,7 @@ const SECTIONS = [
             },
             {
                 subtitle: 'Email Content',
-                text: 'You are solely responsible for the content and appropriateness of follow-up emails sent through Flowcent. Flowcent provides templates; you may customise them. Do not use the Service to send spam or unsolicited commercial email.',
+                text: 'You are responsible for selecting, enabling and reviewing follow-up stages used through Flowcent. Do not use the Service to send spam, harassment, threats or unsolicited commercial email.',
             },
         ],
     },
@@ -71,15 +71,15 @@ const SECTIONS = [
             },
             {
                 subtitle: 'Paid Plans',
-                text: 'The Pro plan is billed monthly or annually as selected. Prices and any applicable taxes are shown before checkout. Payments are processed by the displayed payment provider; Flowcent does not store full card or bank credentials on its servers.',
+                text: 'Pro access is purchased for the monthly or annual term selected at checkout. The checkout amount and currency are displayed before payment. Payments are processed by the displayed payment provider; Flowcent does not store full card or bank credentials on its servers.',
             },
             {
-                subtitle: 'Cancellation & Refunds',
-                text: 'You may cancel your subscription at any time. Your subscription remains active until the end of the current billing period. We do not offer pro-rata refunds for mid-period cancellations, except where required by Indian consumer law.',
+                subtitle: 'Expiry & Refunds',
+                text: 'The current product does not automatically renew a paid term. Pro access remains active until its displayed expiry date. Refund requests are reviewed under applicable law and the circumstances of the payment; contact theravission@gmail.com with the verified order details.',
             },
             {
                 subtitle: 'Plan Changes',
-                text: 'Upgrades take effect immediately. Downgrades take effect at the end of the current billing period.',
+                text: 'A verified upgrade takes effect after payment activation. When the paid term expires, the account returns to the then-current Free plan limits while existing records remain available.',
             },
         ],
     },
@@ -94,7 +94,7 @@ const SECTIONS = [
             },
             {
                 subtitle: 'Your Data',
-                text: 'You retain all ownership of your data (invoices, client information, emails). You grant Flowcent a limited, revocable licence to process your data solely to provide the Service.',
+                text: 'You retain ownership of the invoices, client information and reply text you submit. You grant Flowcent a limited licence to process this data as needed to provide, secure and support the Service.',
             },
         ],
     },
@@ -171,9 +171,9 @@ export default function TermsPage() {
                         Please read these terms carefully before using Flowcent.
                     </p>
                     <div className="flex items-center justify-center gap-3 mt-6 text-xs text-white/30">
-                        <span>📅 Last updated: February 21, 2026</span>
+                        <span>Last updated: June 23, 2026</span>
                         <span>·</span>
-                        <span>Effective from February 21, 2026</span>
+                        <span>Effective from June 23, 2026</span>
                     </div>
                 </div>
             </section>

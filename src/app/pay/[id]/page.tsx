@@ -9,7 +9,7 @@ interface InvoiceData {
     invoice_number: string; amount: number; currency: string;
     due_date: string; status: string; created_at: string; paid_at?: string;
 }
-interface ClientData { id: string; name: string; email: string; company?: string; }
+interface ClientData { name: string; email: string; company?: string; }
 interface FreelancerData { name: string; company: string; }
 
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string; icon: LucideIcon }> = {

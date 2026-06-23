@@ -27,7 +27,8 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 Apply every file in `supabase/migrations/` in filename order using the Supabase
 SQL editor or CLI. The migration creates tables, indexes, auth profile triggers,
 row-level security policies, API-only write grants, transactional plan limits,
-billing activation, webhook claims, and concurrency-safe follow-up worker claims.
+billing activation, database-backed rate limits, webhook claims, and
+concurrency-safe checkout and follow-up worker claims.
 
 Do not serve user traffic until the migration has completed successfully. See
 `supabase/README.md` for verification queries.
@@ -36,8 +37,11 @@ Do not serve user traffic until the migration has completed successfully. See
 
 - Supabase Auth: add the local and production `/api/auth/callback` URLs.
 - Google Cloud: add `/api/auth/gmail/callback` and enable Gmail API access.
-- Razorpay: point a webhook to `/api/webhooks/razorpay` and set its secret.
-- Stripe: point a webhook to `/api/webhooks/stripe` and set its signing secret.
+- Razorpay: point a webhook to `/api/webhooks/razorpay`, subscribe to
+  `payment.captured` and `order.paid`, and set its secret.
+- Stripe: point a webhook to `/api/webhooks/stripe`, subscribe to
+  `checkout.session.completed` and `checkout.session.async_payment_succeeded`,
+  and set its signing secret.
 - Scheduler: call `/api/cron/process-followups` using GET or POST with
   `Authorization: Bearer <CRON_SECRET_KEY>`.
 - WhatsApp: configure approved templates and enable reminders only for clients
@@ -65,6 +69,6 @@ export, and account deletion.
 - Confirm row-level security is enabled on every user-owned table.
 - Configure webhook retries and scheduler monitoring.
 - Poll `/api/health` from external uptime monitoring; a database or required
-  service-role failure returns HTTP 503.
+  service-role/core-schema failure returns HTTP 503.
 - Run `npm run quality` from a clean checkout.
 - Back up Postgres and document a restore drill before accepting live data.

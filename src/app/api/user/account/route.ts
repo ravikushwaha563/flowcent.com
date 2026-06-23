@@ -18,12 +18,13 @@ export async function DELETE(req: NextRequest) {
 
     const admin = createAdminSupabaseClient();
     const { data: profile } = await admin.from('users')
-        .select('gmail_access_token')
+        .select('gmail_access_token, gmail_refresh_token')
         .eq('id', user.id)
         .single();
-    if (profile?.gmail_access_token) {
+    const revocationToken = profile?.gmail_refresh_token || profile?.gmail_access_token;
+    if (revocationToken) {
         try {
-            await getOAuthClient().revokeToken(decryptSecret(profile.gmail_access_token));
+            await getOAuthClient().revokeToken(decryptSecret(revocationToken));
         } catch (error) {
             console.error('Failed to revoke Gmail token during account deletion:', error);
         }

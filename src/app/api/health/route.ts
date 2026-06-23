@@ -6,11 +6,14 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
     const startedAt = Date.now();
     try {
-        const { error } = await createAdminSupabaseClient()
-            .from('users')
-            .select('id')
-            .limit(1);
-        if (error) throw error;
+        const admin = createAdminSupabaseClient();
+        const checks = await Promise.all([
+            admin.from('users').select('id').limit(1),
+            admin.from('invoices').select('id, checkout_claim_token, checkout_claimed_at').limit(1),
+            admin.from('rate_limit_buckets').select('key').limit(1),
+        ]);
+        const failedCheck = checks.find(check => check.error);
+        if (failedCheck?.error) throw failedCheck.error;
 
         return NextResponse.json({
             status: 'ok',

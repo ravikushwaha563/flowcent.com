@@ -7,7 +7,19 @@ import { useReveal } from '@/hooks/useReveal';
 
 const ENTRIES = [
     {
-        version: 'v0.8.0', date: 'Feb 20, 2026', tag: 'New Feature', tagColor: '#6b96ff', isLatest: true,
+        version: 'v0.9.0', date: 'Jun 23, 2026', tag: 'Production Hardening', tagColor: '#34d399', isLatest: true,
+        image: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=600&q=75',
+        imageAlt: 'Secure payment and account protection interface',
+        changes: [
+            { type: 'new', text: 'Concurrency-safe checkout claims for Razorpay and Stripe session creation' },
+            { type: 'new', text: 'Database-backed rate limits for payment, AI, billing and Gmail follow-up operations' },
+            { type: 'improve', text: 'Follow-up worker claims and delivery recording now use database transactions' },
+            { type: 'improve', text: 'Invoice-linked AI analysis records extracted commitments without duplicate timeline entries' },
+            { type: 'fix', text: 'Public payment pages are private, non-indexed and explicitly excluded from shared caches' },
+        ],
+    },
+    {
+        version: 'v0.8.0', date: 'Feb 20, 2026', tag: 'New Feature', tagColor: '#6b96ff',
         image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=600&q=75',
         imageAlt: 'Analytics dashboard showing payment intent score',
         changes: [
@@ -24,7 +36,7 @@ const ENTRIES = [
         changes: [
             { type: 'new', text: '5-Stage Automated Follow-up system with Gmail API integration' },
             { type: 'new', text: 'Auto Follow-up toggle per invoice on creation form' },
-            { type: 'new', text: '⚡ Run Automation button on the invoices page for manual trigger' },
+            { type: 'new', text: 'Per-invoice automation stage and next follow-up visibility' },
             { type: 'new', text: 'Automation column on invoice list showing stage and next follow-up date' },
             { type: 'new', text: 'Cron job endpoint /api/cron/process-followups (batch 50)' },
             { type: 'improve', text: 'Invoice API now sets current_stage and next_followup_date on creation' },
@@ -51,7 +63,7 @@ const ENTRIES = [
             { type: 'new', text: 'Payment Health bar: visual % Paid / Pending / Overdue breakdown' },
             { type: 'new', text: 'Average payment delay metric on dashboard' },
             { type: 'new', text: 'Collection rate percentage calculation' },
-            { type: 'improve', text: 'Real-time stat cards with loading skeleton states' },
+            { type: 'improve', text: 'Current-data stat cards with loading skeleton states' },
         ],
     },
     {
@@ -83,8 +95,8 @@ const ENTRIES = [
         imageAlt: 'Client management and business meeting',
         changes: [
             { type: 'new', text: 'Client management: name, email, phone, company, and WhatsApp consent' },
-            { type: 'new', text: 'Client profile with invoice history and payment stats' },
-            { type: 'new', text: 'Client risk score calculated from payment history' },
+            { type: 'new', text: 'Client records with contact, consent and payment reliability context' },
+            { type: 'new', text: 'Advisory client reliability analysis from stored payment history' },
             { type: 'new', text: 'Client create, edit, search, and protected deletion workflows' },
         ],
     },
@@ -94,7 +106,7 @@ const ENTRIES = [
         imageAlt: 'Team celebrating product launch',
         changes: [
             { type: 'new', text: 'Initial beta launch 🎉' },
-            { type: 'new', text: 'User authentication with JWT (sign up / sign in)' },
+            { type: 'new', text: 'Supabase Auth sessions for sign up and sign in' },
             { type: 'new', text: 'Invoice creation and tracking (CRUD)' },
             { type: 'new', text: 'Supabase PostgreSQL database integration' },
             { type: 'new', text: 'Basic responsive dashboard layout' },
@@ -134,12 +146,12 @@ export default function ChangelogPage() {
                             <h1 className="text-5xl sm:text-6xl font-bold mb-5 tracking-tight leading-[1.05]">
                                 What's <span className="grad-text">new</span> in<br />Flowcent
                             </h1>
-                            <p className="text-white/50 text-lg mb-6">Every feature, improvement, and fix — documented from day one.</p>
+                            <p className="text-white/50 text-lg mb-6">Selected product releases, improvements and fixes from the Flowcent beta.</p>
                             <div className="flex gap-4">
                                 {[
-                                    { v: '8', l: 'versions', color: '#6b96ff' },
-                                    { v: '35+', l: 'changes', color: '#a78bfa' },
-                                    { v: '3 wks', l: 'since launch', color: '#34d399' },
+                                    { v: String(ENTRIES.length), l: 'versions', color: '#6b96ff' },
+                                    { v: '40+', l: 'changes', color: '#a78bfa' },
+                                    { v: 'Beta', l: 'product stage', color: '#34d399' },
                                 ].map((s, i) => (
                                     <div key={s.l} className={`glass-card px-4 py-3 text-center reveal-scale reveal-delay-${i + 1}`}>
                                         <div className="text-lg font-bold" style={{ color: s.color }}>{s.v}</div>

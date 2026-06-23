@@ -5,15 +5,19 @@ import { followUpSchema, validationError } from '@/lib/validations/domain';
 import { ZodError } from 'zod';
 import { decryptSecret } from '@/lib/crypto/secrets';
 import { createAdminSupabaseClient } from '@/lib/supabase/admin';
+import { consumeRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
     try {
         const { supabase, user: authUser, response } = await requireUser();
         if (!authUser) return response!;
+        const admin = createAdminSupabaseClient();
+        if (!await consumeRateLimit(admin, 'manual-followup', authUser.id, 10, 300)) {
+            return rateLimitResponse(300);
+        }
         const { invoiceId, stage } = followUpSchema.parse(await req.json());
 
         // Get user + Gmail tokens
-        const admin = createAdminSupabaseClient();
         const { data: user, error: userError } = await admin
             .from('users')
             .select('name, company_name, gmail_connected, gmail_access_token, gmail_refresh_token')
@@ -87,6 +91,7 @@ export async function POST(req: NextRequest) {
             channel: 'email',
             sent_at: new Date().toISOString(),
             status: 'sent',
+            provider_message_id: result.messageId || null,
         });
         if (followUpError) console.error('Follow-up audit log failed:', followUpError);
 

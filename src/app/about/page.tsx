@@ -8,9 +8,9 @@ import { useReveal } from '@/hooks/useReveal';
 const TIMELINE = [
     { date: 'Foundation', title: 'Invoices and clients', desc: 'Secure account, client, invoice and dashboard workflows backed by Supabase.', color: '#6b96ff' },
     { date: 'Automation', title: 'Gmail follow-ups', desc: 'Five staged reminders can be sent from a connected Gmail account.', color: '#34d399' },
-    { date: 'Intelligence', title: 'Payment analysis', desc: 'AI-assisted reply analysis, payment intent scoring and client trust context.', color: '#fbbf24' },
+    { date: 'Intelligence', title: 'Payment analysis', desc: 'AI-assisted reply analysis, payment intent scoring and payment reliability context.', color: '#fbbf24' },
     { date: 'Payments', title: 'Secure checkout', desc: 'Public-token payment links support Razorpay for INR and Stripe for other supported currencies.', color: '#f87171' },
-    { date: 'Roadmap', title: 'Operational depth', desc: 'Webhooks, team workflows, accounting exports and broader automation are the next focus.', color: '#a78bfa' },
+    { date: 'Roadmap', title: 'Operational depth', desc: 'Team workflows, accounting exports and broader operational monitoring are the next focus.', color: '#a78bfa' },
 ];
 
 const VALUES = [
@@ -57,7 +57,7 @@ export default function AboutPage() {
                                 Flowcent is built around a common problem: good work is delivered, an invoice is sent, and payment follow-up becomes a separate administrative job.
                             </p>
                             <p className="text-white/35 text-lg leading-relaxed">
-                                We built the collection system we always wished existed — AI-powered, Gmail-connected, and engineered for the realities of Indian freelance payment culture.
+                                Flowcent combines AI-assisted review, Gmail-connected follow-ups, secure payment links and practical records for Indian freelance payment workflows.
                             </p>
                         </div>
 

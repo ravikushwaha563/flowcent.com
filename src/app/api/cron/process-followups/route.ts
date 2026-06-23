@@ -14,6 +14,17 @@ function hasValidBearerToken(header: string | null, secret: string): boolean {
     return actual.length === expected.length && crypto.timingSafeEqual(actual, expected);
 }
 
+async function cleanupOperationalData(admin: ReturnType<typeof createAdminSupabaseClient>) {
+    const rateLimitCutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const webhookCutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+    const [rateLimits, webhookEvents] = await Promise.all([
+        admin.from('rate_limit_buckets').delete().lt('expires_at', rateLimitCutoff),
+        admin.from('webhook_events').delete().not('processed_at', 'is', null).lt('processed_at', webhookCutoff),
+    ]);
+    if (rateLimits.error) console.error('Expired rate-limit cleanup failed:', rateLimits.error);
+    if (webhookEvents.error) console.error('Processed webhook cleanup failed:', webhookEvents.error);
+}
+
 async function processFollowups(req: NextRequest) {
     try {
         // 1. Verify Cron Secret securely
@@ -30,6 +41,7 @@ async function processFollowups(req: NextRequest) {
         }
 
         const supabaseAdmin = createAdminSupabaseClient();
+        await cleanupOperationalData(supabaseAdmin);
         // 2. Atomically claim due work so overlapping cron runs cannot send the same stage.
         const { data: claims, error: claimError } = await supabaseAdmin.rpc('claim_due_followup_invoices', { p_limit: 50 });
         if (claimError) {

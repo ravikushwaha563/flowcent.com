@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { X, Crown, Shield, Sparkles, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/lib/errors';
@@ -16,11 +16,8 @@ const PRO_FEATURES = [
     'Unlimited invoices & clients',
     'Fully automated 5-stage follow-ups',
     'AI reply analysis (unlimited)',
-    'Payment Intent Score (unlimited)',
     'Payment reliability analysis (unlimited)',
-    'Advanced analytics & reports',
     'CSV export',
-    'Email support',
 ];
 
 export default function UpgradeModal({ isOpen, onClose, message, onSuccess }: UpgradeModalProps) {
@@ -29,6 +26,13 @@ export default function UpgradeModal({ isOpen, onClose, message, onSuccess }: Up
 
     const totalPrice = billing === 'annual' ? 399 * 12 : 499;
     const savings = billing === 'annual' ? (499 - 399) * 12 : 0;
+
+    useEffect(() => {
+        if (!isOpen) return;
+        const closeOnEscape = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); };
+        document.addEventListener('keydown', closeOnEscape);
+        return () => document.removeEventListener('keydown', closeOnEscape);
+    }, [isOpen, onClose]);
 
     const loadRazorpay = (): Promise<boolean> => new Promise(resolve => {
         if (window.Razorpay) { resolve(true); return; }
@@ -101,14 +105,14 @@ export default function UpgradeModal({ isOpen, onClose, message, onSuccess }: Up
             <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
             {/* Modal */}
-            <div className="relative w-full max-w-md rounded-2xl border border-purple-500/20 bg-[#0d0d18] shadow-2xl shadow-purple-500/10 overflow-hidden"
+            <div role="dialog" aria-modal="true" aria-labelledby="upgrade-dialog-title" className="relative w-full max-w-md rounded-2xl border border-purple-500/20 bg-[#0d0d18] shadow-2xl shadow-purple-500/10 overflow-hidden"
                 style={{ animation: 'revealUp 0.3s cubic-bezier(0.22,1,0.36,1) both' }}>
 
                 {/* Top Glow */}
                 <div className="h-1 bg-gradient-to-r from-transparent via-purple-500 to-transparent opacity-60" />
 
                 {/* Close */}
-                <button onClick={onClose} className="absolute top-4 right-4 w-7 h-7 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] flex items-center justify-center transition-colors">
+                <button onClick={onClose} aria-label="Close upgrade dialog" className="absolute top-4 right-4 w-7 h-7 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] flex items-center justify-center transition-colors">
                     <X size={14} className="text-white/40" />
                 </button>
 
@@ -118,7 +122,7 @@ export default function UpgradeModal({ isOpen, onClose, message, onSuccess }: Up
                         <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-purple-500/30">
                             <Crown size={24} className="text-white" />
                         </div>
-                        <h2 className="text-xl font-bold text-white tracking-tight">Upgrade to Pro</h2>
+                        <h2 id="upgrade-dialog-title" className="text-xl font-bold text-white tracking-tight">Upgrade to Pro</h2>
                         {message && (
                             <p className="text-sm text-amber-400/80 mt-2 px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20">
                                 {message}
@@ -179,7 +183,7 @@ export default function UpgradeModal({ isOpen, onClose, message, onSuccess }: Up
                     </button>
 
                     <p className="text-[10px] text-white/15 text-center flex items-center justify-center gap-1.5">
-                        <Shield size={10} /> Secure payment via Razorpay · Cancel anytime
+                        <Shield size={10} /> Secure payment via Razorpay · Fixed monthly or annual term
                     </p>
                 </div>
             </div>

@@ -2,7 +2,8 @@
 
 Flowcent is a payment collection SaaS for freelancers and agencies. It tracks
 clients and invoices, accepts Razorpay or Stripe payments, sends staged Gmail
-follow-ups, and provides AI-assisted payment intelligence.
+follow-ups, exports Pro invoice records to CSV, and provides AI-assisted payment
+intelligence.
 
 ## Stack
 
@@ -51,7 +52,8 @@ follow-up worker RPCs are missing or reachable by anonymous callers.
   supported.
 - Obtain explicit client consent before enabling WhatsApp reminders.
 - Configure Razorpay and Stripe webhooks before enabling live payments.
-- Monitor `/api/health`, scheduler failures, and payment webhook retries.
+- Monitor `/api/health` (database, service-role and core-schema readiness),
+  scheduler failures, and payment webhook retries.
 - Run the full quality gate and a payment/auth smoke test before deployment.
 
 See [supabase/README.md](supabase/README.md) for database details and

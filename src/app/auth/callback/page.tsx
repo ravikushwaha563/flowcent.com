@@ -16,6 +16,7 @@ export default function AuthCallbackPage() {
                 const requestedNext = new URLSearchParams(window.location.search).get('next');
                 const nextPath = requestedNext === '/reset-password' ? requestedNext : '/dashboard';
                 if (!code) throw new Error('No authorization code received');
+                window.history.replaceState({}, '', '/auth/callback');
 
                 setStatus('Syncing account details...');
 

@@ -10,13 +10,13 @@ const PLANS = [
         name: 'Free',
         price: { monthly: 0, annual: 0 },
         period: 'forever',
-        desc: 'Start collecting payments. No risk.',
+        desc: 'Start with the core invoice workflow.',
         color: '#6b96ff',
         colorRgb: '107,150,255',
         popular: false,
         cta: 'Start for free',
         href: '/signup',
-        metric: 'Up to 5 invoices',
+        metric: 'Up to 5 invoices/month',
         features: [
             { text: '5 invoices per month', included: true },
             { text: '3 clients', included: true },
@@ -35,13 +35,13 @@ const PLANS = [
         name: 'Pro',
         price: { monthly: 499, annual: 399 },
         period: '/month',
-        desc: 'The complete payment collection engine.',
+        desc: 'Higher limits and scheduled follow-ups.',
         color: '#a78bfa',
         colorRgb: '167,139,250',
         popular: true,
         cta: 'Create account',
         href: '/signup?plan=pro',
-        metric: 'Unlimited everything',
+        metric: 'Unlimited core usage',
         features: [
             { text: 'Unlimited invoices', included: true },
             { text: 'Unlimited clients', included: true },
@@ -52,6 +52,7 @@ const PLANS = [
             { text: 'Dashboard analytics', included: true },
             { text: 'INR, USD, EUR, GBP', included: true },
             { text: 'Secure Razorpay and Stripe links', included: true },
+            { text: 'CSV invoice export', included: true },
             { text: 'Team members', included: false },
         ],
     },
@@ -67,6 +68,7 @@ const COMPARISON_ROWS = [
     { label: 'Payment intent score', free: true, pro: true, section: null },
     { label: 'Payment links', free: true, pro: true, section: 'Payments' },
     { label: 'PDF invoice export', free: true, pro: true, section: null },
+    { label: 'CSV invoice export', free: false, pro: true, section: null },
     { label: 'Team members', free: false, pro: false, section: 'Roadmap' },
 ];
 
@@ -145,12 +147,12 @@ export default function PricingPage() {
                         Simple, transparent pricing · No hidden fees
                     </div>
                     <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tighter leading-[1.08] mb-6">
-                        Pay for results,
+                        Start with the essentials,
                         <br />
-                        <span className="grad-text tracking-tighter">not for software.</span>
+                        <span className="grad-text tracking-tighter">upgrade as you grow.</span>
                     </h1>
                     <p className="text-lg text-white/45 max-w-xl mx-auto mb-10 leading-relaxed">
-                        Start free. Upgrade only when Flowcent pays for itself — which usually happens in the first week.
+                        The Free plan covers a focused workflow. Pro adds unlimited core usage and scheduled Gmail follow-ups.
                     </p>
 
                     {/* Annual toggle */}
@@ -246,7 +248,7 @@ export default function PricingPage() {
                 <div className="max-w-4xl mx-auto">
                     <div className="grid sm:grid-cols-3 gap-4">
                         {[
-                            { icon: '🔒', title: 'Secure Checkout', desc: 'Subscription activation is tied to a verified Razorpay order.' },
+                            { icon: '🔒', title: 'Secure Checkout', desc: 'Pro activation is tied to a verified Razorpay order and amount.' },
                             { icon: '🇮🇳', title: 'Made for India', desc: 'INR pricing and Razorpay checkout, with multi-currency client invoices.' },
                             { icon: '⚡', title: 'Free to Start', desc: 'Create clients and invoices without entering payment details.' },
                         ].map(t => (
@@ -328,9 +330,9 @@ export default function PricingPage() {
                         <div className="relative">
                             <p className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-4">Start collecting today</p>
                             <h2 className="text-3xl sm:text-4xl font-bold tracking-tighter text-white mb-4 leading-tight">
-                                Your next overdue invoice
+                                Build a more consistent
                                 <br />
-                                <span className="grad-text tracking-tighter">pays for a year of Pro.</span>
+                                <span className="grad-text tracking-tighter">collection workflow.</span>
                             </h2>
                             <p className="text-white/40 text-sm mb-8 max-w-md mx-auto">
                                 Start with the free plan and upgrade only when your collection workflow grows.

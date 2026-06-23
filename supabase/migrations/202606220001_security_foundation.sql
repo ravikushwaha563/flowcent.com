@@ -71,6 +71,8 @@ alter table public.invoices add column if not exists stripe_payment_id text;
 alter table public.invoices add column if not exists payment_gateway text;
 alter table public.invoices add column if not exists followup_claim_token uuid;
 alter table public.invoices add column if not exists followup_claimed_at timestamptz;
+alter table public.invoices add column if not exists checkout_claim_token uuid;
+alter table public.invoices add column if not exists checkout_claimed_at timestamptz;
 
 do $$
 begin
@@ -151,6 +153,13 @@ create table if not exists public.webhook_events (
     unique(provider, provider_event_id)
 );
 
+create table if not exists public.rate_limit_buckets (
+    key text primary key,
+    request_count integer not null default 0,
+    window_started_at timestamptz not null default now(),
+    expires_at timestamptz not null
+);
+
 alter table public.webhook_events add column if not exists processing_started_at timestamptz;
 alter table public.webhook_events add column if not exists attempt_count integer not null default 0;
 
@@ -166,6 +175,9 @@ create index if not exists followups_invoice_id_idx on public.followups(invoice_
 create unique index if not exists followups_invoice_provider_message_id_idx on public.followups(invoice_id, provider_message_id)
     where provider_message_id is not null;
 create index if not exists billing_orders_user_id_idx on public.billing_orders(user_id);
+create index if not exists rate_limit_buckets_expires_at_idx on public.rate_limit_buckets(expires_at);
+create index if not exists webhook_events_processed_at_idx on public.webhook_events(processed_at)
+    where processed_at is not null;
 
 do $$
 begin
@@ -342,6 +354,13 @@ declare
     invoice_count integer;
     new_id uuid;
 begin
+    update public.users
+    set invoice_count_this_month = 0,
+        ai_usage_this_month = 0,
+        usage_reset_at = now(),
+        updated_at = now()
+    where id = p_user_id and usage_reset_at < date_trunc('month', now());
+
     select * into target_user from public.users where id = p_user_id for update;
     if not found then raise exception using errcode = 'P0001', message = 'USER_NOT_FOUND'; end if;
     if not exists (select 1 from public.clients where id = p_client_id and user_id = p_user_id) then
@@ -368,6 +387,11 @@ begin
         p_user_id, p_client_id, p_invoice_number, p_amount, p_currency, p_due_date,
         'pending', 50, coalesce(p_auto_followup, false), 1, p_next_followup_date
     ) returning id into new_id;
+
+    update public.users
+    set invoice_count_this_month = invoice_count_this_month + 1,
+        updated_at = now()
+    where id = p_user_id;
     return new_id;
 end;
 $$;
@@ -500,11 +524,53 @@ $$;
 revoke all on function public.record_followup_delivery(uuid, uuid, integer, text, text, text, text) from public, anon, authenticated;
 grant execute on function public.record_followup_delivery(uuid, uuid, integer, text, text, text, text) to service_role;
 
-revoke all on public.users, public.clients, public.invoices, public.promises,
-    public.followups, public.billing_orders, public.webhook_events from anon;
+create or replace function public.consume_rate_limit(
+    p_key text,
+    p_limit integer,
+    p_window_seconds integer
+)
+returns boolean
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+    bucket public.rate_limit_buckets%rowtype;
+begin
+    if length(p_key) <> 64 or p_limit < 1 or p_limit > 10000
+       or p_window_seconds < 1 or p_window_seconds > 86400 then
+        return false;
+    end if;
+
+    insert into public.rate_limit_buckets (key, request_count, window_started_at, expires_at)
+    values (p_key, 0, now(), now() + make_interval(secs => p_window_seconds))
+    on conflict (key) do nothing;
+
+    select * into bucket from public.rate_limit_buckets where key = p_key for update;
+    if bucket.expires_at <= now() then
+        update public.rate_limit_buckets
+        set request_count = 1,
+            window_started_at = now(),
+            expires_at = now() + make_interval(secs => p_window_seconds)
+        where key = p_key;
+        return true;
+    end if;
+    if bucket.request_count >= p_limit then return false; end if;
+
+    update public.rate_limit_buckets
+    set request_count = request_count + 1
+    where key = p_key;
+    return true;
+end;
+$$;
+
+revoke all on function public.consume_rate_limit(text, integer, integer) from public, anon, authenticated;
+grant execute on function public.consume_rate_limit(text, integer, integer) to service_role;
 
 revoke all on public.users, public.clients, public.invoices, public.promises,
-    public.followups, public.billing_orders, public.webhook_events from authenticated;
+    public.followups, public.billing_orders, public.webhook_events, public.rate_limit_buckets from anon;
+
+revoke all on public.users, public.clients, public.invoices, public.promises,
+    public.followups, public.billing_orders, public.webhook_events, public.rate_limit_buckets from authenticated;
 
 grant select (id, email, name, company_name, industry, gmail_connected, gmail_email,
     subscription_plan, plan_started_at, plan_expires_at, invoice_count_this_month,
@@ -524,6 +590,7 @@ alter table public.promises enable row level security;
 alter table public.followups enable row level security;
 alter table public.billing_orders enable row level security;
 alter table public.webhook_events enable row level security;
+alter table public.rate_limit_buckets enable row level security;
 
 drop policy if exists users_select_own on public.users;
 create policy users_select_own on public.users for select to authenticated using (id = auth.uid());

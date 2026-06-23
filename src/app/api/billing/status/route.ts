@@ -27,7 +27,7 @@ export async function GET() {
         const needsReset = resetAt < monthStart;
 
         if (needsReset) {
-            await createAdminSupabaseClient()
+            const { error: resetError } = await createAdminSupabaseClient()
                 .from('users')
                 .update({
                     invoice_count_this_month: 0,
@@ -36,8 +36,17 @@ export async function GET() {
                 })
                 .eq('id', authUser.id)
                 .lt('usage_reset_at', monthStart.toISOString());
-            user.invoice_count_this_month = 0;
-            user.ai_usage_this_month = 0;
+            if (resetError) throw resetError;
+
+            const { data: refreshedUsage, error: refreshError } = await supabase
+                .from('users')
+                .select('invoice_count_this_month, ai_usage_this_month, usage_reset_at')
+                .eq('id', authUser.id)
+                .single();
+            if (refreshError || !refreshedUsage) throw refreshError || new Error('Failed to refresh usage');
+            user.invoice_count_this_month = refreshedUsage.invoice_count_this_month;
+            user.ai_usage_this_month = refreshedUsage.ai_usage_this_month;
+            user.usage_reset_at = refreshedUsage.usage_reset_at;
         }
 
         const plan = (user.subscription_plan || 'free') as PlanType;

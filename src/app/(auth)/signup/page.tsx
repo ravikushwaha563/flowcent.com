@@ -89,25 +89,25 @@ export default function SignupPage() {
             >
                 <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-white/40 uppercase tracking-widest">Name</label>
-                        <input type="text" placeholder="Rahul Kumar" className="input-premium" {...register('name')} disabled={isLoading} />
+                        <label htmlFor="signup-name" className="text-xs font-semibold text-white/40 uppercase tracking-widest">Name</label>
+                        <input id="signup-name" type="text" placeholder="Rahul Kumar" className="input-premium" {...register('name')} disabled={isLoading} />
                         {errors.name && <p className="text-xs text-red-400">{errors.name.message}</p>}
                     </div>
                     <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-white/40 uppercase tracking-widest">Company</label>
-                        <input type="text" placeholder="Acme Inc." className="input-premium" {...register('companyName')} disabled={isLoading} />
+                        <label htmlFor="signup-company" className="text-xs font-semibold text-white/40 uppercase tracking-widest">Company</label>
+                        <input id="signup-company" type="text" placeholder="Acme Inc." className="input-premium" {...register('companyName')} disabled={isLoading} />
                     </div>
                 </div>
 
                 <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-white/40 uppercase tracking-widest">Email</label>
-                    <input type="email" placeholder="you@company.com" className="input-premium" {...register('email')} disabled={isLoading} />
+                    <label htmlFor="signup-email" className="text-xs font-semibold text-white/40 uppercase tracking-widest">Email</label>
+                    <input id="signup-email" type="email" placeholder="you@company.com" className="input-premium" {...register('email')} disabled={isLoading} />
                     {errors.email && <p className="text-xs text-red-400">{errors.email.message}</p>}
                 </div>
 
                 <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-white/40 uppercase tracking-widest">Password</label>
-                    <input type="password" placeholder="Min. 8 characters" className="input-premium" {...register('password')} disabled={isLoading} />
+                    <label htmlFor="signup-password" className="text-xs font-semibold text-white/40 uppercase tracking-widest">Password</label>
+                    <input id="signup-password" type="password" placeholder="Min. 8 characters" className="input-premium" {...register('password')} disabled={isLoading} />
                     {errors.password && <p className="text-xs text-red-400">{errors.password.message}</p>}
                 </div>
 

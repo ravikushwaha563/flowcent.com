@@ -83,14 +83,14 @@ export default function LoginPage() {
                 style={{ animation: 'revealUp 0.5s cubic-bezier(0.22,1,0.36,1) 120ms both' }}
             >
                 <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-white/40 uppercase tracking-widest">Email</label>
-                    <input type="email" placeholder="you@company.com" className="input-premium" {...register('email')} disabled={isLoading} />
+                    <label htmlFor="login-email" className="text-xs font-semibold text-white/40 uppercase tracking-widest">Email</label>
+                    <input id="login-email" type="email" placeholder="you@company.com" className="input-premium" {...register('email')} disabled={isLoading} />
                     {errors.email && <p className="text-xs text-red-400">{errors.email.message}</p>}
                 </div>
 
                 <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-white/40 uppercase tracking-widest">Password</label>
-                    <input type="password" placeholder="••••••••" className="input-premium" {...register('password')} disabled={isLoading} />
+                    <label htmlFor="login-password" className="text-xs font-semibold text-white/40 uppercase tracking-widest">Password</label>
+                    <input id="login-password" type="password" placeholder="••••••••" className="input-premium" {...register('password')} disabled={isLoading} />
                     {errors.password && <p className="text-xs text-red-400">{errors.password.message}</p>}
                 </div>
 

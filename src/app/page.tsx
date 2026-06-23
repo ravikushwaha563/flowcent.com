@@ -132,7 +132,7 @@ function LogoCloud() {
 function Features() {
   const allFeatures = [
     // Invoice Management
-    { icon: '📄', title: 'Smart Invoice Tracking', desc: 'Create invoices, assign to clients, and track real-time payment status — pending, overdue, paid.', color: 'rgba(95,135,255,0.12)', border: 'rgba(95,135,255,0.2)', tag: 'Invoicing' },
+    { icon: '📄', title: 'Smart Invoice Tracking', desc: 'Create invoices, assign clients, and review current pending, overdue, paid or cancelled status.', color: 'rgba(95,135,255,0.12)', border: 'rgba(95,135,255,0.2)', tag: 'Invoicing' },
     { icon: '💱', title: 'Multi-Currency Support', desc: 'Bill in INR, USD, EUR, or GBP. Flowcent auto-formats currency for each invoice.', color: 'rgba(95,135,255,0.08)', border: 'rgba(95,135,255,0.15)', tag: 'Invoicing' },
     { icon: '⏰', title: 'Automatic Overdue Detection', desc: 'When a due date passes, Flowcent flags the invoice. Enabled Pro automations can send the next scheduled follow-up.', color: 'rgba(248,113,113,0.1)', border: 'rgba(248,113,113,0.18)', tag: 'Invoicing' },
     // AI & Automation
@@ -187,7 +187,7 @@ function Features() {
         {/* Roadmap banner */}
         <div className="mt-8 p-5 rounded-2xl border border-dashed border-white/[0.08] bg-white/[0.01] text-center">
           <p className="text-sm text-white/30">
-            <span className="text-white/50 font-medium">Available:</span> PDF export · Razorpay payment links · Stripe checkout · Gmail follow-ups · AI analysis
+            <span className="text-white/50 font-medium">Available:</span> PDF export · Pro CSV export · Razorpay links · Stripe checkout · Gmail follow-ups · AI analysis
           </p>
         </div>
       </div>
@@ -200,12 +200,12 @@ function Solutions() {
   const solutions = [
     {
       icon: '💻', title: 'For Freelancers', color: '#6b96ff',
-      problems: ['Clients never pay on time', '"Will pay next week" for 3 months', 'Awkward to send multiple reminders'],
+      problems: ['Some clients pay after the due date', 'Repeated vague payment timelines', 'Awkward to send multiple reminders'],
       fixes: ['Auto follow-ups so you don\'t have to ask', 'AI tracks every excuse chronologically', 'Professional tone that protects relationships'],
     },
     {
       icon: '🏢', title: 'For Agencies', color: '#a78bfa',
-      problems: ['10+ clients, impossible to track manually', 'Team doesn\'t always follow up consistently', 'No visibility into which accounts are at risk'],
+      problems: ['Many invoices are difficult to track manually', 'Follow-up can become inconsistent', 'Payment context is scattered across tools'],
       fixes: ['Centralized dashboard for all invoices', 'Automated sequences through five stages', 'Payment history signals per client at a glance'],
     },
     {
@@ -339,7 +339,7 @@ function FAQ() {
     { q: 'Is Flowcent really free to start?', a: 'Yes! The Free plan is completely free — no credit card required. You get 5 invoices, manual follow-ups, Gmail integration, and 5 AI analyses per month. Upgrade anytime when you grow.' },
     { q: 'How does AI reply analysis work?', a: 'Paste a client reply into Flowcent. The configured AI provider identifies specific payment commitments and suggests a professional response. Invoice-linked analysis can also log extracted promises. AI output is advisory and should be verified.' },
     { q: 'How do Flowcent emails appear to clients?', a: 'Follow-ups are sent from your connected Gmail account, so clients see your sender name and address. Templates may include a small Flowcent attribution in the footer.' },
-    { q: 'Will Flowcent spam my clients with emails?', a: 'Absolutely not. The system is careful — it sends staged emails (Friendly → Firm → Urgent → Final) with deliberate multi-day gaps. You can disable automation per invoice anytime.' },
+    { q: 'How does Flowcent avoid excessive follow-ups?', a: 'Enabled automation uses five staged emails with deliberate multi-day gaps and stops after the final stage. You can disable automation per invoice at any time, and you remain responsible for appropriate use.' },
     { q: 'What Gmail access does Flowcent request?', a: 'Flowcent requests Gmail send access and your Google account email. It does not request inbox-read access. You can disconnect Gmail or revoke access from Google at any time.' },
     { q: 'Can I use Flowcent for USD or EUR invoices?', a: 'Yes! Flowcent supports INR, USD, EUR, and GBP. Multi-currency display is automatic — the format follows each invoice\'s currency setting.' },
   ];
@@ -391,7 +391,7 @@ function FinalCTA() {
             <div className="aurora-blob aurora-blob-purple absolute -bottom-16 -left-16 w-56 h-56 pointer-events-none" />
             <div className="relative">
               <div className="text-4xl mb-4">💰</div>
-              <h2 className="text-3xl sm:text-5xl font-bold tracking-tighter text-white mb-4">Ready to get paid faster?</h2>
+              <h2 className="text-3xl sm:text-5xl font-bold tracking-tighter text-white mb-4">Ready for more consistent follow-up?</h2>
               <p className="text-white/70 mb-10 text-lg max-w-md mx-auto">Create your first client and invoice, then choose exactly how and when Flowcent follows up.</p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link href="/signup" className="bg-white text-[#3d61ff] font-bold px-8 py-3.5 rounded-xl text-sm hover:bg-white/90 transition-colors shadow-2xl hover:-translate-y-0.5" style={{ transition: 'transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease' }}>

@@ -20,7 +20,7 @@ const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
         maxAiAnalyses: 5,
         autoFollowups: false,
         csvExport: false,
-        advancedAnalytics: false,
+        advancedAnalytics: true,
         label: 'Free',
         price: 0,
     },

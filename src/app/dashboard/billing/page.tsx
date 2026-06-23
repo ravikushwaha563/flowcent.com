@@ -135,7 +135,7 @@ export default function BillingPage() {
                             </div>
                             <h1 className="text-2xl font-bold text-white tracking-tight">Billing</h1>
                         </div>
-                        <p className="text-sm text-white/35">Manage your subscription and monitor usage</p>
+                        <p className="text-sm text-white/35">Manage your plan term and monitor usage</p>
                     </div>
                     {!isPro && (
                         <button onClick={() => setShowUpgrade(true)}
@@ -193,7 +193,7 @@ export default function BillingPage() {
                     <h2 className="text-xs font-bold text-white/30 uppercase tracking-widest mb-4">Feature Access</h2>
                     <FeatureRow label="Automated Follow-ups" enabled={status.features.autoFollowups} icon={Mail} />
                     <FeatureRow label="CSV Export" enabled={status.features.csvExport} icon={FileText} />
-                    <FeatureRow label="Advanced Analytics" enabled={status.features.advancedAnalytics} icon={BarChart3} />
+                    <FeatureRow label="Dashboard Analytics" enabled={status.features.advancedAnalytics} icon={BarChart3} />
                     <FeatureRow label="Unlimited Invoices" enabled={isPro} icon={Zap} />
                     <FeatureRow label="Unlimited AI" enabled={isPro} icon={Brain} />
                 </div>
@@ -206,7 +206,7 @@ export default function BillingPage() {
                             <Crown size={40} className="text-purple-400 mx-auto mb-4" />
                             <h3 className="text-lg font-bold text-white mb-2">Unlock the full power of Flowcent</h3>
                             <p className="text-sm text-white/40 max-w-md mx-auto mb-6">
-                                Unlimited invoices, automated follow-ups, unlimited AI analyses, and priority support. Starting at just ₹399/month.
+                                Unlimited invoices, automated follow-ups, unlimited AI analyses, and CSV export. Starting at ₹399/month on the annual term.
                             </p>
                             <button onClick={() => setShowUpgrade(true)}
                                 className="btn-primary text-sm px-8 py-3 mx-auto flex items-center gap-2 shadow-[0_0_25px_rgba(167,139,250,0.3)]">

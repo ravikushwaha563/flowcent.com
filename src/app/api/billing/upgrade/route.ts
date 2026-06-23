@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { verifyRazorpaySignature } from '@/lib/payments/razorpay-signature';
 import { activateBillingOrder } from '@/lib/billing/activate';
 import { createAdminSupabaseClient } from '@/lib/supabase/admin';
+import { consumeRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 const upgradeSchema = z.object({
     plan: z.literal('pro').default('pro'),
@@ -18,11 +19,15 @@ const verificationSchema = z.object({
     razorpay_signature: z.string().regex(/^[a-f0-9]{64}$/i),
 });
 
-// POST /api/billing/upgrade — Create Razorpay order for Pro plan subscription
+// POST /api/billing/upgrade — Create a Razorpay order for a fixed Pro access term.
 export async function POST(req: NextRequest) {
     try {
         const { user, response } = await requireUser();
         if (!user) return response!;
+        const admin = createAdminSupabaseClient();
+        if (!await consumeRateLimit(admin, 'billing-order', user.id, 10, 300)) {
+            return rateLimitResponse(300);
+        }
 
         const parsed = upgradeSchema.safeParse(await req.json());
         if (!parsed.success) return NextResponse.json({ error: 'Invalid plan or billing cycle' }, { status: 400 });
@@ -54,7 +59,7 @@ export async function POST(req: NextRequest) {
             },
         });
 
-        const { error: orderError } = await createAdminSupabaseClient().from('billing_orders').insert({
+        const { error: orderError } = await admin.from('billing_orders').insert({
             user_id: user.id,
             razorpay_order_id: order.id,
             plan,

@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { consumeAiAnalysis } from '@/lib/usage';
 import { createAdminSupabaseClient } from '@/lib/supabase/admin';
 import { createHash } from 'node:crypto';
+import { consumeRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 const requestSchema = z.object({
     excuse: z.string().trim().min(3).max(10_000),
@@ -26,6 +27,9 @@ export async function POST(req: NextRequest) {
     try {
         const { supabase, user, response } = await requireUser();
         if (!user) return response!;
+        if (!await consumeRateLimit(createAdminSupabaseClient(), 'ai-reply-analysis', user.id, 20, 300)) {
+            return rateLimitResponse(300);
+        }
 
         const parsedRequest = requestSchema.safeParse(await req.json());
         if (!parsedRequest.success) return NextResponse.json({ error: 'Please provide a valid client message.' }, { status: 400 });

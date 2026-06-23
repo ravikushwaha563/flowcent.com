@@ -123,7 +123,7 @@ export default function ExcuseAnalyzerModal({ isOpen, onClose, invoiceContext, o
                             </div>
                             <div>
                                 <h2 id="excuse-analyzer-title" className="text-lg font-bold text-white tracking-tight">AI Reply Analyzer</h2>
-                                <p className="text-sm text-white/40">Evidence-based payment reply review</p>
+                                <p className="text-sm text-white/40">Specificity-based payment reply review</p>
                             </div>
                         </div>
                         <button type="button" onClick={onClose} aria-label="Close AI reply analyzer" className="p-2 text-white/40 hover:text-white transition-colors rounded-lg hover:bg-white/5">
@@ -136,12 +136,12 @@ export default function ExcuseAnalyzerModal({ isOpen, onClose, invoiceContext, o
                         
                         {!result && (
                             <div className="space-y-3">
-                                <label className="text-xs font-semibold text-white/40 uppercase tracking-widest flex items-center justify-between">
+                                <label htmlFor="excuse-analyzer-message" className="text-xs font-semibold text-white/40 uppercase tracking-widest flex items-center justify-between">
                                     <span>Paste Client Response</span>
                                     {invoiceContext && <span className="text-blue-400/60 lowercase">Context loaded</span>}
                                 </label>
                                 <textarea
-                                    aria-label="Client payment reply"
+                                    id="excuse-analyzer-message"
                                     value={excuse}
                                     onChange={(e) => setExcuse(e.target.value)}
                                     placeholder="e.g., 'We are waiting on our own clients to pay us before we can clear this invoice...'"
