@@ -16,7 +16,8 @@ export async function DELETE(req: NextRequest) {
         return NextResponse.json({ error: 'Email confirmation does not match' }, { status: 400 });
     }
 
-    const { data: profile } = await supabase.from('users')
+    const admin = createAdminSupabaseClient();
+    const { data: profile } = await admin.from('users')
         .select('gmail_access_token')
         .eq('id', user.id)
         .single();
@@ -28,7 +29,6 @@ export async function DELETE(req: NextRequest) {
         }
     }
 
-    const admin = createAdminSupabaseClient();
     const { error } = await admin.auth.admin.deleteUser(user.id);
     if (error) return NextResponse.json({ error: 'Failed to delete account' }, { status: 500 });
     await supabase.auth.signOut();

@@ -9,7 +9,7 @@ import SiteFooter from '@/components/SiteFooter';
 function Hero() {
   const TICKER_ITEMS = [
     '⚡ Fully automated follow-ups',
-    '🤖 AI Excuse Memory™',
+    'AI-assisted reply analysis',
     '📊 Payment Intent Score 0–100',
     '📧 Gmail Integration',
     '🔒 No client awkwardness',
@@ -140,7 +140,7 @@ function Features() {
     { icon: '💱', title: 'Multi-Currency Support', desc: 'Bill in INR, USD, EUR, or GBP. Flowcent auto-formats currency for each invoice.', color: 'rgba(95,135,255,0.08)', border: 'rgba(95,135,255,0.15)', tag: 'Invoicing' },
     { icon: '⏰', title: 'Automatic Overdue Detection', desc: 'The moment a due date passes, Flowcent flags the invoice and begins the follow-up sequence.', color: 'rgba(248,113,113,0.1)', border: 'rgba(248,113,113,0.18)', tag: 'Invoicing' },
     // AI & Automation
-    { icon: '🤖', title: 'AI Excuse Memory™', desc: '"Kal kar dunga" — our AI reads client replies, extracts promises/excuses, and logs them forever.', color: 'rgba(124,58,237,0.12)', border: 'rgba(124,58,237,0.22)', tag: 'AI' },
+    { icon: '🤖', title: 'AI Reply Analysis', desc: 'Paste a payment reply to identify specific commitments, record promises, and draft a professional response.', color: 'rgba(124,58,237,0.12)', border: 'rgba(124,58,237,0.22)', tag: 'AI' },
     { icon: '✉️', title: '5-Stage Auto Follow-ups', desc: 'Friendly Reminder → Follow-up → 2nd Follow-up → Urgent → Final Notice. Sent from your Gmail.', color: 'rgba(6,182,212,0.12)', border: 'rgba(6,182,212,0.2)', tag: 'Automation' },
     { icon: '📊', title: 'Payment Intent Score', desc: 'AI-powered 0–100 score per invoice: based on overdue days, client history, and follow-up stage.', color: 'rgba(52,211,153,0.12)', border: 'rgba(52,211,153,0.2)', tag: 'AI' },
     { icon: '⚡', title: 'One-Click Automation Run', desc: 'Manually trigger the automation engine to process all overdue invoices in one click.', color: 'rgba(251,191,36,0.1)', border: 'rgba(251,191,36,0.2)', tag: 'Automation' },
@@ -210,7 +210,7 @@ function Solutions() {
     {
       icon: '🏢', title: 'For Agencies', color: '#a78bfa',
       problems: ['10+ clients, impossible to track manually', 'Team doesn\'t always follow up consistently', 'No visibility into which accounts are at risk'],
-      fixes: ['Centralized dashboard for all invoices', 'Automated sequences — set once, runs forever', 'Payment risk scores per client at a glance'],
+      fixes: ['Centralized dashboard for all invoices', 'Automated sequences through five stages', 'Payment history signals per client at a glance'],
     },
     {
       icon: '🎨', title: 'For Creatives & Designers', color: '#fbbf24',
@@ -269,7 +269,7 @@ function HowItWorks() {
   const steps = [
     { num: '01', icon: '👤', title: 'Add your clients', desc: 'Import or manually add clients. Flowcent builds a payment profile for each one automatically.' },
     { num: '02', icon: '📄', title: 'Create an invoice', desc: 'Create an invoice in seconds. Enable auto-follow-ups and Flowcent does the rest from day one.' },
-    { num: '03', icon: '🤖', title: 'AI watches for excuses', desc: 'Paste client replies — AI detects promises, excuses, and updates the intent score instantly.' },
+    { num: '03', icon: '🤖', title: 'Review payment replies', desc: 'Paste a client reply to identify commitments and draft a professional response for review.' },
     { num: '04', icon: '💰', title: 'Get paid, automatically', desc: 'Staged emails remind clients at the right time, with the right tone. You get paid.' },
   ];
   return (
@@ -277,7 +277,7 @@ function HowItWorks() {
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
           <span className="text-xs font-semibold tracking-[0.2em] text-cyan-400 uppercase mb-4 block">How it works</span>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tighter mb-4">Set up in <span className="grad-text tracking-tighter">5 minutes</span></h2>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tighter mb-4">A focused setup for <span className="grad-text tracking-tighter">payment follow-up</span></h2>
           <p className="text-white/40 text-lg max-w-md mx-auto">No complex setup. Start tracking and collecting immediately.</p>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 relative">
@@ -341,7 +341,7 @@ function FAQ() {
   const [open, setOpen] = useState<number | null>(null);
   const faqs = [
     { q: 'Is Flowcent really free to start?', a: 'Yes! The Free plan is completely free — no credit card required. You get 5 invoices, manual follow-ups, Gmail integration, and 5 AI analyses per month. Upgrade anytime when you grow.' },
-    { q: 'How does the AI Excuse Memory™ work?', a: 'Paste a client reply into Flowcent. The configured AI provider analyzes the message, identifies the likely intent, and suggests a professional response. Invoice-linked analysis can also log extracted promises.' },
+    { q: 'How does AI reply analysis work?', a: 'Paste a client reply into Flowcent. The configured AI provider identifies specific payment commitments and suggests a professional response. Invoice-linked analysis can also log extracted promises. AI output is advisory and should be verified.' },
     { q: 'Will my clients know I\'m using Flowcent?', a: 'No. All emails are sent from your own Gmail account via OAuth. Your clients see your name and address — not Flowcent\'s.' },
     { q: 'Will Flowcent spam my clients with emails?', a: 'Absolutely not. The system is careful — it sends staged emails (Friendly → Firm → Urgent → Final) with deliberate multi-day gaps. You can disable automation per invoice anytime.' },
     { q: 'What Gmail access does Flowcent request?', a: 'Flowcent requests Gmail send access and your Google account email. It does not request inbox-read access. You can disconnect Gmail or revoke access from Google at any time.' },

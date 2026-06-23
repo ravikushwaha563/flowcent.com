@@ -1,11 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminSupabaseClient } from '@/lib/supabase/admin';
-import { sendFollowUpEmail, refreshAccessToken } from '@/lib/gmail';
+import { generateFollowUpEmail, sendFollowUpEmail, refreshAccessToken } from '@/lib/gmail';
 import { sendWhatsAppTemplate } from '@/lib/whatsapp';
 import { serverEnv } from '@/lib/env/server';
 import { decryptSecret, encryptSecret } from '@/lib/crypto/secrets';
+import { publicEnv } from '@/lib/env/public';
+import crypto from 'crypto';
 
-export async function GET(req: NextRequest) {
+function hasValidBearerToken(header: string | null, secret: string): boolean {
+    if (!header) return false;
+    const actual = Buffer.from(header);
+    const expected = Buffer.from(`Bearer ${secret}`);
+    return actual.length === expected.length && crypto.timingSafeEqual(actual, expected);
+}
+
+async function processFollowups(req: NextRequest) {
     try {
         // 1. Verify Cron Secret securely
         const authHeader = req.headers.get('authorization');
@@ -16,7 +25,7 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
         }
 
-        if (authHeader !== `Bearer ${expectedSecret}`) {
+        if (!hasValidBearerToken(authHeader, expectedSecret)) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
@@ -31,7 +40,7 @@ export async function GET(req: NextRequest) {
                 clients(id, name, email, company, phone),
                 users(id, email, name, subscription_plan, plan_expires_at, gmail_connected, gmail_access_token, gmail_refresh_token, gmail_token_expiry)
             `)
-            .neq('status', 'paid')
+            .eq('status', 'pending')
             .eq('auto_followup', true)
             .lte('next_followup_date', now)
             .lte('current_stage', 5)
@@ -96,29 +105,17 @@ export async function GET(req: NextRequest) {
                 if (!accessToken) continue;
 
                 // Generate Email Content based on stage
-                const stage = invoice.current_stage || 1;
+                const stage = Math.min(Math.max(invoice.current_stage || 1, 1), 5) as 1 | 2 | 3 | 4 | 5;
                 const amountFormatted = new Intl.NumberFormat('en-IN', { style: 'currency', currency: invoice.currency, maximumFractionDigits: 0 }).format(invoice.amount);
-                const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-                const payLink = `${appUrl}/pay/${invoice.public_token}`;
-
-                const subject = stage === 1 
-                    ? `Payment Reminder: Invoice ${invoice.invoice_number}`
-                    : `Action Required: Overdue Invoice ${invoice.invoice_number} – Follow-up #${stage}`;
-                
-                const body = `
-<div style="font-family:system-ui,-apple-system,sans-serif;color:#1a1a2e;max-width:560px;margin:0 auto;padding:24px">
-  <p style="margin:0 0 16px">Hi ${client.name},</p>
-  <p style="margin:0 0 16px">This is a ${stage === 1 ? 'friendly reminder' : '<b style="color:#e74c3c">follow-up notice</b>'} regarding invoice <strong>${invoice.invoice_number}</strong> for <strong>${amountFormatted}</strong>, which was due on ${new Date(invoice.due_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}.</p>
-  ${stage > 1 ? '<p style="margin:0 0 16px;padding:12px 16px;background:#fff3f3;border-left:4px solid #e74c3c;border-radius:8px;font-size:14px;color:#c0392b"><strong>This invoice is now overdue.</strong> Please settle it at your earliest convenience.</p>' : ''}
-  <p style="margin:0 0 24px">You can securely view and pay this invoice with one click:</p>
-  <div style="text-align:center;margin:0 0 24px">
-    <a href="${payLink}" style="display:inline-block;padding:14px 40px;background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;font-weight:700;font-size:15px;text-decoration:none;border-radius:12px;letter-spacing:0.3px">Pay ${amountFormatted} Now →</a>
-  </div>
-  <p style="margin:0 0 8px;font-size:13px;color:#666">If you have already made this payment, please disregard this email.</p>
-  <hr style="border:none;border-top:1px solid #eee;margin:24px 0"/>
-  <p style="margin:0;font-size:13px;color:#999">Best regards,<br/><strong style="color:#333">${user.name || 'Your Partner'}</strong></p>
-  <p style="margin:16px 0 0;font-size:11px;color:#bbb;text-align:center">Powered by <a href="https://flowcent.in" style="color:#3b82f6;text-decoration:none">Flowcent</a> · AI-Powered Payment Collection</p>
-</div>`;
+                const emailContent = generateFollowUpEmail({
+                    stage,
+                    clientName: client.name,
+                    invoiceNumber: invoice.invoice_number,
+                    amount: amountFormatted,
+                    dueDate: invoice.due_date,
+                    senderName: user.name || 'Your Partner',
+                    paymentUrl: `${publicEnv.appUrl}/pay/${invoice.public_token}`,
+                });
 
                 // Send the email
                 const emailResult = await sendFollowUpEmail({
@@ -127,8 +124,8 @@ export async function GET(req: NextRequest) {
                     to: client.email,
                     toName: client.name,
                     fromName: user.name || 'Your Partner',
-                    subject,
-                    htmlBody: body
+                    subject: emailContent.subject,
+                    htmlBody: emailContent.html
                 });
                 if (!emailResult.success) {
                     throw new Error(emailResult.error || 'Gmail send failed');
@@ -136,7 +133,7 @@ export async function GET(req: NextRequest) {
 
                 // --- WhatsApp Integration ---
                 let whatsappStatus = 'skipped_no_phone';
-                if (client.phone) {
+                if (client.phone && client.whatsapp_opt_in) {
                     const templateName = stage === 1 ? 'payment_reminder_v1' : 'payment_overdue_v1';
                     const sent = await sendWhatsAppTemplate(
                         client.phone,
@@ -178,9 +175,9 @@ export async function GET(req: NextRequest) {
                     invoice_id: invoice.id,
                     user_id: user.id,
                     stage,
-                    email_subject: subject,
-                    message_content: body,
-                    channel: client.phone && whatsappStatus === 'sent' ? 'email+whatsapp' : 'email',
+                    email_subject: emailContent.subject,
+                    message_content: emailContent.html,
+                    channel: client.phone && client.whatsapp_opt_in && whatsappStatus === 'sent' ? 'email+whatsapp' : 'email',
                     status: 'sent',
                     sent_at: new Date().toISOString(),
                 });
@@ -204,3 +201,6 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }
+
+export const GET = processFollowups;
+export const POST = processFollowups;

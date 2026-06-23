@@ -3,6 +3,7 @@ import { getGmailAuthUrl, getOAuthClient } from '@/lib/gmail';
 import { requireUser } from '@/lib/auth/server';
 import { randomBytes } from 'crypto';
 import { decryptSecret } from '@/lib/crypto/secrets';
+import { createAdminSupabaseClient } from '@/lib/supabase/admin';
 
 export async function GET() {
     try {
@@ -29,15 +30,17 @@ export async function GET() {
         });
         return result;
     } catch (err: unknown) {
-        return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to start Gmail connection' }, { status: 500 });
+        console.error('Failed to start Gmail connection:', err);
+        return NextResponse.json({ error: 'Failed to start Gmail connection' }, { status: 500 });
     }
 }
 
 export async function DELETE() {
-    const { supabase, user, response } = await requireUser();
+    const { user, response } = await requireUser();
     if (!user) return response!;
 
-    const { data: profile } = await supabase.from('users').select('gmail_access_token').eq('id', user.id).single();
+    const admin = createAdminSupabaseClient();
+    const { data: profile } = await admin.from('users').select('gmail_access_token').eq('id', user.id).single();
     if (profile?.gmail_access_token) {
         try {
             await getOAuthClient().revokeToken(decryptSecret(profile.gmail_access_token));
@@ -46,7 +49,7 @@ export async function DELETE() {
         }
     }
 
-    const { error } = await supabase.from('users').update({
+    const { error } = await admin.from('users').update({
         gmail_connected: false,
         gmail_access_token: null,
         gmail_refresh_token: null,

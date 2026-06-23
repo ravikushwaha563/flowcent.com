@@ -42,11 +42,12 @@ alter table public.clients add column if not exists ai_trust_score integer;
 alter table public.clients add column if not exists ai_risk_level text;
 alter table public.clients add column if not exists ai_trust_summary text;
 alter table public.clients add column if not exists ai_scored_at timestamptz;
+alter table public.clients add column if not exists whatsapp_opt_in boolean not null default false;
 
 create table if not exists public.invoices (
     id uuid primary key default gen_random_uuid(),
     user_id uuid not null references public.users(id) on delete cascade,
-    client_id uuid not null references public.clients(id) on delete cascade,
+    client_id uuid not null references public.clients(id) on delete restrict,
     invoice_number text not null,
     amount numeric(12,2) not null,
     currency text not null default 'INR',
@@ -68,6 +69,16 @@ alter table public.invoices add column if not exists razorpay_payment_id text;
 alter table public.invoices add column if not exists stripe_session_id text;
 alter table public.invoices add column if not exists stripe_payment_id text;
 alter table public.invoices add column if not exists payment_gateway text;
+
+do $$
+begin
+    if exists (select 1 from pg_constraint where conname = 'invoices_client_id_fkey' and conrelid = 'public.invoices'::regclass) then
+        alter table public.invoices drop constraint invoices_client_id_fkey;
+    end if;
+    alter table public.invoices add constraint invoices_client_id_fkey
+        foreign key (client_id) references public.clients(id) on delete restrict;
+exception when duplicate_object then null;
+end $$;
 
 create table if not exists public.promises (
     id uuid primary key default gen_random_uuid(),
@@ -127,9 +138,14 @@ create table if not exists public.webhook_events (
     event_type text not null,
     payload jsonb not null,
     processed_at timestamptz,
+    processing_started_at timestamptz,
+    attempt_count integer not null default 0,
     created_at timestamptz not null default now(),
     unique(provider, provider_event_id)
 );
+
+alter table public.webhook_events add column if not exists processing_started_at timestamptz;
+alter table public.webhook_events add column if not exists attempt_count integer not null default 0;
 
 create index if not exists clients_user_id_idx on public.clients(user_id);
 create index if not exists invoices_user_id_idx on public.invoices(user_id);
@@ -137,6 +153,7 @@ create index if not exists invoices_client_id_idx on public.invoices(client_id);
 create index if not exists invoices_followup_due_idx on public.invoices(next_followup_date)
     where auto_followup = true and status = 'pending';
 create unique index if not exists invoices_public_token_idx on public.invoices(public_token);
+create unique index if not exists invoices_user_number_idx on public.invoices(user_id, lower(invoice_number));
 create index if not exists promises_invoice_id_idx on public.promises(invoice_id);
 create index if not exists followups_invoice_id_idx on public.followups(invoice_id);
 create index if not exists billing_orders_user_id_idx on public.billing_orders(user_id);
@@ -253,14 +270,155 @@ begin
 end;
 $$;
 
-revoke all on function public.activate_billing_order(text, text) from public, anon;
-grant execute on function public.activate_billing_order(text, text) to authenticated, service_role;
+revoke all on function public.activate_billing_order(text, text) from public, anon, authenticated;
+grant execute on function public.activate_billing_order(text, text) to service_role;
+
+create or replace function public.create_client_record(
+    p_user_id uuid,
+    p_name text,
+    p_email text,
+    p_phone text,
+    p_company text,
+    p_whatsapp_opt_in boolean
+)
+returns uuid
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+    target_user public.users%rowtype;
+    active_plan text;
+    client_count integer;
+    new_id uuid;
+begin
+    select * into target_user from public.users where id = p_user_id for update;
+    if not found then raise exception using errcode = 'P0001', message = 'USER_NOT_FOUND'; end if;
+
+    active_plan := case
+        when target_user.plan_expires_at is not null and target_user.plan_expires_at < now() then 'free'
+        else coalesce(target_user.subscription_plan, 'free')
+    end;
+    select count(*) into client_count from public.clients where user_id = p_user_id;
+    if active_plan = 'free' and client_count >= 3 then
+        raise exception using errcode = 'P0001', message = 'CLIENT_LIMIT_EXCEEDED';
+    end if;
+
+    insert into public.clients (user_id, name, email, phone, company, whatsapp_opt_in)
+    values (p_user_id, p_name, p_email, nullif(p_phone, ''), nullif(p_company, ''), coalesce(p_whatsapp_opt_in, false))
+    returning id into new_id;
+    return new_id;
+end;
+$$;
+
+revoke all on function public.create_client_record(uuid, text, text, text, text, boolean) from public, anon, authenticated;
+grant execute on function public.create_client_record(uuid, text, text, text, text, boolean) to service_role;
+
+create or replace function public.create_invoice_record(
+    p_user_id uuid,
+    p_client_id uuid,
+    p_invoice_number text,
+    p_amount numeric,
+    p_currency text,
+    p_due_date date,
+    p_auto_followup boolean,
+    p_next_followup_date timestamptz
+)
+returns uuid
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+    target_user public.users%rowtype;
+    active_plan text;
+    invoice_count integer;
+    new_id uuid;
+begin
+    select * into target_user from public.users where id = p_user_id for update;
+    if not found then raise exception using errcode = 'P0001', message = 'USER_NOT_FOUND'; end if;
+    if not exists (select 1 from public.clients where id = p_client_id and user_id = p_user_id) then
+        raise exception using errcode = 'P0001', message = 'CLIENT_NOT_FOUND';
+    end if;
+
+    active_plan := case
+        when target_user.plan_expires_at is not null and target_user.plan_expires_at < now() then 'free'
+        else coalesce(target_user.subscription_plan, 'free')
+    end;
+    if active_plan = 'free' and coalesce(p_auto_followup, false) then
+        raise exception using errcode = 'P0001', message = 'AUTOMATION_REQUIRES_PRO';
+    end if;
+    select count(*) into invoice_count from public.invoices
+    where user_id = p_user_id and created_at >= date_trunc('month', now());
+    if active_plan = 'free' and invoice_count >= 5 then
+        raise exception using errcode = 'P0001', message = 'INVOICE_LIMIT_EXCEEDED';
+    end if;
+
+    insert into public.invoices (
+        user_id, client_id, invoice_number, amount, currency, due_date,
+        status, payment_intent_score, auto_followup, current_stage, next_followup_date
+    ) values (
+        p_user_id, p_client_id, p_invoice_number, p_amount, p_currency, p_due_date,
+        'pending', 50, coalesce(p_auto_followup, false), 1, p_next_followup_date
+    ) returning id into new_id;
+    return new_id;
+end;
+$$;
+
+revoke all on function public.create_invoice_record(uuid, uuid, text, numeric, text, date, boolean, timestamptz) from public, anon, authenticated;
+grant execute on function public.create_invoice_record(uuid, uuid, text, numeric, text, date, boolean, timestamptz) to service_role;
+
+create or replace function public.claim_webhook_event(
+    p_provider text,
+    p_event_id text,
+    p_event_type text,
+    p_payload jsonb
+)
+returns text
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+    target_event public.webhook_events%rowtype;
+begin
+    insert into public.webhook_events (provider, provider_event_id, event_type, payload)
+    values (p_provider, p_event_id, p_event_type, p_payload)
+    on conflict (provider, provider_event_id) do nothing;
+
+    select * into target_event from public.webhook_events
+    where provider = p_provider and provider_event_id = p_event_id
+    for update;
+
+    if target_event.processed_at is not null then return 'processed'; end if;
+    if target_event.processing_started_at is not null
+       and target_event.processing_started_at > now() - interval '5 minutes' then
+        return 'busy';
+    end if;
+
+    update public.webhook_events
+    set processing_started_at = now(), attempt_count = attempt_count + 1, payload = p_payload
+    where provider = p_provider and provider_event_id = p_event_id;
+    return 'claimed';
+end;
+$$;
+
+revoke all on function public.claim_webhook_event(text, text, text, jsonb) from public, anon, authenticated;
+grant execute on function public.claim_webhook_event(text, text, text, jsonb) to service_role;
 
 revoke all on public.users, public.clients, public.invoices, public.promises,
     public.followups, public.billing_orders, public.webhook_events from anon;
 
-grant select, insert, update, delete on public.users, public.clients, public.invoices,
-    public.promises, public.followups, public.billing_orders to authenticated;
+revoke all on public.users, public.clients, public.invoices, public.promises,
+    public.followups, public.billing_orders, public.webhook_events from authenticated;
+
+grant select (id, email, name, company_name, industry, gmail_connected, gmail_email,
+    subscription_plan, plan_started_at, plan_expires_at, invoice_count_this_month,
+    ai_usage_this_month, usage_reset_at, created_at, updated_at)
+    on public.users to authenticated;
+grant insert (id, email, name, password_hash, company_name, industry)
+    on public.users to authenticated;
+grant update (name, company_name, industry, updated_at)
+    on public.users to authenticated;
+grant select on public.clients, public.invoices, public.promises,
+    public.followups, public.billing_orders to authenticated;
 
 alter table public.users enable row level security;
 alter table public.clients enable row level security;
@@ -335,5 +493,51 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
     after insert or update of email, raw_user_meta_data on auth.users
     for each row execute procedure public.handle_new_user();
+
+create or replace function public.consume_ai_analysis()
+returns boolean
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+    target_user public.users%rowtype;
+    active_plan text;
+begin
+    if auth.uid() is null then
+        return false;
+    end if;
+
+    update public.users
+    set ai_usage_this_month = 0,
+        invoice_count_this_month = 0,
+        usage_reset_at = now(),
+        updated_at = now()
+    where id = auth.uid()
+      and usage_reset_at < date_trunc('month', now());
+
+    select * into target_user from public.users where id = auth.uid() for update;
+    if not found then
+        return false;
+    end if;
+
+    active_plan := case
+        when target_user.plan_expires_at is not null and target_user.plan_expires_at < now() then 'free'
+        else coalesce(target_user.subscription_plan, 'free')
+    end;
+
+    if active_plan = 'free' and target_user.ai_usage_this_month >= 5 then
+        return false;
+    end if;
+
+    update public.users
+    set ai_usage_this_month = ai_usage_this_month + 1,
+        updated_at = now()
+    where id = auth.uid();
+    return true;
+end;
+$$;
+
+revoke all on function public.consume_ai_analysis() from public;
+grant execute on function public.consume_ai_analysis() to authenticated;
 
 commit;

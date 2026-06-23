@@ -25,7 +25,7 @@ const POSTS = [
         slug: 'ai-excuse-memory-explained',
         category: 'AI Features',
         categoryColor: '#a78bfa',
-        title: 'Inside AI Excuse Memory™: How It Detects Client Payment Patterns',
+        title: 'Inside AI Reply Analysis: Reviewing Payment Commitments',
         excerpt: 'A technical and practical deep-dive into how Flowcent\'s AI reads client emails, extracts promises, and builds a payment intent profile.',
         date: 'Feb 18, 2026',
         readTime: '6 min read',
@@ -78,11 +78,11 @@ const POSTS = [
         category: 'AI Features',
         categoryColor: '#a78bfa',
         title: 'Payment Intent Score: What the Number Means and How to Use It',
-        excerpt: 'Understanding Flowcent\'s 0–100 payment likelihood score — the four signals it uses, the color coding, and when to escalate manually.',
+        excerpt: 'Understanding Flowcent\'s 0–100 follow-up priority signal, its inputs, and when to review an invoice manually.',
         date: 'Feb 8, 2026',
         readTime: '5 min read',
         image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=700&q=75',
-        imageAlt: 'Analytics dashboard with charts and prediction scores',
+        imageAlt: 'Analytics dashboard with charts and invoice priority scores',
         featured: false,
     },
 ];
@@ -224,7 +224,7 @@ export default function BlogPage() {
                 </section>
             )}
 
-            {/* ── Newsletter ── */}
+            {/* ── Editorial contact ── */}
             <section className="relative z-10 py-12 px-6 pb-24">
                 <div className="max-w-3xl mx-auto reveal-up">
                     <div className="relative rounded-3xl overflow-hidden">
@@ -233,13 +233,9 @@ export default function BlogPage() {
                             width={1200} height={600} sizes="100vw"
                             className="absolute inset-0 w-full h-full object-cover opacity-15" />
                         <div className="relative border-glow-card glass-card p-12 text-center" style={{ borderColor: 'rgba(167,139,250,0.2)' }}>
-                            <h2 className="text-2xl font-bold mb-3">Get articles in your inbox</h2>
-                            <p className="text-white/45 mb-7 max-w-sm mx-auto">New articles on freelance payments, AI, and collections. No spam — 1 email per week max.</p>
-                            <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-                                <input type="email" placeholder="your@email.com"
-                                    className="flex-1 bg-white/[0.05] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white placeholder-white/25 outline-none focus:border-purple-500/40 focus:bg-white/[0.07] transition-colors duration-200" />
-                                <button className="btn-primary px-6 py-3 whitespace-nowrap">Subscribe →</button>
-                            </div>
+                            <h2 className="text-2xl font-bold mb-3">Suggest a topic</h2>
+                            <p className="text-white/45 mb-7 max-w-sm mx-auto">Have a question about invoices, follow-ups, or payment operations that deserves a practical article?</p>
+                            <Link href="/contact" className="btn-primary inline-block px-6 py-3">Send a suggestion →</Link>
                         </div>
                     </div>
                 </div>

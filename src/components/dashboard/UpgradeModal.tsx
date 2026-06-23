@@ -8,7 +8,6 @@ import { getErrorMessage } from '@/lib/errors';
 interface UpgradeModalProps {
     isOpen: boolean;
     onClose: () => void;
-    token: string | null;
     message?: string;
     onSuccess?: () => void;
 }
@@ -16,15 +15,15 @@ interface UpgradeModalProps {
 const PRO_FEATURES = [
     'Unlimited invoices & clients',
     'Fully automated 5-stage follow-ups',
-    'AI Excuse Memory™ (unlimited)',
+    'AI reply analysis (unlimited)',
     'Payment Intent Score (unlimited)',
-    'Client Trust Scoring (unlimited)',
+    'Payment reliability analysis (unlimited)',
     'Advanced analytics & reports',
     'CSV export',
-    'Priority support (24hr)',
+    'Email support',
 ];
 
-export default function UpgradeModal({ isOpen, onClose, token, message, onSuccess }: UpgradeModalProps) {
+export default function UpgradeModal({ isOpen, onClose, message, onSuccess }: UpgradeModalProps) {
     const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly');
     const [loading, setLoading] = useState(false);
 
@@ -48,7 +47,7 @@ export default function UpgradeModal({ isOpen, onClose, token, message, onSucces
 
             const res = await fetch('/api/billing/upgrade', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ plan: 'pro', billing }),
             });
             const data = await res.json();
@@ -68,7 +67,7 @@ export default function UpgradeModal({ isOpen, onClose, token, message, onSucces
                     try {
                         const v = await fetch('/api/billing/upgrade', {
                             method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                            headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                                 razorpay_order_id: response.razorpay_order_id,
                                 razorpay_payment_id: response.razorpay_payment_id,

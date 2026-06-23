@@ -66,7 +66,7 @@ const SOLUTIONS = [
         icon: '🎬',
         title: 'For Content Creators',
         tagline: 'Brand deals, retainers, campaigns — all tracked',
-        desc: 'Whether it\'s a one-time brand deal or a recurring retainer, Flowcent tracks all your content revenue and automatically follows up when payment is late.',
+        desc: 'Track one-time brand deals and individual retainer invoices, then enable follow-up automation per invoice when needed.',
         color: '#f87171',
         stat: { v: '₹0', l: 'cost to start' },
         image: 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=600&q=75',

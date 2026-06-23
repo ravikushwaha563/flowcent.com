@@ -84,7 +84,7 @@ function DashboardSidebar({
 
             <div className="mx-3 mb-3 p-3 rounded-xl border border-white/[0.06] bg-white/[0.02]">
                 <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xs font-semibold text-white/60">Free Plan</span>
+                    <span className="text-xs font-semibold text-white/60 capitalize">{user?.subscriptionPlan || 'free'} Plan</span>
                     <span className="ml-auto text-[9px] px-1.5 py-0.5 rounded bg-green-500/15 text-green-400 font-bold">ACTIVE</span>
                 </div>
                 <Link href="/dashboard/billing" onClick={onNavigate}>

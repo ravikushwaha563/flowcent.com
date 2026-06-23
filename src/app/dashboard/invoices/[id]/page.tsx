@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import { InvoicePDF } from '@/components/InvoicePDF';
 import RazorpayButton from '@/components/RazorpayButton';
-import { CreditCard, CheckCircle2, Link2 } from 'lucide-react';
+import { CreditCard, CheckCircle2, Link2, XCircle } from 'lucide-react';
 import ExcuseAnalyzerModal from '@/components/dashboard/ExcuseAnalyzerModal';
 import { toast } from 'sonner';
 import Link from 'next/link';
@@ -100,7 +100,7 @@ type PageParams = globalThis.Promise<{ id: string }>;
 export default function InvoiceDetailPage({ params }: { params: PageParams }) {
     // Next.js 16: params is a Promise — must use React.use() to unwrap
     const { id } = use(params);
-    const { token } = useAuth();
+    const { isAuthenticated } = useAuth();
     const [invoice, setInvoice] = useState<Invoice | null>(null);
     const [promises, setPromises] = useState<ClientPromise[]>([]);
     const [loading, setLoading] = useState(true);
@@ -115,8 +115,8 @@ export default function InvoiceDetailPage({ params }: { params: PageParams }) {
     const fetchData = useCallback(async (invoiceId: string) => {
         try {
             const [invoiceResponse, promisesResponse] = await globalThis.Promise.all([
-                fetch(`/api/invoices/${invoiceId}`, { headers: { Authorization: `Bearer ${token}` } }),
-                fetch(`/api/invoices/analyze-excuse?invoiceId=${invoiceId}`, { headers: { Authorization: `Bearer ${token}` } }),
+                fetch(`/api/invoices/${invoiceId}`),
+                fetch(`/api/invoices/analyze-excuse?invoiceId=${invoiceId}`),
             ]);
             const [invoiceData, promisesData] = await globalThis.Promise.all([invoiceResponse.json(), promisesResponse.json()]);
             setInvoice(invoiceData.invoice);
@@ -124,7 +124,7 @@ export default function InvoiceDetailPage({ params }: { params: PageParams }) {
         } finally {
             setLoading(false);
         }
-    }, [token]);
+    }, []);
 
     const calculateScore = async () => {
         if (!id) return;
@@ -132,7 +132,7 @@ export default function InvoiceDetailPage({ params }: { params: PageParams }) {
         try {
             const res = await fetch('/api/invoices/score', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ invoiceId: id }),
             });
             const data = await res.json();
@@ -148,12 +148,12 @@ export default function InvoiceDetailPage({ params }: { params: PageParams }) {
         setSuccessMsg(msg); setTimeout(() => setSuccessMsg(''), 4000);
     };
 
-    useEffect(() => { if (token && id) fetchData(id); }, [token, id, fetchData]);
+    useEffect(() => { if (isAuthenticated && id) fetchData(id); }, [isAuthenticated, id, fetchData]);
 
     const toggleFulfilled = async (promiseId: string, current: boolean) => {
         await fetch('/api/invoices/analyze-excuse', {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ promiseId, fulfilled: !current }),
         });
         setPromises(prev => prev.map(p => p.id === promiseId ? { ...p, fulfilled: !current } : p));
@@ -177,7 +177,7 @@ export default function InvoiceDetailPage({ params }: { params: PageParams }) {
         </div>
     );
 
-    const status = invoice.status === 'paid' ? 'paid' :
+    const status = invoice.status === 'paid' ? 'paid' : invoice.status === 'cancelled' ? 'cancelled' :
         new Date(invoice.due_date) < new Date() ? 'overdue' : 'pending';
 
     return (
@@ -193,16 +193,18 @@ export default function InvoiceDetailPage({ params }: { params: PageParams }) {
                         <p className="text-sm text-white/35 mt-1">{invoice.clients.name} · {invoice.clients.email}</p>
                     </div>
                     <div className="flex items-center gap-3">
-                        <button
-                            onClick={() => {
-                                const url = `${window.location.origin}/pay/${invoice.public_token}`;
-                                navigator.clipboard.writeText(url);
-                                toast.success('Payment link copied to clipboard!');
-                            }}
-                            className="btn-outline text-xs px-4 py-1.5 flex items-center gap-2 hover:bg-white/[0.04]"
-                        >
-                            <Link2 size={13} /> Share Pay Link
-                        </button>
+                        {invoice.status === 'pending' && (
+                            <button
+                                onClick={() => {
+                                    const url = `${window.location.origin}/pay/${invoice.public_token}`;
+                                    navigator.clipboard.writeText(url);
+                                    toast.success('Payment link copied to clipboard!');
+                                }}
+                                className="btn-outline text-xs px-4 py-1.5 flex items-center gap-2 hover:bg-white/[0.04]"
+                            >
+                                <Link2 size={13} /> Share Pay Link
+                            </button>
+                        )}
                         {isClient && (
                             <PDFDownloadLink
                                 document={<InvoicePDF invoice={invoice} />}
@@ -218,9 +220,9 @@ export default function InvoiceDetailPage({ params }: { params: PageParams }) {
                                 }
                             </PDFDownloadLink>
                         )}
-                        <span className={`text-xs px-3 py-1.5 rounded-full font-semibold ${status === 'paid' ? 'badge-paid' : status === 'overdue' ? 'badge-overdue' : 'badge-pending'
+                        <span className={`text-xs px-3 py-1.5 rounded-full font-semibold ${status === 'paid' ? 'badge-paid' : status === 'cancelled' ? 'bg-white/[0.06] text-white/45 border border-white/10' : status === 'overdue' ? 'badge-overdue' : 'badge-pending'
                             }`}>
-                            {status === 'paid' ? '✓ Paid' : status === 'overdue' ? '⚠ Overdue' : '◷ Pending'}
+                            {status === 'paid' ? '✓ Paid' : status === 'cancelled' ? 'Cancelled' : status === 'overdue' ? '⚠ Overdue' : '◷ Pending'}
                         </span>
                     </div>
                 </div>
@@ -254,7 +256,7 @@ export default function InvoiceDetailPage({ params }: { params: PageParams }) {
             </div>
 
             {/* Payment Action Card */}
-            {status !== 'paid' ? (
+            {invoice.status === 'pending' ? (
                 <div className="glass-card p-6 space-y-4" style={{ borderColor: 'rgba(99,102,241,0.2)' }}>
                     <div className="flex items-center gap-2">
                         <span className="w-6 h-6 rounded-lg bg-indigo-500/15 flex items-center justify-center text-indigo-400">
@@ -295,7 +297,7 @@ export default function InvoiceDetailPage({ params }: { params: PageParams }) {
                         Secure checkout via {invoice.currency === 'INR' ? 'Razorpay' : 'Stripe'}
                     </p>
                 </div>
-            ) : (
+            ) : invoice.status === 'paid' ? (
                 <div className="glass-card p-6 flex items-center gap-3" style={{ borderColor: 'rgba(52,211,153,0.2)' }}>
                     <CheckCircle2 size={20} className="text-green-400" />
                     <div>
@@ -303,10 +305,18 @@ export default function InvoiceDetailPage({ params }: { params: PageParams }) {
                         <p className="text-xs text-white/35">This invoice has been fully paid{invoice.paid_at ? ` on ${new Date(invoice.paid_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}` : ''}.</p>
                     </div>
                 </div>
+            ) : (
+                <div className="glass-card p-6 flex items-center gap-3">
+                    <XCircle size={20} className="text-white/45" />
+                    <div>
+                        <p className="text-sm font-semibold text-white/65">Invoice Cancelled</p>
+                        <p className="text-xs text-white/35">Reopen it from the invoice list before collecting payment.</p>
+                    </div>
+                </div>
             )}
 
             {/* Payment Intent Score Breakdown */}
-            {invoice.status !== 'paid' && (
+            {invoice.status === 'pending' && (
                 <div className="glass-card p-6 space-y-4" style={{ borderColor: 'rgba(52,211,153,0.15)' }}>
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -333,7 +343,7 @@ export default function InvoiceDetailPage({ params }: { params: PageParams }) {
                                     <span className="text-[9px] opacity-70">/ 100</span>
                                 </div>
                                 <div>
-                                    <p className="text-sm font-bold" style={{ color: scoreResult.color }}>{scoreResult.label} Likelihood</p>
+                                    <p className="text-sm font-bold" style={{ color: scoreResult.color }}>{scoreResult.label} Priority Signal</p>
                                     <p className="text-xs text-white/35 mt-0.5">{scoreResult.summary}</p>
                                 </div>
                             </div>
@@ -371,10 +381,10 @@ export default function InvoiceDetailPage({ params }: { params: PageParams }) {
                     </div>
                     <div>
                         <h2 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
-                            AI Excuse Analyzer™ <span className="px-2 py-0.5 rounded-full bg-blue-500/10 text-[10px] text-blue-400 font-bold tracking-widest uppercase border border-blue-500/20">Elite Feature</span>
+                            AI Reply Analyzer <span className="px-2 py-0.5 rounded-full bg-blue-500/10 text-[10px] text-blue-400 font-bold tracking-widest uppercase border border-blue-500/20">AI Assisted</span>
                         </h2>
                         <p className="text-xs text-white/50 mt-1 leading-relaxed">
-                            Paste a client's reply to instantly detect psychological delay tactics,<br className="hidden sm:block" /> calculate truth probability, and generate a firm counter-response.
+                            Review commitment details in a client's reply and draft a professional response.<br className="hidden sm:block" /> AI output is advisory and should be verified before sending.
                         </p>
                     </div>
                 </div>

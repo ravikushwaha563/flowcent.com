@@ -19,7 +19,8 @@ follow-ups, and provides AI-assisted payment intelligence.
 3. Apply every SQL file in `supabase/migrations/` in filename order.
 4. Run `npm run dev` and open `http://localhost:3000`.
 
-The service-role Supabase key is server-only. Never prefix it with
+The service-role Supabase key is required for validated application writes and
+is server-only. Never prefix it with
 `NEXT_PUBLIC_` or expose it to browser code.
 
 ## Quality checks
@@ -37,7 +38,9 @@ Individual commands are available as `npm run lint`, `npm run typecheck`,
 - Rotate any credential that has ever appeared in an archive or shared file.
 - Configure the production app URL and provider callback URLs exactly.
 - Supply `CRON_SECRET_KEY` and invoke `/api/cron/process-followups` with a
-  bearer token from a trusted scheduler.
+  bearer token from a trusted scheduler. Both GET-based schedulers and POST are
+  supported.
+- Obtain explicit client consent before enabling WhatsApp reminders.
 - Configure Razorpay and Stripe webhooks before enabling live payments.
 - Run the full quality gate and a payment/auth smoke test before deployment.
 

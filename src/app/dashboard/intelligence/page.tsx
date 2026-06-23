@@ -11,7 +11,7 @@ import UpgradeModal from '@/components/dashboard/UpgradeModal';
 import { getErrorMessage } from '@/lib/errors';
 
 interface AnalysisResult {
-    truth_probability: number;
+    credibility_signal: number;
     intent_category: string;
     analysis: string;
     suggested_response: string;
@@ -33,17 +33,17 @@ interface TrustAnalysis {
 const EXCUSE_TYPES = [
     { icon: <CalendarClock size={24} strokeWidth={1.5} />, title: 'Date Commitment', desc: '"Will pay by Friday" — tracked & scored high', risk: 'low', example: '"I will transfer by end of this week."' },
     { icon: <Coins size={24} strokeWidth={1.5} />, title: 'Partial Payment', desc: '"Can I send half now?" — partial intent', risk: 'medium', example: '"Can I do ₹25,000 now and the rest next month?"' },
-    { icon: <Building2 size={24} strokeWidth={1.5} />, title: 'Process Excuse', desc: '"Our accounts team handles this" — delay tactic', risk: 'medium', example: '"Please send to our finance department."' },
+    { icon: <Building2 size={24} strokeWidth={1.5} />, title: 'Process Delay', desc: '"Our accounts team handles this" — request an owner and date', risk: 'medium', example: '"Please send to our finance department."' },
     { icon: <CircleDashed size={24} strokeWidth={1.5} />, title: 'Vague Promise', desc: '"Will sort it out soon" — high risk', risk: 'high', example: '"We\'ll take care of it this week."' },
     { icon: <Scale size={24} strokeWidth={1.5} />, title: 'Dispute', desc: '"Had feedback on the work" — very high risk', risk: 'critical', example: '"Actually, we had some issues with delivery."' },
-    { icon: <Ghost size={24} strokeWidth={1.5} />, title: 'No Response', desc: 'Ghost — highest risk, time to escalate', risk: 'critical', example: '(No reply after 7+ days)' },
+    { icon: <Ghost size={24} strokeWidth={1.5} />, title: 'No Response', desc: 'No reply after reminders — review the next escalation step', risk: 'critical', example: '(No reply after 7+ days)' },
 ];
 
 const COMING_SOON_AI = [
     { icon: <Puzzle size={24} strokeWidth={1.5} />, title: 'Pattern Memory', desc: 'Use richer client history and logged promises as context for future risk analysis.', tag: 'Planned', color: '#a78bfa' },
     { icon: <Mail size={24} strokeWidth={1.5} />, title: 'AI-Written Follow-ups', desc: 'Generate editable follow-up drafts from invoice context and prior client replies.', tag: 'Planned', color: '#6b96ff' },
-    { icon: <AlertTriangle size={24} strokeWidth={1.5} />, title: 'Risk Alerts', desc: 'Get notified before an invoice goes overdue — AI predicts 7 days in advance based on client payment history.', tag: 'Q3 2026', color: '#fbbf24' },
-    { icon: <Phone size={24} strokeWidth={1.5} />, title: 'WhatsApp AI Bot', desc: 'AI reads WhatsApp replies and logs excuse patterns, just like email — even without Copy-Paste.', tag: 'Q3 2026', color: '#25d366' },
+    { icon: <AlertTriangle size={24} strokeWidth={1.5} />, title: 'Due-Date Alerts', desc: 'Explore configurable reminders before an invoice reaches its due date.', tag: 'Planned', color: '#fbbf24' },
+    { icon: <Phone size={24} strokeWidth={1.5} />, title: 'WhatsApp Reply Import', desc: 'Explore consent-aware reply import and structured commitment logging.', tag: 'Planned', color: '#25d366' },
 ];
 
 const RISK_COLOR: Record<string, string> = {
@@ -51,7 +51,7 @@ const RISK_COLOR: Record<string, string> = {
 };
 
 export default function IntelligencePage() {
-    const { token } = useAuth();
+    const { isAuthenticated } = useAuth();
     const [input, setInput] = useState('');
     const [invoiceId, setInvoiceId] = useState('');
     const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -70,22 +70,22 @@ export default function IntelligencePage() {
 
     // Fetch clients when Insights tab is selected
     useEffect(() => {
-        if (activeTab === 'insights' && token && trustClients.length === 0) {
+        if (activeTab === 'insights' && isAuthenticated && trustClients.length === 0) {
             setTrustLoading(true);
-            fetch('/api/clients', { headers: { Authorization: `Bearer ${token}` } })
+            fetch('/api/clients')
                 .then(r => r.json())
                 .then(d => setTrustClients(d.clients || []))
                 .catch(() => toast.error('Failed to load clients'))
                 .finally(() => setTrustLoading(false));
         }
-    }, [activeTab, token, trustClients.length]);
+    }, [activeTab, isAuthenticated, trustClients.length]);
 
     const scoreClient = async (clientId: string) => {
         setScoringId(clientId);
         try {
             const res = await fetch('/api/ai/client-trust-score', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ clientId }),
             });
             const data = await res.json();
@@ -107,9 +107,9 @@ export default function IntelligencePage() {
             } : c));
             setExpandedId(clientId);
             setExpandedAnalysis(data.analysis);
-            toast.success(`Trust score generated for ${trustClients.find(c => c.id === clientId)?.name}`);
+            toast.success(`Payment reliability analysis generated for ${trustClients.find(c => c.id === clientId)?.name}`);
         } catch (error: unknown) {
-            toast.error(getErrorMessage(error, 'Failed to generate trust score'));
+            toast.error(getErrorMessage(error, 'Failed to generate payment reliability analysis'));
         } finally {
             setScoringId(null);
         }
@@ -121,7 +121,7 @@ export default function IntelligencePage() {
         try {
             const res = await fetch('/api/ai/analyze-excuse', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ excuse: input, invoiceId: invoiceId || undefined }),
             });
             const data = await res.json();
@@ -141,7 +141,7 @@ export default function IntelligencePage() {
         }
     };
 
-    const scoreColor = result ? result.truth_probability >= 70 ? '#34d399' : result.truth_probability >= 40 ? '#fbbf24' : '#f87171' : '#6b96ff';
+    const scoreColor = result ? result.credibility_signal >= 70 ? '#34d399' : result.credibility_signal >= 40 ? '#fbbf24' : '#f87171' : '#6b96ff';
 
     return (
         <div className="min-h-screen bg-[#09090f] text-white">
@@ -154,7 +154,6 @@ export default function IntelligencePage() {
             <UpgradeModal
                 isOpen={showUpgrade}
                 onClose={() => setShowUpgrade(false)}
-                token={token}
                 message={upgradeMessage}
             />
 
@@ -169,12 +168,12 @@ export default function IntelligencePage() {
                             </div>
                             <h1 className="text-2xl font-bold text-white tracking-tight">AI Intelligence</h1>
                         </div>
-                        <p className="text-sm text-white/35">AI-assisted reply analysis · Excuse Memory™</p>
+                        <p className="text-sm text-white/35">AI-assisted payment reply and history analysis</p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                         <span className="flex items-center gap-1.5 text-xs font-semibold text-purple-400 px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20">
                             <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
-                            AI Online
+                            AI Assisted
                         </span>
                     </div>
                 </div>
@@ -218,7 +217,7 @@ export default function IntelligencePage() {
                         <div className="glass-card p-6 space-y-4" style={{ borderColor: 'rgba(167,139,250,0.15)' }}>
                             <div className="flex items-center gap-2 mb-2">
                                 <div className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
-                                <p className="text-xs font-bold text-white/40 uppercase tracking-widest">Excuse Memory™ Analyser</p>
+                                <p className="text-xs font-bold text-white/40 uppercase tracking-widest">Payment Reply Analyser</p>
                             </div>
 
                             <div className="space-y-1.5">
@@ -277,16 +276,16 @@ export default function IntelligencePage() {
                                 <div className="p-5 rounded-xl border" style={{ borderColor: `${scoreColor}15`, background: `${scoreColor}06` }}>
                                     <div className="flex items-center justify-between mb-3">
                                         <span className="text-sm font-semibold text-white">Excuse Credibility</span>
-                                        <span className="text-3xl font-black" style={{ color: scoreColor }}>{result.truth_probability}</span>
+                                        <span className="text-3xl font-black" style={{ color: scoreColor }}>{result.credibility_signal}</span>
                                     </div>
                                     <div className="h-2.5 rounded-full bg-white/[0.07] overflow-hidden">
                                         <div className="h-full rounded-full transition-all duration-700"
-                                            style={{ width: `${result.truth_probability}%`, background: `linear-gradient(90deg, ${scoreColor}80, ${scoreColor})` }} />
+                                            style={{ width: `${result.credibility_signal}%`, background: `linear-gradient(90deg, ${scoreColor}80, ${scoreColor})` }} />
                                     </div>
                                     <div className="flex justify-between mt-2">
                                         <span className="text-[10px] text-white/25">Low risk</span>
                                         <span className="text-xs font-medium" style={{ color: scoreColor }}>
-                                            {result.truth_probability >= 70 ? 'Likely genuine' : result.truth_probability >= 40 ? 'Uncertain, verify commitment' : 'Likely a delay tactic'}
+                                            {result.credibility_signal >= 70 ? 'Specific, verifiable commitment' : result.credibility_signal >= 40 ? 'Some details; verify commitment' : 'Vague; request concrete details'}
                                         </span>
                                         <span className="text-[10px] text-white/25">High risk</span>
                                     </div>
@@ -311,7 +310,7 @@ export default function IntelligencePage() {
                 {activeTab === 'insights' && (
                     <div className="space-y-5">
                         <div className="flex items-center justify-between">
-                            <p className="text-sm text-white/40">AI-powered trust analysis of your clients based on their complete payment history.</p>
+                            <p className="text-sm text-white/40">AI-assisted payment reliability analysis based only on records stored in Flowcent.</p>
                         </div>
 
                         {trustLoading ? (
@@ -326,7 +325,7 @@ export default function IntelligencePage() {
                         ) : trustClients.length === 0 ? (
                             <div className="glass-card p-12 text-center">
                                 <Users size={40} className="text-white/15 mx-auto mb-4" />
-                                <p className="text-white/40 text-sm">No clients found. Add clients first to generate trust insights.</p>
+                                <p className="text-white/40 text-sm">No clients found. Add clients first to generate payment history insights.</p>
                             </div>
                         ) : (
                             <div className="grid sm:grid-cols-2 gap-4">
@@ -337,7 +336,7 @@ export default function IntelligencePage() {
                                         const riskLevel = client.ai_risk_level;
                                         const hasScore = score !== null && score !== undefined;
                                         const scoreColor = hasScore ? (score >= 70 ? '#34d399' : score >= 40 ? '#fbbf24' : '#f87171') : '#6b96ff';
-                                        const riskLabel = riskLevel === 'trusted' ? 'Trusted' : riskLevel === 'moderate' ? 'Moderate' : riskLevel === 'risky' ? 'Risky' : riskLevel === 'high_risk' ? 'High Risk' : 'Unscored';
+                                        const riskLabel = riskLevel === 'trusted' ? 'Reliable Record' : riskLevel === 'moderate' ? 'Mixed Record' : riskLevel === 'risky' ? 'Review Record' : riskLevel === 'high_risk' ? 'Limited Reliability' : 'Unscored';
                                         const riskColor = riskLevel === 'trusted' ? '#34d399' : riskLevel === 'moderate' ? '#fbbf24' : riskLevel === 'risky' ? '#fb923c' : riskLevel === 'high_risk' ? '#f87171' : '#6b96ff';
                                         const isExpanded = expandedId === client.id;
                                         const isScoring = scoringId === client.id;
@@ -368,7 +367,7 @@ export default function IntelligencePage() {
                                                 {hasScore ? (
                                                     <div className="space-y-1.5">
                                                         <div className="flex justify-between text-xs">
-                                                            <span className="text-white/30">Trust Score</span>
+                                                            <span className="text-white/30">Reliability Score</span>
                                                             <span className="font-bold" style={{ color: scoreColor }}>{score}/100</span>
                                                         </div>
                                                         <div className="h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.05)' }}>

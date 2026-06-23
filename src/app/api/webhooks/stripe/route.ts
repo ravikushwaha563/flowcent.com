@@ -3,6 +3,7 @@ import type Stripe from 'stripe';
 import { createAdminSupabaseClient } from '@/lib/supabase/admin';
 import { getStripe } from '@/lib/stripe';
 import { requireServerEnv } from '@/lib/env/server';
+import { claimWebhookEvent, completeWebhookEvent, releaseWebhookEvent } from '@/lib/payments/webhook-events';
 
 export async function POST(req: NextRequest) {
     const payload = await req.text();
@@ -17,19 +18,9 @@ export async function POST(req: NextRequest) {
     }
 
     const supabaseAdmin = createAdminSupabaseClient();
-    const { data: existing } = await supabaseAdmin
-        .from('webhook_events')
-        .select('processed_at')
-        .eq('provider', 'stripe')
-        .eq('provider_event_id', event.id)
-        .maybeSingle();
-    if (existing?.processed_at) return NextResponse.json({ received: true, duplicate: true });
-
-    if (!existing) {
-        await supabaseAdmin.from('webhook_events').insert({
-            provider: 'stripe', provider_event_id: event.id, event_type: event.type, payload: event,
-        });
-    }
+    const claim = await claimWebhookEvent(supabaseAdmin, 'stripe', event.id, event.type, event);
+    if (claim === 'processed') return NextResponse.json({ received: true, duplicate: true });
+    if (claim === 'busy') return NextResponse.json({ received: true, processing: true }, { status: 202 });
 
     try {
         if (event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') {
@@ -65,11 +56,11 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        await supabaseAdmin.from('webhook_events').update({ processed_at: new Date().toISOString() })
-            .eq('provider', 'stripe').eq('provider_event_id', event.id);
+        await completeWebhookEvent(supabaseAdmin, 'stripe', event.id);
         return NextResponse.json({ received: true });
     } catch (error) {
         console.error('Stripe webhook processing failed:', error);
+        await releaseWebhookEvent(supabaseAdmin, 'stripe', event.id);
         return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 });
     }
 }

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { checkInvoiceLimit, PlanType } from '@/lib/plan-limits';
+import { checkAutoFollowup, checkInvoiceLimit, PlanType } from '@/lib/plan-limits';
 import { requireUser } from '@/lib/auth/server';
 import { createInvoiceSchema, validationError } from '@/lib/validations/domain';
 import { ZodError } from 'zod';
+import { createAdminSupabaseClient } from '@/lib/supabase/admin';
 
 // GET /api/invoices - List all invoices for current user
 export async function GET() {
@@ -48,10 +49,20 @@ export async function POST(req: NextRequest) {
             .single();
         if (!ownedClient) return NextResponse.json({ error: 'Client not found' }, { status: 404 });
 
+        const { data: duplicateInvoice } = await supabase
+            .from('invoices')
+            .select('id')
+            .eq('user_id', user.id)
+            .ilike('invoice_number', invoiceNumber)
+            .maybeSingle();
+        if (duplicateInvoice) {
+            return NextResponse.json({ error: 'Invoice number already exists' }, { status: 409 });
+        }
+
         // Fetch user plan and usage
         const { data: profile } = await supabase
             .from('users')
-            .select('subscription_plan, plan_expires_at, invoice_count_this_month')
+            .select('subscription_plan, plan_expires_at')
             .eq('id', user.id)
             .single();
             
@@ -60,7 +71,23 @@ export async function POST(req: NextRequest) {
             ? 'free'
             : (profile.subscription_plan || 'free');
         
-        const limitCheck = checkInvoiceLimit(activePlan as PlanType, profile.invoice_count_this_month || 0);
+        if (autoFollowup) {
+            const automationCheck = checkAutoFollowup(activePlan as PlanType);
+            if (!automationCheck.allowed) {
+                return NextResponse.json({ error: 'LIMIT_EXCEEDED', message: automationCheck.message }, { status: 403 });
+            }
+        }
+
+        const now = new Date();
+        const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+        const { count: monthlyInvoiceCount, error: countError } = await supabase
+            .from('invoices')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', user.id)
+            .gte('created_at', monthStart.toISOString());
+        if (countError) throw countError;
+
+        const limitCheck = checkInvoiceLimit(activePlan as PlanType, monthlyInvoiceCount || 0);
         
         if (!limitCheck.allowed) {
             return NextResponse.json({ error: 'LIMIT_EXCEEDED', message: limitCheck.message }, { status: 403 });
@@ -71,21 +98,29 @@ export async function POST(req: NextRequest) {
         const nextFollowup = new Date(due);
         nextFollowup.setDate(due.getDate() + 1);
 
-        const { data, error } = await supabase
-            .from('invoices')
-            .insert({
-                user_id: user.id,
-                client_id: clientId,
-                invoice_number: invoiceNumber,
-                amount,
-                currency,
-                due_date: dueDate,
-                status: 'pending',
-                payment_intent_score: 50,
-                auto_followup: autoFollowup || false,
-                current_stage: 1,
-                next_followup_date: nextFollowup.toISOString(),
-            })
+        const admin = createAdminSupabaseClient();
+        const { data: invoiceId, error: createError } = await admin.rpc('create_invoice_record', {
+            p_user_id: user.id,
+            p_client_id: clientId,
+            p_invoice_number: invoiceNumber,
+            p_amount: amount,
+            p_currency: currency,
+            p_due_date: dueDate,
+            p_auto_followup: autoFollowup || false,
+            p_next_followup_date: nextFollowup.toISOString(),
+        });
+        if (createError?.message.includes('INVOICE_LIMIT_EXCEEDED')) {
+            return NextResponse.json({ error: 'LIMIT_EXCEEDED', message: limitCheck.message }, { status: 403 });
+        }
+        if (createError?.message.includes('AUTOMATION_REQUIRES_PRO')) {
+            return NextResponse.json({ error: 'LIMIT_EXCEEDED', message: checkAutoFollowup('free').message }, { status: 403 });
+        }
+        if (createError?.code === '23505') {
+            return NextResponse.json({ error: 'Invoice number already exists' }, { status: 409 });
+        }
+        if (createError) throw createError;
+
+        const { data, error } = await admin.from('invoices')
             .select(`
         *,
         clients (
@@ -95,15 +130,10 @@ export async function POST(req: NextRequest) {
           company
         )
       `)
+            .eq('id', invoiceId)
             .single();
 
         if (error) throw error;
-
-        // Update usage
-        await supabase
-            .from('users')
-            .update({ invoice_count_this_month: (profile.invoice_count_this_month || 0) + 1 })
-            .eq('id', user.id);
 
         return NextResponse.json({ invoice: data }, { status: 201 });
     } catch (error) {

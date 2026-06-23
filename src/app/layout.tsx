@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     default: "Flowcent – AI-Powered Payment Collection for Indian Freelancers",
     template: "%s | Flowcent",
   },
-  description: "Stop chasing payments. Flowcent tracks every invoice, detects payment excuses with AI, and sends automatic follow-ups — so you get paid faster.",
+  description: "Track invoices, review payment replies with AI assistance, and send staged follow-ups from your connected Gmail account.",
   keywords: ["invoice tracking", "payment collection", "AI follow-up", "freelancer payment", "India fintech", "payment automation"],
   metadataBase: new URL("https://flowcent.in"),
   openGraph: {

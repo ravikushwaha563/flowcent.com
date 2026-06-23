@@ -28,7 +28,7 @@ const PLANS = [
             { text: 'INR, USD, EUR, GBP', included: true },
             { text: 'Automated scheduling', included: false },
             { text: 'Unlimited invoices & clients', included: false },
-            { text: 'Priority support', included: false },
+            { text: 'Email support', included: false },
         ],
     },
     {
@@ -47,7 +47,7 @@ const PLANS = [
             { text: 'Unlimited clients', included: true },
             { text: 'Gmail integration + smart scheduling', included: true },
             { text: 'Fully automated 5-stage follow-ups', included: true },
-            { text: 'AI Excuse Memory™ (unlimited)', included: true },
+            { text: 'AI reply analysis (unlimited)', included: true },
             { text: 'Payment Intent Score (unlimited)', included: true },
             { text: 'Dashboard analytics', included: true },
             { text: 'INR, USD, EUR, GBP', included: true },

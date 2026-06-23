@@ -4,6 +4,7 @@ import { sendFollowUpEmail, generateFollowUpEmail } from '@/lib/gmail';
 import { followUpSchema, validationError } from '@/lib/validations/domain';
 import { ZodError } from 'zod';
 import { decryptSecret } from '@/lib/crypto/secrets';
+import { createAdminSupabaseClient } from '@/lib/supabase/admin';
 
 export async function POST(req: NextRequest) {
     try {
@@ -12,7 +13,8 @@ export async function POST(req: NextRequest) {
         const { invoiceId, stage } = followUpSchema.parse(await req.json());
 
         // Get user + Gmail tokens
-        const { data: user, error: userError } = await supabase
+        const admin = createAdminSupabaseClient();
+        const { data: user, error: userError } = await admin
             .from('users')
             .select('name, company_name, gmail_connected, gmail_access_token, gmail_refresh_token')
             .eq('id', authUser.id)
@@ -38,8 +40,8 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
         }
 
-        if (invoice.status === 'paid') {
-            return NextResponse.json({ error: 'Invoice is already paid' }, { status: 400 });
+        if (invoice.status !== 'pending') {
+            return NextResponse.json({ error: invoice.status === 'paid' ? 'Invoice is already paid' : 'Invoice is cancelled' }, { status: 409 });
         }
 
         // Format amount
@@ -56,6 +58,7 @@ export async function POST(req: NextRequest) {
             dueDate: invoice.due_date,
             senderName: user.name || authUser.email?.split('@')[0] || 'Flowcent User',
             companyName: user.company_name,
+            paymentUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/pay/${invoice.public_token}`,
         });
 
         // Send via Gmail API
@@ -70,11 +73,12 @@ export async function POST(req: NextRequest) {
         });
 
         if (!result.success) {
-            return NextResponse.json({ error: `Failed to send: ${result.error}` }, { status: 500 });
+            console.error('Gmail send failed:', result.error);
+            return NextResponse.json({ error: 'Failed to send follow-up email' }, { status: 502 });
         }
 
         // Record the follow-up in DB
-        const { error: followUpError } = await supabase.from('followups').insert({
+        const { error: followUpError } = await admin.from('followups').insert({
             invoice_id: invoiceId,
             user_id: authUser.id,
             stage,
@@ -94,6 +98,6 @@ export async function POST(req: NextRequest) {
     } catch (err: unknown) {
         if (err instanceof ZodError) return NextResponse.json(validationError(err), { status: 400 });
         console.error('Send follow-up error:', err);
-        return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to send follow-up' }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to send follow-up' }, { status: 500 });
     }
 }

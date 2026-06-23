@@ -59,6 +59,6 @@ export async function POST(req: NextRequest) {
         });
     } catch (err: unknown) {
         console.error('Stripe verify error:', err);
-        return NextResponse.json({ error: err instanceof Error ? err.message : 'Stripe verification failed' }, { status: 500 });
+        return NextResponse.json({ error: 'Stripe verification failed' }, { status: 500 });
     }
 }

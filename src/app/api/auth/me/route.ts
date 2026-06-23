@@ -8,9 +8,13 @@ export async function GET() {
 
         const { data: profile } = await supabase
             .from('users')
-            .select('name, company_name, industry, gmail_connected, created_at, updated_at')
+            .select('name, company_name, industry, gmail_connected, subscription_plan, plan_expires_at, created_at, updated_at')
             .eq('id', user.id)
             .single();
+
+        const activePlan = profile?.plan_expires_at && new Date(profile.plan_expires_at) < new Date()
+            ? 'free'
+            : profile?.subscription_plan || 'free';
 
         return NextResponse.json({
             user: {
@@ -20,6 +24,7 @@ export async function GET() {
                 companyName: profile?.company_name ?? null,
                 industry: profile?.industry ?? null,
                 gmailConnected: profile?.gmail_connected ?? false,
+                subscriptionPlan: activePlan,
                 createdAt: profile?.created_at ?? user.created_at,
                 updatedAt: profile?.updated_at ?? user.updated_at ?? user.created_at,
             },

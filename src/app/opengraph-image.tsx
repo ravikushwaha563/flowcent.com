@@ -6,6 +6,8 @@ export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
 export default async function Image() {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
     return new ImageResponse(
         (
             <div
@@ -23,20 +25,6 @@ export default async function Image() {
                     overflow: 'hidden',
                 }}>
 
-                {/* Background glow blobs */}
-                <div style={{
-                    position: 'absolute', top: -120, left: -60,
-                    width: 500, height: 500,
-                    background: 'radial-gradient(circle, rgba(59,130,246,0.25) 0%, transparent 70%)',
-                    borderRadius: '50%',
-                }} />
-                <div style={{
-                    position: 'absolute', bottom: -100, right: -40,
-                    width: 400, height: 400,
-                    background: 'radial-gradient(circle, rgba(139,92,246,0.2) 0%, transparent 70%)',
-                    borderRadius: '50%',
-                }} />
-
                 {/* Grid pattern overlay */}
                 <div style={{
                     position: 'absolute', inset: 0,
@@ -49,7 +37,7 @@ export default async function Image() {
                     {/* ImageResponse renders this JSX outside the browser DOM. */}
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                        src="http://localhost:3000/logo.png"
+                        src={new URL('/logo.png', appUrl).toString()}
                         alt="Logo"
                         style={{
                             width: 64,
@@ -83,15 +71,15 @@ export default async function Image() {
 
                 {/* Sub */}
                 <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 22, lineHeight: 1.5, marginBottom: 40, maxWidth: 620 }}>
-                    AI invoice tracking, 5-stage follow-ups from Gmail, and Excuse Memory™ — built for Indian freelancers.
+                    Track invoices, automate Gmail follow-ups, and accept online payments in one focused workspace.
                 </p>
 
                 {/* Stats row */}
                 <div style={{ display: 'flex', gap: 16 }}>
                     {[
-                        { value: '45 → 12 days', label: 'Avg payment time' },
-                        { value: '5 stages', label: 'Follow-ups' },
-                        { value: '₹0 to start', label: 'Free plan forever' },
+                        { value: '4 currencies', label: 'Invoice support' },
+                        { value: '5 stages', label: 'Follow-up workflow' },
+                        { value: 'Free plan', label: 'Available to start' },
                     ].map((s) => (
                         <div key={s.label} style={{
                             padding: '12px 20px', borderRadius: 12,

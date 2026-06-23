@@ -42,7 +42,7 @@ const CATEGORIES: Record<string, {
                 benefits: [
                     'Create invoices with client, amount, currency, and due date',
                     'Real-time status: Pending → Overdue → Paid with colour coding',
-                    'View all invoices sorted by newest first or overdue priority',
+                    'View invoices sorted by newest first with clear overdue status',
                     'Click any invoice to see full AI analysis and promise history',
                     'One-click "mark as paid" with confirmation modal',
                 ],
@@ -58,7 +58,7 @@ const CATEGORIES: Record<string, {
                     'Supports INR ₹, USD $, EUR €, and GBP £',
                     'Currency selection per invoice — works globally',
                     'Dashboard totals shown in your primary currency',
-                    'Invoice PDF (coming soon) respects currency formatting and locale',
+                    'Download a professional PDF with invoice and client details',
                 ],
             },
             {
@@ -80,7 +80,7 @@ const CATEGORIES: Record<string, {
                 icon: '📤',
                 title: 'PDF Invoice Export',
                 tagline: 'Professional invoices your clients respect',
-                desc: 'Generate a clean, professional PDF for every invoice — branded, itemised, and ready to send. Clients who receive proper invoices pay faster than those who get a WhatsApp message.',
+                desc: 'Generate a clean PDF summary with invoice number, client details, amount, issue date, due date, and payment status.',
                 image: 'https://images.unsplash.com/photo-1568234931994-ba7cc1fcbc97?auto=format&fit=crop&w=800&q=80',
                 imageAlt: 'PDF document with professional invoice formatting',
                 benefits: [
@@ -98,15 +98,15 @@ const CATEGORIES: Record<string, {
         label: 'AI & Automation',
         color: '#a78bfa',
         icon: '🤖',
-        tagline: 'AI that reads client emails, predicts payment, and chases for you',
+        tagline: 'Review payment replies and automate staged reminders',
         heroImage: 'https://images.unsplash.com/photo-1677442135703-1787eea5ce01?auto=format&fit=crop&w=1200&q=80',
         heroImageAlt: 'Abstract AI neural network visualization in deep purple',
         items: [
             {
                 icon: '🤖',
-                title: 'AI Excuse Memory™',
+                title: 'AI Reply Analysis',
                 tagline: 'Never forget what your client promised',
-                desc: 'Paste any client email or message reply into Flowcent. Our AI reads it, extracts payment promises and excuses, categorises them (Date Commitment, Excuse, Dispute, etc.), and logs them permanently. Every client builds a truth record.',
+                desc: 'Paste a client email or message reply into Flowcent. AI extracts payment commitments, categorises the reply, and can log the result against the invoice. The output is advisory and remains reviewable by you.',
                 image: 'https://images.unsplash.com/photo-1655720031554-a929595ffad7?auto=format&fit=crop&w=800&q=80',
                 imageAlt: 'AI reading and analyzing email text to extract key information',
                 benefits: [
@@ -114,8 +114,8 @@ const CATEGORIES: Record<string, {
                     'Every promise logged with exact quote, date, and type',
                     'Mark promises as fulfilled when payment actually arrives',
                     'Full timeline view of all excuses per invoice',
-                    'Pattern detection: same excuse twice from same client = flagged',
-                    'AI recommends which follow-up stage to escalate to next',
+                    'Structured categories keep commitments easier to review',
+                    'Suggested responses remain editable before use',
                 ],
             },
             {
@@ -126,11 +126,8 @@ const CATEGORIES: Record<string, {
                 image: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=800&q=80',
                 imageAlt: 'Email inbox with professional payment follow-up messages visible',
                 benefits: [
-                    'Stage 1: Friendly Reminder — sent 3 days after due date',
-                    'Stage 2: Professional Follow-up — +3 more days',
-                    'Stage 3: Second Follow-up — +4 more days',
-                    'Stage 4: Urgent Notice — +5 more days',
-                    'Stage 5: Final Notice — +7 more days',
+                    'Stage 1: Friendly Reminder — scheduled after the due date',
+                    'Stages 2–5: progressively firmer follow-ups at 3-day intervals',
                     'All emails sent FROM YOUR real Gmail address, not a system address',
                     'Toggle auto follow-up ON or OFF per individual invoice at creation',
                     'Manual "Run Now" button to trigger the current stage immediately',
@@ -139,15 +136,14 @@ const CATEGORIES: Record<string, {
             {
                 icon: '📊',
                 title: 'Payment Intent Score',
-                tagline: 'AI predicts: will this client actually pay?',
-                desc: 'Every unpaid invoice gets a dynamic 0–100 payment intent score, calculated in real time from four key signals. Know which overdue invoices need your personal attention — and which the automation will handle.',
+                tagline: 'Prioritize follow-up using payment history signals',
+                desc: 'Recalculate a 0–100 follow-up priority signal for a pending invoice using due-date status, relevant client payment history, and follow-up stage.',
                 image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80',
-                imageAlt: 'Analytics dashboard showing predictive payment scores with color coding',
+                imageAlt: 'Analytics dashboard showing invoice priority scores with color coding',
                 benefits: [
                     'Factor 1: Days overdue — highest impact signal',
                     'Factor 2: Client\'s full payment history across all past invoices',
                     'Factor 3: Current follow-up stage reached (Stage 4/5 = lower score)',
-                    'Factor 4: Invoice amount (high invoice = riskier)',
                     '🟢 High (70+) · 🟡 Medium (45–69) · 🔴 Low (<45) colour coding',
                     'One-click recalculate from invoice list or detail page',
                     'Score breakdown card showing contribution of each factor',
@@ -185,38 +181,37 @@ const CATEGORIES: Record<string, {
                 icon: '👥',
                 title: 'Client Management',
                 tagline: 'A full payment profile for every client',
-                desc: 'Each client gets a dedicated profile — contact info, company, all linked invoices, complete payment history, and a risk score derived from their behaviour. Know your best payers and your problem clients instantly.',
+                desc: 'Store client contact details, company, and payment-history signals in one client list. Edit records, review reliability badges, and use clients when creating invoices.',
                 image: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=800&q=80',
                 imageAlt: 'Team reviewing client profile information on screen',
                 benefits: [
-                    'Client profile: name, email, phone, company, notes',
-                    'All invoices for that client in one linked view',
-                    'Total billed, total collected, and current outstanding balance',
+                    'Client record: name, email, phone, company, and WhatsApp consent',
+                    'Clients are linked to every invoice created for them',
                     'Payment risk score shown on client card and profile',
-                    'Quick-add client from the invoices page (no separate flow needed)',
-                    'Client list sorted by outstanding balance or last activity',
+                    'Create, edit, search, and safely delete eligible client records',
+                    'Clients with invoice history are protected from deletion',
                 ],
             },
             {
                 icon: '🏆',
                 title: 'Client Risk Scoring',
-                tagline: 'Identify your problem payers before it\'s too late',
-                desc: 'Every client accumulates a payment risk score based on their real history with you — how often late, how many overdue invoices, how many excuses logged. High risk = chase early.',
+                tagline: 'Review payment reliability signals from your own records',
+                desc: 'Generate an AI-assisted payment reliability analysis using invoice history and logged commitments. Treat it as decision support, not a credit score or guarantee.',
                 image: 'https://images.unsplash.com/photo-1642790551116-18a150d38a18?auto=format&fit=crop&w=800&q=80',
                 imageAlt: 'Risk assessment dashboard showing client payment scores',
                 benefits: [
                     'Score based on: payment delay history, overdue frequency, excuse count',
                     'Colour-coded risk badge on every client card (🟢 Low · 🟡 Medium · 🔴 High)',
                     'Sort client list by risk score to prioritise your collections effort',
-                    'Risk score updates automatically with every invoice interaction',
-                    'Helps you decide: accept this client\'s next project or request an advance?',
+                    'Analysis can be refreshed when you need an updated review',
+                    'Use the output alongside contracts, disputes, and direct communication',
                 ],
             },
             {
                 icon: '📝',
                 title: 'Promise & Excuse Tracker',
-                tagline: 'Every "I\'ll pay Friday" is documented forever',
-                desc: 'No more he-said-she-said. Every payment commitment a client makes is timestamped, categorised, and stored as evidence. When they give you the same excuse twice, Flowcent flags it.',
+                tagline: 'Keep payment commitments with the related invoice',
+                desc: 'Extracted payment commitments can be timestamped, categorised, and stored with an invoice for operational review. Flowcent does not certify them as legal evidence.',
                 image: 'https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?auto=format&fit=crop&w=800&q=80',
                 imageAlt: 'Notebook and digital tracker showing client commitments logged',
                 benefits: [
@@ -225,7 +220,7 @@ const CATEGORIES: Record<string, {
                     'Date logged + optional promised payment date fields',
                     'Fulfill/unfulfill toggle — mark when the promise was kept (or wasn\'t)',
                     'Full promise timeline on every invoice detail page',
-                    'Patterns surfaced: same excuse from same client across multiple invoices',
+                    'Original source messages should be retained and verified separately',
                 ],
             },
             {
@@ -261,7 +256,7 @@ const CATEGORIES: Record<string, {
                 icon: '📧',
                 title: 'Gmail Integration (Live)',
                 tagline: 'Send follow-ups from your own Google inbox',
-                desc: 'The most important integration in Flowcent. Connect your Google account once — and every single automated follow-up is sent from your personal Gmail address. Clients respond faster when they see a real person\'s email, not a system address.',
+                desc: 'Connect Google through OAuth so manual and automated follow-ups can be sent from the connected Gmail address instead of a generic system mailbox.',
                 image: 'https://images.unsplash.com/photo-1596526131083-e8c633c948d2?auto=format&fit=crop&w=800&q=80',
                 imageAlt: 'Gmail open on MacBook displaying follow-up email thread',
                 benefits: [
@@ -270,7 +265,7 @@ const CATEGORIES: Record<string, {
                     'Works with gmail.com and Google Workspace domains',
                     'Tokens refreshed automatically — never reconnect manually',
                     'All 5 follow-up stages sent from your address with correct display name',
-                    'Recipient sees: "From: Arjun Singh (arjun@gmail.com)" — not Flowcent',
+                    'Recipient sees your connected Gmail sender identity, not a generic Flowcent mailbox',
                 ],
             },
             {
@@ -465,7 +460,7 @@ export default async function FeatureCategoryPage({ params }: { params: Promise<
                             <h2 className="text-3xl font-bold mb-4">
                                 All {cat.items.length} {cat.label} features — <span className="grad-text">free to start</span>
                             </h2>
-                            <p className="text-white/50 mb-8 max-w-md mx-auto">No credit card required. Set up in 5 minutes. Upgrade anytime.</p>
+                            <p className="text-white/50 mb-8 max-w-md mx-auto">No credit card required for the Free plan. Upgrade anytime.</p>
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
                                 <Link href="/signup"><button className="btn-primary px-8 py-3.5">Get started free →</button></Link>
                                 <Link href="/features"><button className="btn-outline px-8 py-3.5">Back to all features</button></Link>

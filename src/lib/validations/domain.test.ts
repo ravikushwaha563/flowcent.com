@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
     createClientSchema,
     createInvoiceSchema,
+    updateInvoiceSchema,
     updateProfileSchema,
     verifyRazorpayPaymentSchema,
     verifyStripePaymentSchema,
@@ -12,6 +13,7 @@ const publicToken = '550e8400-e29b-41d4-a716-446655440000';
 describe('domain validation', () => {
     it('normalizes valid client and invoice input', () => {
         expect(createClientSchema.parse({ name: '  Asha  ', email: 'asha@example.com' }).name).toBe('Asha');
+        expect(createClientSchema.parse({ name: 'Asha', email: 'asha@example.com', whatsappOptIn: true }).whatsappOptIn).toBe(true);
         expect(createInvoiceSchema.parse({
             clientId: publicToken,
             invoiceNumber: 'INV-100',
@@ -42,5 +44,12 @@ describe('domain validation', () => {
             razorpay_payment_id: 'pay_123',
             razorpay_signature: 'a'.repeat(64),
         }).success).toBe(true);
+    });
+
+    it('accepts supported invoice edits and rejects empty or unknown edits', () => {
+        expect(updateInvoiceSchema.safeParse({ status: 'cancelled' }).success).toBe(true);
+        expect(updateInvoiceSchema.parse({ amount: '1500', autoFollowup: true }).amount).toBe(1500);
+        expect(updateInvoiceSchema.safeParse({}).success).toBe(false);
+        expect(updateInvoiceSchema.safeParse({ file_url: 'https://attacker.example/file' }).success).toBe(false);
     });
 });

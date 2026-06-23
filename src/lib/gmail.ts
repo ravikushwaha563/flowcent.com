@@ -1,13 +1,22 @@
 import { google } from 'googleapis';
-import { publicEnv } from '@/lib/env/public';
 import { requireServerEnv, serverEnv } from '@/lib/env/server';
 import { getErrorMessage } from '@/lib/errors';
+
+export function escapeHtml(value: string): string {
+    return value.replace(/[&<>'"]/g, character => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;',
+    })[character] || character);
+}
+
+function sanitizeHeader(value: string): string {
+    return value.replace(/[\r\n]+/g, ' ').trim();
+}
 
 export function getOAuthClient() {
     return new google.auth.OAuth2(
         requireServerEnv('GOOGLE_CLIENT_ID'),
         requireServerEnv('GOOGLE_CLIENT_SECRET'),
-        serverEnv.GOOGLE_REDIRECT_URI || `${publicEnv.appUrl}/api/auth/gmail/callback`,
+        serverEnv.GOOGLE_REDIRECT_URI || `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/auth/gmail/callback`,
     );
 }
 
@@ -62,10 +71,10 @@ function buildEmailMessage({
     to: string; from: string; subject: string; body: string; replyTo?: string;
 }): string {
     const headers = [
-        `To: ${to}`,
-        `From: ${from}`,
-        `Subject: ${subject}`,
-        replyTo ? `Reply-To: ${replyTo}` : '',
+        `To: ${sanitizeHeader(to)}`,
+        `From: ${sanitizeHeader(from)}`,
+        `Subject: ${sanitizeHeader(subject)}`,
+        replyTo ? `Reply-To: ${sanitizeHeader(replyTo)}` : '',
         'Content-Type: text/html; charset=utf-8',
         'MIME-Version: 1.0',
     ].filter(Boolean).join('\n');
@@ -93,8 +102,8 @@ export async function sendFollowUpEmail({
         const fromEmail = userInfo.email || '';
 
         const raw = buildEmailMessage({
-            to: `${toName} <${to}>`,
-            from: `${fromName} <${fromEmail}>`,
+            to: `${sanitizeHeader(toName)} <${sanitizeHeader(to)}>`,
+            from: `${sanitizeHeader(fromName)} <${sanitizeHeader(fromEmail)}>`,
             subject,
             body: htmlBody,
         });
@@ -112,38 +121,51 @@ export async function sendFollowUpEmail({
 
 // Generate HTML email template for follow-up
 export function generateFollowUpEmail({
-    stage, clientName, invoiceNumber, amount, dueDate, senderName, companyName,
+    stage, clientName, invoiceNumber, amount, dueDate, senderName, companyName, paymentUrl,
 }: {
     stage: 1 | 2 | 3 | 4 | 5;
     clientName: string; invoiceNumber: string; amount: string;
-    dueDate: string; senderName: string; companyName?: string;
+    dueDate: string; senderName: string; companyName?: string; paymentUrl?: string;
 }): { subject: string; html: string } {
-    const company = companyName || senderName;
+    const safeClientName = escapeHtml(clientName);
+    const safeInvoiceNumber = escapeHtml(invoiceNumber);
+    const safeAmount = escapeHtml(amount);
+    const safeSenderName = escapeHtml(senderName);
+    const company = escapeHtml(companyName || senderName);
     const formattedDue = new Date(dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+    let safePaymentUrl: string | null = null;
+    if (paymentUrl) {
+        try {
+            const parsedUrl = new URL(paymentUrl);
+            if (parsedUrl.protocol === 'https:' || parsedUrl.protocol === 'http:') safePaymentUrl = escapeHtml(parsedUrl.toString());
+        } catch {
+            safePaymentUrl = null;
+        }
+    }
 
     const templates: Record<number, { subject: string; intro: string; tone: string }> = {
         1: {
-            subject: `Friendly Reminder: Invoice ${invoiceNumber} is due`,
+            subject: `Friendly Reminder: Invoice ${sanitizeHeader(invoiceNumber)} is due`,
             intro: `I hope this message finds you well! I'm reaching out with a friendly reminder about`,
             tone: 'Just in case it slipped through the cracks — no worries at all!'
         },
         2: {
-            subject: `Follow-up: Invoice ${invoiceNumber} – Payment Pending`,
+            subject: `Follow-up: Invoice ${sanitizeHeader(invoiceNumber)} – Payment Pending`,
             intro: `I wanted to follow up regarding the outstanding payment for`,
             tone: 'Please let me know if you have any questions or need any changes to the invoice.'
         },
         3: {
-            subject: `Action Required: Invoice ${invoiceNumber} – 2nd Follow-up`,
+            subject: `Action Required: Invoice ${sanitizeHeader(invoiceNumber)} – 2nd Follow-up`,
             intro: `This is my second follow-up regarding the payment overdue for`,
             tone: 'Could you please let me know the expected payment date? Your prompt response is appreciated.'
         },
         4: {
-            subject: `⚠️ Urgent: Invoice ${invoiceNumber} – Payment Overdue`,
+            subject: `⚠️ Urgent: Invoice ${sanitizeHeader(invoiceNumber)} – Payment Overdue`,
             intro: `I'm writing regarding the significantly overdue payment for`,
             tone: 'Please arrange the payment immediately or contact me to discuss any issues.'
         },
         5: {
-            subject: `Final Notice: Invoice ${invoiceNumber} – Immediate Action Required`,
+            subject: `Final Notice: Invoice ${sanitizeHeader(invoiceNumber)} – Immediate Action Required`,
             intro: `This is a final notice regarding the long overdue payment for`,
             tone: 'If payment is not received within 7 days, I will be forced to take further action.'
         },
@@ -167,21 +189,21 @@ export function generateFollowUpEmail({
     <!-- Body -->
     <div style="padding:32px;">
       <p style="color:#c4c4d4;margin:0 0 20px;font-size:15px;line-height:1.6;">
-        Dear <strong style="color:#f1f1f7;">${clientName}</strong>,
+        Dear <strong style="color:#f1f1f7;">${safeClientName}</strong>,
       </p>
       <p style="color:#c4c4d4;margin:0 0 24px;font-size:15px;line-height:1.6;">
-        ${t.intro} Invoice <strong style="color:#6b96ff;">${invoiceNumber}</strong>.
+        ${t.intro} Invoice <strong style="color:#6b96ff;">${safeInvoiceNumber}</strong>.
       </p>
       <!-- Invoice Card -->
       <div style="background:#1a1a2e;border:1px solid rgba(95,135,255,0.15);border-radius:12px;padding:20px;margin-bottom:24px;">
         <table style="width:100%;border-collapse:collapse;">
           <tr>
             <td style="color:#7474a0;font-size:13px;padding-bottom:12px;">Invoice Number</td>
-            <td style="color:#6b96ff;font-size:13px;font-family:monospace;text-align:right;padding-bottom:12px;">${invoiceNumber}</td>
+            <td style="color:#6b96ff;font-size:13px;font-family:monospace;text-align:right;padding-bottom:12px;">${safeInvoiceNumber}</td>
           </tr>
           <tr>
             <td style="color:#7474a0;font-size:13px;padding-bottom:12px;">Amount Due</td>
-            <td style="color:#f87171;font-size:18px;font-weight:bold;text-align:right;padding-bottom:12px;">${amount}</td>
+            <td style="color:#f87171;font-size:18px;font-weight:bold;text-align:right;padding-bottom:12px;">${safeAmount}</td>
           </tr>
           <tr>
             <td style="color:#7474a0;font-size:13px;">Due Date</td>
@@ -190,15 +212,12 @@ export function generateFollowUpEmail({
         </table>
       </div>
       <p style="color:#c4c4d4;margin:0 0 28px;font-size:14px;line-height:1.6;">${t.tone}</p>
-      <!-- CTA -->
-      <a href="mailto:${''}" style="display:inline-block;background:linear-gradient(135deg,#3d61ff,#7c3aed);color:white;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px;">
-        Reply to this email →
-      </a>
+      ${safePaymentUrl ? `<div style="text-align:center;margin:0 0 24px;"><a href="${safePaymentUrl}" style="display:inline-block;padding:12px 28px;background:#3b82f6;color:#fff;font-weight:700;font-size:14px;text-decoration:none;border-radius:8px;">View and pay invoice</a></div>` : ''}
     </div>
     <!-- Footer -->
     <div style="padding:20px 32px;border-top:1px solid rgba(255,255,255,0.06);">
       <p style="color:#4a4a6a;font-size:12px;margin:0;">
-        This follow-up was sent by <strong>${senderName}</strong> via Flowcent Payment Intelligence Platform.
+        This follow-up was sent by <strong>${safeSenderName}</strong> via Flowcent.
       </p>
     </div>
   </div>

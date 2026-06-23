@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getPlanLimits, PlanType } from '@/lib/plan-limits';
 import { requireUser } from '@/lib/auth/server';
+import { createAdminSupabaseClient } from '@/lib/supabase/admin';
 
 // GET /api/billing/status — Returns current plan, usage, and limits
 export async function GET() {
@@ -20,19 +21,21 @@ export async function GET() {
         }
 
         // Check if usage needs monthly reset
-        const resetAt = user.usage_reset_at ? new Date(user.usage_reset_at) : new Date(0);
         const now = new Date();
-        const needsReset = now.getMonth() !== resetAt.getMonth() || now.getFullYear() !== resetAt.getFullYear();
+        const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+        const resetAt = user.usage_reset_at ? new Date(user.usage_reset_at) : new Date(0);
+        const needsReset = resetAt < monthStart;
 
         if (needsReset) {
-            await supabase
+            await createAdminSupabaseClient()
                 .from('users')
                 .update({
                     invoice_count_this_month: 0,
                     ai_usage_this_month: 0,
                     usage_reset_at: now.toISOString(),
                 })
-                .eq('id', authUser.id);
+                .eq('id', authUser.id)
+                .lt('usage_reset_at', monthStart.toISOString());
             user.invoice_count_this_month = 0;
             user.ai_usage_this_month = 0;
         }
@@ -45,6 +48,13 @@ export async function GET() {
             .from('clients')
             .select('id', { count: 'exact', head: true })
             .eq('user_id', authUser.id);
+
+        const { count: invoiceCount, error: invoiceCountError } = await supabase
+            .from('invoices')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', authUser.id)
+            .gte('created_at', monthStart.toISOString());
+        if (invoiceCountError) throw invoiceCountError;
 
         // Check if plan is expired
         const isExpired = user.plan_expires_at && new Date(user.plan_expires_at) < now;
@@ -59,7 +69,7 @@ export async function GET() {
             expiresAt: user.plan_expires_at,
             isExpired: !!isExpired,
             usage: {
-                invoices: { used: user.invoice_count_this_month, limit: activeLimits.maxInvoices, unlimited: activeLimits.maxInvoices === null },
+                invoices: { used: invoiceCount || 0, limit: activeLimits.maxInvoices, unlimited: activeLimits.maxInvoices === null },
                 clients: { used: clientCount || 0, limit: activeLimits.maxClients, unlimited: activeLimits.maxClients === null },
                 aiAnalyses: { used: user.ai_usage_this_month, limit: activeLimits.maxAiAnalyses, unlimited: activeLimits.maxAiAnalyses === null },
             },

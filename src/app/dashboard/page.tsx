@@ -59,7 +59,7 @@ const QUICK_ACTIONS = [
 ];
 
 export default function DashboardPage() {
-    const { token, user, isLoading } = useAuth();
+    const { user, isAuthenticated, isLoading } = useAuth();
     const [stats, setStats] = useState<Stats | null>(null);
     const [recent, setRecent] = useState<RecentInvoice[]>([]);
     const [loading, setLoading] = useState(true);
@@ -71,15 +71,15 @@ export default function DashboardPage() {
     }, []);
 
     useEffect(() => {
-        if (!token || isLoading) return;
+        if (!isAuthenticated || isLoading) return;
         Promise.all([
-            fetch('/api/dashboard/stats', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-            fetch('/api/invoices?limit=5', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
+            fetch('/api/dashboard/stats').then(r => r.json()),
+            fetch('/api/invoices?limit=5').then(r => r.json()),
         ]).then(([s, inv]) => {
             setStats(s.stats || null);
             setRecent((inv.invoices || []).slice(0, 5));
         }).finally(() => setLoading(false));
-    }, [token, isLoading]);
+    }, [isAuthenticated, isLoading]);
 
     const fmtTotals = (field: 'paid' | 'pending' | 'overdue') => {
         const values = stats?.currency_totals.filter(item => item[field] > 0) || [];

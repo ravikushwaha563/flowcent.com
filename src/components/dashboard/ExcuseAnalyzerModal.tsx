@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bot, X, Sparkles, Copy, CheckCircle2, AlertTriangle, ShieldAlert, ShieldCheck, Thermometer } from 'lucide-react';
-import { useAuth } from '@/contexts/auth-context';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/lib/errors';
 
@@ -22,14 +21,13 @@ interface ExcuseAnalyzerModalProps {
 }
 
 interface AnalysisResult {
-    truth_probability: number;
+    credibility_signal: number;
     intent_category: string;
     analysis: string;
     suggested_response: string;
 }
 
 export default function ExcuseAnalyzerModal({ isOpen, onClose, invoiceContext }: ExcuseAnalyzerModalProps) {
-    const { token } = useAuth();
     const [excuse, setExcuse] = useState('');
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -50,8 +48,7 @@ export default function ExcuseAnalyzerModal({ isOpen, onClose, invoiceContext }:
             const res = await fetch('/api/ai/analyze-excuse', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ excuse, invoiceId: invoiceContext?.id })
             });
@@ -121,7 +118,7 @@ export default function ExcuseAnalyzerModal({ isOpen, onClose, invoiceContext }:
                             </div>
                             <div>
                                 <h2 className="text-lg font-bold text-white tracking-tight">AI Excuse Analyzer</h2>
-                                <p className="text-sm text-white/40">Powered by Gemini 1.5 Professional</p>
+                                <p className="text-sm text-white/40">Evidence-based payment reply review</p>
                             </div>
                         </div>
                         <button onClick={onClose} className="p-2 text-white/40 hover:text-white transition-colors rounded-lg hover:bg-white/5">
@@ -157,7 +154,7 @@ export default function ExcuseAnalyzerModal({ isOpen, onClose, invoiceContext }:
                                         {isAnalyzing ? (
                                             <>
                                                 <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-                                                <span className="text-sm font-semibold text-blue-400">Analyzing psychological intent...</span>
+                                                <span className="text-sm font-semibold text-blue-400">Reviewing commitment details...</span>
                                             </>
                                         ) : (
                                             <>
@@ -171,7 +168,7 @@ export default function ExcuseAnalyzerModal({ isOpen, onClose, invoiceContext }:
                                 <div className="p-4 rounded-xl bg-orange-500/5 border border-orange-500/10 flex items-start gap-3 mt-4">
                                     <ShieldCheck className="w-5 h-5 text-orange-400 shrink-0 mt-0.5" />
                                     <p className="text-xs text-orange-400/80 leading-relaxed">
-                                        <strong className="text-orange-400">Pro Tip:</strong> Vague excuses like "processing" or "end of month" often mask cash flow issues. The AI will detect evasion tactics and provide a firm, professional counter-response to force prioritization.
+                                        This AI signal evaluates specificity, not truth. Verify dates, amounts, and disputes directly with the client before acting.
                                     </p>
                                 </div>
                             </div>
@@ -185,13 +182,13 @@ export default function ExcuseAnalyzerModal({ isOpen, onClose, invoiceContext }:
                             >
                                 {/* Metrics Grid */}
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className={`p-4 rounded-xl border flex flex-col gap-2 ${getProbabilityColor(result.truth_probability)}`}>
+                                    <div className={`p-4 rounded-xl border flex flex-col gap-2 ${getProbabilityColor(result.credibility_signal)}`}>
                                         <div className="flex items-center justify-between">
-                                            <span className="text-xs font-semibold uppercase tracking-widest opacity-80">Truth Probability</span>
-                                            {getProbabilityIcon(result.truth_probability)}
+                                            <span className="text-xs font-semibold uppercase tracking-widest opacity-80">Credibility Signal</span>
+                                            {getProbabilityIcon(result.credibility_signal)}
                                         </div>
                                         <div className="flex items-baseline gap-1">
-                                            <span className="text-3xl font-bold">{result.truth_probability}</span>
+                                            <span className="text-3xl font-bold">{result.credibility_signal}</span>
                                             <span className="text-sm font-medium opacity-70">%</span>
                                         </div>
                                     </div>
@@ -208,7 +205,7 @@ export default function ExcuseAnalyzerModal({ isOpen, onClose, invoiceContext }:
                                 {/* Analysis */}
                                 <div className="space-y-2">
                                     <h3 className="text-xs font-semibold text-white/40 uppercase tracking-widest flex items-center gap-2">
-                                        <Bot className="w-3.5 h-3.5" /> AI Psychological Analysis
+                                        <Bot className="w-3.5 h-3.5" /> Message Analysis
                                     </h3>
                                     <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 text-sm text-white/70 leading-relaxed">
                                         {result.analysis}
@@ -219,7 +216,7 @@ export default function ExcuseAnalyzerModal({ isOpen, onClose, invoiceContext }:
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between">
                                         <h3 className="text-xs font-semibold text-white/40 uppercase tracking-widest flex items-center gap-2">
-                                            <Sparkles className="w-3.5 h-3.5" /> Suggested Counter-Response
+                                            <Sparkles className="w-3.5 h-3.5" /> Suggested Response
                                         </h3>
                                         <button 
                                             onClick={handleCopy}

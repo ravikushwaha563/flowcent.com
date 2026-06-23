@@ -20,12 +20,10 @@ export async function POST(req: NextRequest) {
         const email = user.email!;
         const name = user.user_metadata?.full_name || user.user_metadata?.name || email.split('@')[0];
 
-        await supabase.from('users').upsert({
-            id: user.id,
-            email,
-            name,
-            password_hash: 'supabase_auth_managed',
-        }, { onConflict: 'id' });
+        const { error: profileError } = await supabase.from('users')
+            .update({ name, updated_at: new Date().toISOString() })
+            .eq('id', user.id);
+        if (profileError) throw profileError;
 
         return NextResponse.json({
             user: {

@@ -121,7 +121,7 @@ export default function SignupPage() {
                 </button>
 
                 <p className="text-center text-xs text-white/25">
-                    By signing up, you agree to our <a href="/terms" className="underline hover:text-white/50 transition-colors">terms of service</a>.
+                    By signing up, you agree to our <Link href="/terms" className="underline hover:text-white/50 transition-colors">terms of service</Link>.
                 </p>
             </form>
 

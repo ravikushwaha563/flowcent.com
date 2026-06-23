@@ -36,19 +36,6 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // The database trigger creates the public profile. When email
-        // confirmation is disabled, update it immediately through RLS.
-        if (authData.session) {
-            await supabase.from('users').upsert({
-                id: authData.user.id,
-                email: authData.user.email,
-                name: name || null,
-                password_hash: 'supabase_auth_managed',
-                company_name: companyName || null,
-                gmail_connected: false,
-            }, { onConflict: 'id' });
-        }
-
         return NextResponse.json(
             {
                 user: {

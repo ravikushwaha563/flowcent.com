@@ -35,7 +35,7 @@ const ENTRIES = [
         image: 'https://images.unsplash.com/photo-1677442135703-1787eea5ce01?auto=format&fit=crop&w=600&q=75',
         imageAlt: 'AI visualization with purple neural network',
         changes: [
-            { type: 'new', text: 'AI Excuse Memory™ — paste client replies, AI extracts promises/excuses' },
+            { type: 'new', text: 'AI reply analysis — extract payment commitments from pasted client replies' },
             { type: 'new', text: 'Promise types: Date Commitment, Partial Payment, Excuse, Dispute, Will Pay' },
             { type: 'new', text: 'Promise timeline on invoice detail page' },
             { type: 'new', text: 'Mark promise as fulfilled/unfulfilled with toggle' },
@@ -82,10 +82,10 @@ const ENTRIES = [
         image: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=600&q=75',
         imageAlt: 'Client management and business meeting',
         changes: [
-            { type: 'new', text: 'Full client management: name, email, phone, company, notes' },
+            { type: 'new', text: 'Client management: name, email, phone, company, and WhatsApp consent' },
             { type: 'new', text: 'Client profile with invoice history and payment stats' },
             { type: 'new', text: 'Client risk score calculated from payment history' },
-            { type: 'new', text: 'Quick-add client from invoices page' },
+            { type: 'new', text: 'Client create, edit, search, and protected deletion workflows' },
         ],
     },
     {

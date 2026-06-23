@@ -125,8 +125,8 @@ export default function ContactPage() {
                             <p className="text-[11px] font-bold text-white/30 uppercase tracking-widest mb-4">Follow us</p>
                             <div className="flex gap-3">
                                 {[
-                                    { icon: '𝕏', name: 'Twitter / X', href: '#', hoverClr: 'hover:border-white/25' },
-                                    { icon: 'in', name: 'LinkedIn', href: '#', hoverClr: 'hover:border-blue-500/40' },
+                                    { icon: '𝕏', name: 'Twitter / X', href: 'https://twitter.com/flowcentin', hoverClr: 'hover:border-white/25' },
+                                    { icon: 'in', name: 'LinkedIn', href: 'https://linkedin.com/company/flowcent', hoverClr: 'hover:border-blue-500/40' },
                                 ].map(s => (
                                     <a key={s.name} href={s.href}
                                         className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-white/[0.08] ${s.hoverClr} hover:bg-white/[0.04] transition-all text-white/40 hover:text-white/70`}>

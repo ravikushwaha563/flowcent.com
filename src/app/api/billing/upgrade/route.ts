@@ -5,6 +5,7 @@ import { requireServerEnv } from '@/lib/env/server';
 import { z } from 'zod';
 import { verifyRazorpaySignature } from '@/lib/payments/razorpay-signature';
 import { activateBillingOrder } from '@/lib/billing/activate';
+import { createAdminSupabaseClient } from '@/lib/supabase/admin';
 
 const upgradeSchema = z.object({
     plan: z.literal('pro').default('pro'),
@@ -20,7 +21,7 @@ const verificationSchema = z.object({
 // POST /api/billing/upgrade — Create Razorpay order for Pro plan subscription
 export async function POST(req: NextRequest) {
     try {
-        const { supabase, user, response } = await requireUser();
+        const { user, response } = await requireUser();
         if (!user) return response!;
 
         const parsed = upgradeSchema.safeParse(await req.json());
@@ -53,7 +54,7 @@ export async function POST(req: NextRequest) {
             },
         });
 
-        const { error: orderError } = await supabase.from('billing_orders').insert({
+        const { error: orderError } = await createAdminSupabaseClient().from('billing_orders').insert({
             user_id: user.id,
             razorpay_order_id: order.id,
             plan,
@@ -75,7 +76,7 @@ export async function POST(req: NextRequest) {
         });
     } catch (err: unknown) {
         console.error('Upgrade order error:', err);
-        return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to create upgrade order' }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to create upgrade order' }, { status: 500 });
     }
 }
 
@@ -114,7 +115,7 @@ export async function PATCH(req: NextRequest) {
             return NextResponse.json({ error: 'Payment amount or status does not match the billing order' }, { status: 400 });
         }
 
-        const activation = await activateBillingOrder(supabase, razorpay_order_id, razorpay_payment_id);
+        const activation = await activateBillingOrder(createAdminSupabaseClient(), razorpay_order_id, razorpay_payment_id);
 
         return NextResponse.json({
             success: true,
@@ -124,6 +125,6 @@ export async function PATCH(req: NextRequest) {
         });
     } catch (err: unknown) {
         console.error('Upgrade verification error:', err);
-        return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to activate plan' }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to activate plan' }, { status: 500 });
     }
 }

@@ -7,7 +7,11 @@ export const createClientSchema = z.object({
     email: z.string().trim().email().max(254),
     phone: optionalText(32),
     company: optionalText(120),
+    whatsappOptIn: z.boolean().optional(),
 });
+
+export const updateClientSchema = createClientSchema.partial()
+    .refine(value => Object.keys(value).length > 0, 'No supported fields provided');
 
 export const createInvoiceSchema = z.object({
     clientId: z.string().uuid(),
@@ -20,7 +24,12 @@ export const createInvoiceSchema = z.object({
 
 export const updateInvoiceSchema = z.object({
     status: z.enum(['pending', 'paid', 'cancelled']).optional(),
-    payment_intent_score: z.number().int().min(0).max(100).optional(),
+    clientId: z.string().uuid().optional(),
+    invoiceNumber: z.string().trim().min(1).max(64).optional(),
+    amount: z.coerce.number().finite().positive().max(100_000_000).optional(),
+    currency: z.enum(['INR', 'USD', 'EUR', 'GBP']).optional(),
+    dueDate: z.string().date().optional(),
+    autoFollowup: z.boolean().optional(),
 }).refine((value) => Object.keys(value).length > 0, 'No supported fields provided');
 
 export const updateProfileSchema = z.object({

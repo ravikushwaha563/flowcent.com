@@ -2,7 +2,7 @@
 
 import { useState, useEffect, use } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { CheckCircle2, Clock, AlertTriangle, Shield, CreditCard, ArrowRight, type LucideIcon } from 'lucide-react';
+import { CheckCircle2, Clock, AlertTriangle, Shield, CreditCard, ArrowRight, XCircle, type LucideIcon } from 'lucide-react';
 import { getErrorMessage } from '@/lib/errors';
 
 interface InvoiceData {
@@ -16,10 +16,12 @@ const STATUS_MAP: Record<string, { label: string; color: string; bg: string; ico
     paid:    { label: 'Paid',    color: '#34d399', bg: 'rgba(52,211,153,0.08)', icon: CheckCircle2 },
     pending: { label: 'Pending', color: '#fbbf24', bg: 'rgba(251,191,36,0.08)', icon: Clock },
     overdue: { label: 'Overdue', color: '#f87171', bg: 'rgba(248,113,113,0.08)', icon: AlertTriangle },
+    cancelled: { label: 'Cancelled', color: '#a1a1aa', bg: 'rgba(161,161,170,0.08)', icon: XCircle },
 };
 
 function getStatus(status: string, dueDate: string) {
     if (status === 'paid') return STATUS_MAP.paid;
+    if (status === 'cancelled') return STATUS_MAP.cancelled;
     if (new Date(dueDate) < new Date()) return STATUS_MAP.overdue;
     return STATUS_MAP.pending;
 }
@@ -185,6 +187,7 @@ export default function PublicPaymentPage({ params }: { params: Promise<{ id: st
 
     const statusCfg = getStatus(invoice.status, invoice.due_date);
     const isPaid = invoice.status === 'paid' || paymentSuccess;
+    const isCancelled = invoice.status === 'cancelled';
     const StatusIcon = statusCfg.icon;
 
     return (
@@ -228,6 +231,14 @@ export default function PublicPaymentPage({ params }: { params: Promise<{ id: st
                                     <p className="text-4xl font-bold text-white tracking-tight">{fmt(invoice.amount, invoice.currency)}</p>
                                     <p className="text-xs text-white/30">Paid on {invoice.paid_at ? new Date(invoice.paid_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : 'just now'}</p>
                                 </div>
+                            ) : isCancelled ? (
+                                <div className="space-y-3">
+                                    <div className="w-16 h-16 rounded-full bg-white/[0.04] border-2 border-white/10 flex items-center justify-center mx-auto">
+                                        <XCircle className="w-8 h-8 text-white/45" />
+                                    </div>
+                                    <p className="text-white/60 font-bold text-lg">Payment Request Cancelled</p>
+                                    <p className="text-sm text-white/35">Contact the sender if you received this link unexpectedly.</p>
+                                </div>
                             ) : (
                                 <div className="space-y-2">
                                     <p className="text-xs text-white/30 uppercase tracking-widest font-semibold">Amount Due</p>
@@ -265,7 +276,7 @@ export default function PublicPaymentPage({ params }: { params: Promise<{ id: st
                         </div>
 
                         {/* Pay Button */}
-                        {!isPaid && (
+                        {!isPaid && !isCancelled && (
                             <div className="px-8 pb-8 space-y-3">
                                 <button
                                     onClick={handlePay}

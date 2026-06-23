@@ -1,38 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireUser } from '@/lib/auth/server';
 import { analyzeEmailForExcuses } from '@/lib/gemini';
-import { checkAiLimit, PlanType } from '@/lib/plan-limits';
 import { serverEnv } from '@/lib/env/server';
+import { z } from 'zod';
+import { consumeAiAnalysis } from '@/lib/usage';
+import { createAdminSupabaseClient } from '@/lib/supabase/admin';
+
+const analyzeRequestSchema = z.object({
+    invoiceId: z.string().uuid(),
+    emailContent: z.string().trim().min(3).max(20_000),
+    clientReplyDate: z.string().max(100).optional(),
+});
+
+const updatePromiseSchema = z.object({
+    promiseId: z.string().uuid(),
+    fulfilled: z.boolean(),
+});
 
 export async function POST(req: NextRequest) {
     try {
         const { supabase, user: authUser, response } = await requireUser();
         if (!authUser) return response!;
 
-        const body = await req.json();
-        const { invoiceId, emailContent, clientReplyDate } = body;
-
-        if (!invoiceId || !emailContent) {
-            return NextResponse.json({ error: 'invoiceId and emailContent required' }, { status: 400 });
-        }
-
-        // Fetch user plan and ai usage
-        const { data: user } = await supabase
-            .from('users')
-            .select('subscription_plan, plan_expires_at, ai_usage_this_month')
-            .eq('id', authUser.id)
-            .single();
-
-        if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
-
-        const activePlan = user.plan_expires_at && new Date(user.plan_expires_at) < new Date()
-            ? 'free'
-            : (user.subscription_plan || 'free');
-        const limitCheck = checkAiLimit(activePlan as PlanType, user.ai_usage_this_month || 0);
-
-        if (!limitCheck.allowed) {
-            return NextResponse.json({ error: 'LIMIT_EXCEEDED', message: limitCheck.message }, { status: 403 });
-        }
+        const parsedRequest = analyzeRequestSchema.safeParse(await req.json());
+        if (!parsedRequest.success) return NextResponse.json({ error: 'Valid invoice and email content are required' }, { status: 400 });
+        const { invoiceId, emailContent, clientReplyDate } = parsedRequest.data;
 
         if (!serverEnv.GROQ_API_KEY) {
             return NextResponse.json({ error: 'AI provider is not configured' }, { status: 503 });
@@ -48,6 +40,10 @@ export async function POST(req: NextRequest) {
 
         if (!invoice) return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
 
+        if (!await consumeAiAnalysis(supabase)) {
+            return NextResponse.json({ error: 'LIMIT_EXCEEDED', message: 'Your plan allows 5 AI analyses/month. Upgrade for unlimited AI.' }, { status: 403 });
+        }
+
         const fmtAmount = new Intl.NumberFormat('en-IN', {
             style: 'currency', currency: invoice.currency || 'INR', maximumFractionDigits: 0,
         }).format(invoice.amount);
@@ -61,34 +57,29 @@ export async function POST(req: NextRequest) {
         );
 
         // Save each extracted promise to DB
-        const savedPromises = [];
-        for (const p of analysis.promises) {
-            const { data: promise } = await supabase
+        let savedPromises: unknown[] = [];
+        if (analysis.promises.length > 0) {
+            const { data, error: promisesError } = await createAdminSupabaseClient()
                 .from('promises')
-                .insert({
+                .insert(analysis.promises.map(p => ({
                     invoice_id: invoiceId,
                     promise_text: p.promise_text,
                     promise_type: p.promise_type,
                     promised_date: p.promised_date || null,
                     fulfilled: false,
                     email_id: clientReplyDate || new Date().toISOString(),
-                })
-                .select()
-                .single();
-            savedPromises.push(promise);
+                })))
+                .select();
+            if (promisesError) throw promisesError;
+            savedPromises = data || [];
         }
 
         // Update invoice payment_intent_score
-        await supabase
+        const { error: invoiceUpdateError } = await createAdminSupabaseClient()
             .from('invoices')
             .update({ payment_intent_score: analysis.intent_score })
             .eq('id', invoiceId);
-
-        // Update ai usage
-        await supabase
-            .from('users')
-            .update({ ai_usage_this_month: (user.ai_usage_this_month || 0) + 1 })
-            .eq('id', authUser.id);
+        if (invoiceUpdateError) throw invoiceUpdateError;
 
         return NextResponse.json({
             success: true,
@@ -98,7 +89,7 @@ export async function POST(req: NextRequest) {
         });
     } catch (err: unknown) {
         console.error('Excuse analysis error:', err);
-        return NextResponse.json({ error: err instanceof Error ? err.message : 'Analysis failed' }, { status: 500 });
+        return NextResponse.json({ error: 'Analysis failed' }, { status: 500 });
     }
 }
 
@@ -121,7 +112,8 @@ export async function GET(req: NextRequest) {
         const { data: promises } = await query;
         return NextResponse.json({ promises: promises || [] });
     } catch (err: unknown) {
-        return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to load promises' }, { status: 500 });
+        console.error('Promise history load failed:', err);
+        return NextResponse.json({ error: 'Failed to load promises' }, { status: 500 });
     }
 }
 
@@ -130,8 +122,9 @@ export async function PATCH(req: NextRequest) {
         const { supabase, user, response } = await requireUser();
         if (!user) return response!;
 
-        const body = await req.json();
-        const { promiseId, fulfilled } = body;
+        const parsedRequest = updatePromiseSchema.safeParse(await req.json());
+        if (!parsedRequest.success) return NextResponse.json({ error: 'Valid promise update required' }, { status: 400 });
+        const { promiseId, fulfilled } = parsedRequest.data;
 
         const { data: ownedPromise } = await supabase
             .from('promises')
@@ -141,7 +134,7 @@ export async function PATCH(req: NextRequest) {
             .single();
         if (!ownedPromise) return NextResponse.json({ error: 'Promise not found' }, { status: 404 });
 
-        const { data: promise, error } = await supabase
+        const { data: promise, error } = await createAdminSupabaseClient()
             .from('promises')
             .update({ fulfilled })
             .eq('id', promiseId)
@@ -151,6 +144,7 @@ export async function PATCH(req: NextRequest) {
         if (error) return NextResponse.json({ error: 'Failed to update promise' }, { status: 500 });
         return NextResponse.json({ promise });
     } catch (err: unknown) {
-        return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to update promise' }, { status: 500 });
+        console.error('Promise update failed:', err);
+        return NextResponse.json({ error: 'Failed to update promise' }, { status: 500 });
     }
 }

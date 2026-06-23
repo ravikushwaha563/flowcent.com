@@ -22,8 +22,11 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
         }
 
-        if (invoice.status === 'paid') {
-            return NextResponse.json({ error: 'Invoice is already paid' }, { status: 400 });
+        if (invoice.status !== 'pending') {
+            return NextResponse.json({ error: invoice.status === 'paid' ? 'Invoice is already paid' : 'Invoice is cancelled' }, { status: 409 });
+        }
+        if (invoice.currency === 'INR') {
+            return NextResponse.json({ error: 'Stripe checkout is available only for non-INR invoices' }, { status: 400 });
         }
 
         const appUrl = publicEnv.appUrl;
@@ -55,18 +58,27 @@ export async function POST(req: NextRequest) {
         });
 
         // Store session ID
-        await supabaseAdmin
+        const { data: linkedInvoice, error: updateError } = await supabaseAdmin
             .from('invoices')
             .update({
                 stripe_session_id: session.id,
                 payment_gateway: 'stripe',
                 updated_at: new Date().toISOString(),
             })
-            .eq('id', invoice.id);
+            .eq('id', invoice.id)
+            .eq('status', 'pending')
+            .select('id')
+            .maybeSingle();
+        if (updateError) throw updateError;
+        if (!linkedInvoice) {
+            await stripe.checkout.sessions.expire(session.id);
+            return NextResponse.json({ error: 'Invoice is no longer payable' }, { status: 409 });
+        }
 
+        if (!session.url) throw new Error('Stripe did not return a checkout URL');
         return NextResponse.json({ url: session.url });
     } catch (err: unknown) {
         console.error('Stripe checkout error:', err);
-        return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to create Stripe session' }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to create Stripe session' }, { status: 500 });
     }
 }

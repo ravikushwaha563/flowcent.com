@@ -2,21 +2,22 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/auth-context';
-import { Users, Search, Plus, X, Building2, AlertTriangle } from 'lucide-react';
+import { Users, Search, Plus, X, Building2, AlertTriangle, Pencil, Trash2, MessageCircle } from 'lucide-react';
 import UpgradeModal from '@/components/dashboard/UpgradeModal';
 import { getErrorMessage } from '@/lib/errors';
 
 interface Client {
-    id: string; name: string; email: string; phone?: string; company?: string;
+    id: string; name: string; email: string; phone?: string | null; company?: string | null;
     payment_history_score: number; avg_payment_delay: number; created_at: string;
     ai_trust_score?: number | null; ai_risk_level?: string | null;
     ai_trust_summary?: string | null; ai_scored_at?: string | null;
+    whatsapp_opt_in?: boolean;
 }
 
 const ScoreBadge = ({ score, aiRisk }: { score: number; aiRisk?: string | null }) => {
-    if (aiRisk === 'high_risk') return <span className="badge-overdue text-xs px-2.5 py-1 rounded-full font-semibold">⚠ High Risk</span>;
+    if (aiRisk === 'high_risk') return <span className="badge-overdue text-xs px-2.5 py-1 rounded-full font-semibold">Review Record</span>;
     if (aiRisk === 'risky') return <span className="text-xs px-2.5 py-1 rounded-full font-semibold" style={{ background: 'rgba(251,146,60,0.1)', color: '#fb923c', border: '1px solid rgba(251,146,60,0.2)' }}>◷ Risky</span>;
-    if (aiRisk === 'trusted') return <span className="badge-paid text-xs px-2.5 py-1 rounded-full font-semibold">✓ Trusted</span>;
+    if (aiRisk === 'trusted') return <span className="badge-paid text-xs px-2.5 py-1 rounded-full font-semibold">Reliable Record</span>;
     if (aiRisk === 'moderate') return <span className="badge-pending text-xs px-2.5 py-1 rounded-full font-semibold">◷ Moderate</span>;
     // Fallback to old score-based badges
     if (score >= 70) return <span className="badge-paid text-xs px-2.5 py-1 rounded-full font-semibold">✓ Good Payer</span>;
@@ -25,32 +26,35 @@ const ScoreBadge = ({ score, aiRisk }: { score: number; aiRisk?: string | null }
 };
 
 export default function ClientsPage() {
-    const { token } = useAuth();
+    const { isAuthenticated } = useAuth();
     const [clients, setClients] = useState<Client[]>([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
-    const [formData, setFormData] = useState({ name: '', email: '', phone: '', company: '' });
+    const [formData, setFormData] = useState({ name: '', email: '', phone: '', company: '', whatsappOptIn: false });
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
     const [showUpgrade, setShowUpgrade] = useState(false);
     const [upgradeMessage, setUpgradeMessage] = useState('');
+    const [editingClient, setEditingClient] = useState<Client | null>(null);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [actionError, setActionError] = useState('');
 
     const fetchClients = useCallback(async () => {
         try {
-            const res = await fetch('/api/clients', { headers: { Authorization: `Bearer ${token}` } });
+            const res = await fetch('/api/clients');
             const data = await res.json();
             setClients(data.clients || []);
         } finally { setLoading(false); }
-    }, [token]);
+    }, []);
 
-    useEffect(() => { if (token) fetchClients(); }, [token, fetchClients]);
+    useEffect(() => { if (isAuthenticated) fetchClients(); }, [isAuthenticated, fetchClients]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault(); setSubmitting(true); setError('');
         try {
-            const res = await fetch('/api/clients', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            const res = await fetch(editingClient ? `/api/clients/${editingClient.id}` : '/api/clients', {
+                method: editingClient ? 'PATCH' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData),
             });
             const data = await res.json();
@@ -63,13 +67,53 @@ export default function ClientsPage() {
                 }
                 throw new Error(data.error);
             }
-            setClients(prev => [data.client, ...prev]);
+            setClients(prev => editingClient
+                ? prev.map(client => client.id === editingClient.id ? data.client : client)
+                : [data.client, ...prev]);
             setShowForm(false);
-            setFormData({ name: '', email: '', phone: '', company: '' });
+            setEditingClient(null);
+            setFormData({ name: '', email: '', phone: '', company: '', whatsappOptIn: false });
         } catch (error: unknown) { setError(getErrorMessage(error, 'Failed to add client')); } finally { setSubmitting(false); }
     };
 
     const [search, setSearch] = useState('');
+
+    const startCreate = () => {
+        setEditingClient(null);
+        setFormData({ name: '', email: '', phone: '', company: '', whatsappOptIn: false });
+        setShowForm(true);
+    };
+
+    const startEdit = (client: Client) => {
+        setEditingClient(client);
+        setFormData({ name: client.name, email: client.email, phone: client.phone || '', company: client.company || '', whatsappOptIn: Boolean(client.whatsapp_opt_in) });
+        setShowForm(true);
+    };
+
+    const closeForm = () => {
+        setShowForm(false);
+        setEditingClient(null);
+        setError('');
+    };
+
+    const deleteClient = async (client: Client) => {
+        if (!window.confirm(`Delete ${client.name}? This cannot be undone.`)) return;
+        setDeletingId(client.id);
+        setActionError('');
+        try {
+            const res = await fetch(`/api/clients/${client.id}`, {
+                method: 'DELETE',
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+            setClients(previous => previous.filter(item => item.id !== client.id));
+            if (editingClient?.id === client.id) closeForm();
+        } catch (error: unknown) {
+            setActionError(getErrorMessage(error, 'Failed to delete client'));
+        } finally {
+            setDeletingId(null);
+        }
+    };
 
     const colors = ['#5f87ff', '#a78bfa', '#22d3ee', '#34d399', '#fb923c', '#f472b6'];
     const getColor = (name: string) => colors[name.charCodeAt(0) % colors.length];
@@ -94,7 +138,6 @@ export default function ClientsPage() {
             <UpgradeModal
                 isOpen={showUpgrade}
                 onClose={() => setShowUpgrade(false)}
-                token={token}
                 message={upgradeMessage}
             />
 
@@ -105,7 +148,7 @@ export default function ClientsPage() {
                         <h1 className="text-2xl font-bold text-white tracking-tight">Clients</h1>
                         <p className="text-sm text-white/35 mt-1">{clients.length} client{clients.length !== 1 ? 's' : ''} · {good} good payers · {slow} slow payers</p>
                     </div>
-                    <button onClick={() => setShowForm(!showForm)} className={showForm ? 'btn-outline text-xs px-4 py-2 flex items-center gap-2' : 'btn-primary text-xs px-4 py-2 flex items-center gap-2'}>
+                    <button onClick={showForm ? closeForm : startCreate} className={showForm ? 'btn-outline text-xs px-4 py-2 flex items-center gap-2' : 'btn-primary text-xs px-4 py-2 flex items-center gap-2'}>
                         {showForm ? <><X size={14} /> Cancel</> : <><Plus size={14} /> Add Client</>}
                     </button>
                 </div>
@@ -123,10 +166,16 @@ export default function ClientsPage() {
                     </div>
                 )}
 
+                {actionError && (
+                    <div className="px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-400 flex items-center gap-2">
+                        <AlertTriangle size={14} /> {actionError}
+                    </div>
+                )}
+
                 {/* Form */}
                 {showForm && (
                     <div className="glass-card p-6 anim-up" style={{ borderColor: 'rgba(95,135,255,0.2)' }}>
-                        <p className="text-xs font-semibold text-white/35 uppercase tracking-widest mb-5">New Client</p>
+                        <p className="text-xs font-semibold text-white/35 uppercase tracking-widest mb-5">{editingClient ? 'Edit Client' : 'New Client'}</p>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="grid sm:grid-cols-2 gap-4">
                                 {[
@@ -138,15 +187,23 @@ export default function ClientsPage() {
                                     <div key={f.key} className="space-y-1.5">
                                         <label className="text-xs font-semibold text-white/35 uppercase tracking-widest">{f.label}</label>
                                         <input type={f.type} placeholder={f.placeholder} className="input-premium"
-                                            value={formData[f.key as keyof typeof formData]}
+                                            value={formData[f.key as 'name' | 'email' | 'phone' | 'company']}
                                             onChange={e => setFormData(p => ({ ...p, [f.key]: e.target.value }))}
                                             required={f.required} />
                                     </div>
                                 ))}
                             </div>
+                            <label className="flex items-start gap-3 p-4 rounded-lg bg-white/[0.02] border border-white/[0.07] cursor-pointer">
+                                <input type="checkbox" className="mt-0.5" checked={formData.whatsappOptIn}
+                                    onChange={event => setFormData(previous => ({ ...previous, whatsappOptIn: event.target.checked }))} />
+                                <MessageCircle size={16} className="text-green-400 mt-0.5 shrink-0" />
+                                <span className="text-xs text-white/50 leading-relaxed">
+                                    This client has explicitly agreed to receive invoice reminders on WhatsApp.
+                                </span>
+                            </label>
                             {error && <div className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-400 flex items-center gap-2"><AlertTriangle size={14} /> {error}</div>}
                             <button type="submit" disabled={submitting} className="btn-primary text-xs px-5 py-2.5">
-                                {submitting ? 'Adding...' : 'Add Client →'}
+                                {submitting ? 'Saving...' : editingClient ? 'Save Changes' : 'Add Client →'}
                             </button>
                         </form>
                     </div>
@@ -177,7 +234,7 @@ export default function ClientsPage() {
                         <p className="text-sm text-white/40 max-w-sm mx-auto mb-8 leading-relaxed">
                             Add your first client to start tracking their payment history and generating invoices.
                         </p>
-                        <button onClick={() => setShowForm(true)} className="btn-primary text-sm px-6 py-3 flex items-center gap-2 mx-auto shadow-[0_0_20px_rgba(95,135,255,0.25)] hover:shadow-[0_0_30px_rgba(95,135,255,0.4)]">
+                        <button onClick={startCreate} className="btn-primary text-sm px-6 py-3 flex items-center gap-2 mx-auto shadow-[0_0_20px_rgba(95,135,255,0.25)] hover:shadow-[0_0_30px_rgba(95,135,255,0.4)]">
                             <Plus size={16} /> Add First Client
                         </button>
                     </div>
@@ -200,7 +257,20 @@ export default function ClientsPage() {
                                                 <p className="text-xs text-white/35 truncate">{client.email}</p>
                                             </div>
                                         </div>
-                                        <ScoreBadge score={client.payment_history_score} aiRisk={client.ai_risk_level} />
+                                        <div className="flex items-center gap-2">
+                                            <ScoreBadge score={client.payment_history_score} aiRisk={client.ai_risk_level} />
+                                            <button onClick={() => startEdit(client)} className="w-7 h-7 rounded-lg flex items-center justify-center text-white/25 hover:text-white/70 hover:bg-white/[0.06]" title="Edit client">
+                                                <Pencil size={13} />
+                                            </button>
+                                            <button
+                                                onClick={() => deleteClient(client)}
+                                                disabled={deletingId === client.id}
+                                                className="w-7 h-7 rounded-lg flex items-center justify-center text-white/25 hover:text-red-400 hover:bg-red-500/10 disabled:opacity-40"
+                                                title="Delete client"
+                                            >
+                                                <Trash2 size={13} />
+                                            </button>
+                                        </div>
                                     </div>
 
                                     {client.company && (

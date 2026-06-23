@@ -82,24 +82,22 @@ function FeatureRow({ label, enabled, icon: Icon }: { label: string; enabled: bo
 }
 
 export default function BillingPage() {
-    const { token } = useAuth();
+    const { isAuthenticated } = useAuth();
     const [status, setStatus] = useState<BillingStatus | null>(null);
     const [loading, setLoading] = useState(true);
     const [showUpgrade, setShowUpgrade] = useState(false);
 
     const fetchStatus = useCallback(async () => {
-        if (!token) return;
+        if (!isAuthenticated) return;
         try {
-            const res = await fetch('/api/billing/status', {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            const res = await fetch('/api/billing/status');
             const data = await res.json();
             if (res.ok) setStatus(data);
         } catch { toast.error('Failed to load billing status'); }
         finally { setLoading(false); }
-    }, [token]);
+    }, [isAuthenticated]);
 
-    useEffect(() => { if (token) fetchStatus(); }, [token, fetchStatus]);
+    useEffect(() => { if (isAuthenticated) fetchStatus(); }, [isAuthenticated, fetchStatus]);
 
     const planColor = PLAN_COLORS[status?.plan || 'free'] || '#6b96ff';
 
@@ -222,7 +220,6 @@ export default function BillingPage() {
             <UpgradeModal
                 isOpen={showUpgrade}
                 onClose={() => setShowUpgrade(false)}
-                token={token}
                 onSuccess={fetchStatus}
             />
         </div>

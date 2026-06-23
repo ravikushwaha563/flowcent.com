@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { exchangeCodeForTokens, getGmailAddress } from '@/lib/gmail';
 import { requireUser } from '@/lib/auth/server';
 import { encryptSecret } from '@/lib/crypto/secrets';
+import { createAdminSupabaseClient } from '@/lib/supabase/admin';
 
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
@@ -19,7 +20,7 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-        const { supabase, user, response } = await requireUser();
+        const { user, response } = await requireUser();
         if (response || !user) return NextResponse.redirect(new URL('/login?next=/dashboard/settings', req.url));
 
         const tokens = await exchangeCodeForTokens(code);
@@ -31,7 +32,8 @@ export async function GET(req: NextRequest) {
         // Get Gmail address
         const gmailAddress = await getGmailAddress(tokens.access_token, tokens.refresh_token || undefined);
 
-        const { data: existingProfile } = await supabase
+        const admin = createAdminSupabaseClient();
+        const { data: existingProfile } = await admin
             .from('users')
             .select('gmail_refresh_token')
             .eq('id', user.id)
@@ -41,7 +43,7 @@ export async function GET(req: NextRequest) {
             ? encryptSecret(tokens.refresh_token)
             : existingProfile?.gmail_refresh_token || null;
 
-        const { error: updateError } = await supabase
+        const { error: updateError } = await admin
             .from('users')
             .update({
                 gmail_connected: true,

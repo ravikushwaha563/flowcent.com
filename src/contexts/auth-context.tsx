@@ -9,13 +9,13 @@ export interface User {
     companyName: string | null;
     industry: string | null;
     gmailConnected: boolean;
+    subscriptionPlan: 'free' | 'pro' | 'agency';
     createdAt: string;
     updatedAt: string;
 }
 
 interface AuthContextType {
     user: User | null;
-    token: string | null;
     isAuthenticated: boolean;
     isLoading: boolean;
     login: () => Promise<void>;
@@ -26,7 +26,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
-    const [token, setToken] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     const loadUser = useCallback(async () => {
@@ -35,17 +34,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (response.ok) {
                 const data = await response.json();
                 setUser(data.user);
-                // Compatibility marker while dashboard calls migrate away from
-                // manually attaching Authorization headers. It contains no secret.
-                setToken('cookie-session');
             } else {
                 setUser(null);
-                setToken(null);
             }
         } catch (error) {
             console.error('Failed to fetch user:', error);
             setUser(null);
-            setToken(null);
         } finally {
             setIsLoading(false);
         }
@@ -60,13 +54,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const logout = useCallback(async () => {
         await fetch('/api/auth/logout', { method: 'POST' });
-        setToken(null);
         setUser(null);
     }, []);
 
     const value = {
         user,
-        token,
         isAuthenticated: !!user,
         isLoading,
         login,

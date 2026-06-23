@@ -5,6 +5,7 @@ import { createAdminSupabaseClient } from '@/lib/supabase/admin';
 import { requireServerEnv } from '@/lib/env/server';
 import { verifyRazorpayWebhookSignature } from '@/lib/payments/razorpay-signature';
 import { activateBillingOrder } from '@/lib/billing/activate';
+import { claimWebhookEvent, completeWebhookEvent, releaseWebhookEvent } from '@/lib/payments/webhook-events';
 
 const webhookSchema = z.object({
     event: z.string(),
@@ -41,14 +42,9 @@ export async function POST(req: NextRequest) {
     const eventId = req.headers.get('x-razorpay-event-id') || crypto.createHash('sha256').update(payload).digest('hex');
     const supabaseAdmin = createAdminSupabaseClient();
 
-    const { data: existing } = await supabaseAdmin.from('webhook_events').select('processed_at')
-        .eq('provider', 'razorpay').eq('provider_event_id', eventId).maybeSingle();
-    if (existing?.processed_at) return NextResponse.json({ received: true, duplicate: true });
-    if (!existing) {
-        await supabaseAdmin.from('webhook_events').insert({
-            provider: 'razorpay', provider_event_id: eventId, event_type: event.event, payload: event,
-        });
-    }
+    const claim = await claimWebhookEvent(supabaseAdmin, 'razorpay', eventId, event.event, event);
+    if (claim === 'processed') return NextResponse.json({ received: true, duplicate: true });
+    if (claim === 'busy') return NextResponse.json({ received: true, processing: true }, { status: 202 });
 
     try {
         if (event.event === 'payment.captured' || event.event === 'order.paid') {
@@ -87,11 +83,11 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        await supabaseAdmin.from('webhook_events').update({ processed_at: new Date().toISOString() })
-            .eq('provider', 'razorpay').eq('provider_event_id', eventId);
+        await completeWebhookEvent(supabaseAdmin, 'razorpay', eventId);
         return NextResponse.json({ received: true });
     } catch (error) {
         console.error('Razorpay webhook processing failed:', error);
+        await releaseWebhookEvent(supabaseAdmin, 'razorpay', eventId);
         return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 });
     }
 }

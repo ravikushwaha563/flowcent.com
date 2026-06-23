@@ -22,8 +22,11 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
         }
 
-        if (invoice.status === 'paid') {
-            return NextResponse.json({ error: 'Invoice is already paid' }, { status: 400 });
+        if (invoice.status !== 'pending') {
+            return NextResponse.json({ error: invoice.status === 'paid' ? 'Invoice is already paid' : 'Invoice is cancelled' }, { status: 409 });
+        }
+        if (invoice.currency !== 'INR') {
+            return NextResponse.json({ error: 'Razorpay checkout is available only for INR invoices' }, { status: 400 });
         }
 
         const amountInPaise = Math.round(invoice.amount * 100);
@@ -60,10 +63,15 @@ export async function POST(req: NextRequest) {
         });
 
         // Store the order ID on the invoice for verification later
-        await supabaseAdmin
+        const { data: linkedInvoice, error: updateError } = await supabaseAdmin
             .from('invoices')
             .update({ razorpay_order_id: order.id, updated_at: new Date().toISOString() })
-            .eq('id', invoice.id);
+            .eq('id', invoice.id)
+            .eq('status', 'pending')
+            .select('id')
+            .maybeSingle();
+        if (updateError) throw updateError;
+        if (!linkedInvoice) return NextResponse.json({ error: 'Invoice is no longer payable' }, { status: 409 });
 
         return NextResponse.json({
             orderId: order.id,
@@ -79,6 +87,6 @@ export async function POST(req: NextRequest) {
         });
     } catch (err: unknown) {
         console.error('Razorpay create-order error:', err);
-        return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to create payment order' }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to create payment order' }, { status: 500 });
     }
 }

@@ -17,7 +17,7 @@ const VALUES = [
     { icon: '🎯', title: 'Relentlessly practical', desc: 'We build features that solve real pain — no vanity metrics, no fluff.', color: '#6b96ff' },
     { icon: '🇮🇳', title: 'Built for India first', desc: 'Indian freelancers have unique payment challenges. We design for that reality.', color: '#a78bfa' },
     { icon: '🔒', title: 'Privacy by design', desc: 'Gmail access is limited to sending email and identifying the connected account. Inbox-read access is not requested.', color: '#34d399' },
-    { icon: '💰', title: 'Free tier forever', desc: 'Every freelancer deserves better cash flow tools — even if they can\'t afford to pay yet.', color: '#fbbf24' },
+    { icon: '💰', title: 'Useful free tier', desc: 'Core invoice and client workflows remain available before a Pro upgrade.', color: '#fbbf24' },
 ];
 
 const STATS = [
@@ -54,7 +54,7 @@ export default function AboutPage() {
                                 We're fixing how<br />India's freelancers<br /><span className="grad-text">get paid</span>
                             </h1>
                             <p className="text-white/50 text-lg leading-relaxed mb-6">
-                                Flowcent was built by a team that got tired of the same story: you do great work, you send an invoice, and then spend the next 45 days chasing it.
+                                Flowcent is built around a common problem: good work is delivered, an invoice is sent, and payment follow-up becomes a separate administrative job.
                             </p>
                             <p className="text-white/35 text-lg leading-relaxed">
                                 We built the collection system we always wished existed — AI-powered, Gmail-connected, and engineered for the realities of Indian freelance payment culture.
@@ -190,7 +190,7 @@ export default function AboutPage() {
                                 <span className="grad-text">from the first invoice.</span>
                             </h2>
                             <p className="text-white/40 text-sm mb-8 max-w-sm mx-auto">
-                                Free plan forever. Pro when you need it. Start collecting in 5 minutes.
+                                Start on the Free plan. Upgrade to Pro when you need automation and higher limits.
                             </p>
                             <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
                                 <Link href="/signup">

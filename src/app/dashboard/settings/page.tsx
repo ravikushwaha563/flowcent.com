@@ -12,8 +12,7 @@ interface UserProfile {
     gmail_connected: boolean; gmail_email?: string;
 }
 
-function ProfileEditForm({ token, profile, onSaved }: {
-    token: string | null;
+function ProfileEditForm({ profile, onSaved }: {
     profile: UserProfile | null;
     onSaved: (updated: Partial<UserProfile>) => void;
 }) {
@@ -31,7 +30,7 @@ function ProfileEditForm({ token, profile, onSaved }: {
         try {
             const res = await fetch('/api/user/profile', {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, company_name: company }),
             });
             const data = await res.json();
@@ -69,7 +68,7 @@ function ProfileEditForm({ token, profile, onSaved }: {
 
 
 export default function SettingsPage() {
-    const { token, user } = useAuth();
+    const { user, isAuthenticated } = useAuth();
     const searchParams = useSearchParams();
     const router = useRouter();
     const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -90,17 +89,17 @@ export default function SettingsPage() {
     }, [searchParams, router]);
 
     useEffect(() => {
-        if (!token) return;
-        fetch('/api/user/profile', { headers: { Authorization: `Bearer ${token}` } })
+        if (!isAuthenticated) return;
+        fetch('/api/user/profile')
             .then(r => r.json())
             .then(d => { setProfile(d.user); setLoading(false); })
             .catch(() => setLoading(false));
-    }, [token]);
+    }, [isAuthenticated]);
 
     const connectGmail = async () => {
         setGmailConnecting(true);
         try {
-            const res = await fetch('/api/auth/gmail', { headers: { Authorization: `Bearer ${token}` } });
+            const res = await fetch('/api/auth/gmail');
             const data = await res.json();
                 if (!res.ok) {
                     toast.error(data.error || 'Failed to get Gmail auth URL');
@@ -174,7 +173,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Editable fields */}
-                <ProfileEditForm token={token} profile={profile} onSaved={(updated) => setProfile(p => p ? { ...p, ...updated } : p)} />
+                <ProfileEditForm profile={profile} onSaved={(updated) => setProfile(p => p ? { ...p, ...updated } : p)} />
             </div>
 
             {/* Gmail Integration Card */}

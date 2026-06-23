@@ -68,6 +68,6 @@ export async function POST(req: NextRequest) {
         });
     } catch (err: unknown) {
         console.error('Payment verification error:', err);
-        return NextResponse.json({ error: err instanceof Error ? err.message : 'Payment verification failed' }, { status: 500 });
+        return NextResponse.json({ error: 'Payment verification failed' }, { status: 500 });
     }
 }

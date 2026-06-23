@@ -11,7 +11,7 @@ const SECTIONS = [
         content: [
             {
                 subtitle: '',
-                text: 'By creating an account or using Flowcent (the "Service"), you agree to be bound by these Terms & Conditions ("Terms"). If you do not agree, do not use the Service. These Terms apply to all users, including free, Pro, and Agency plan subscribers.',
+                text: 'By creating an account or using Flowcent (the "Service"), you agree to be bound by these Terms & Conditions ("Terms"). If you do not agree, do not use the Service. These Terms apply to all Free and Pro users.',
             },
         ],
     },
@@ -22,7 +22,7 @@ const SECTIONS = [
         content: [
             {
                 subtitle: '',
-                text: 'Flowcent is a SaaS platform that provides invoice tracking, AI-powered payment excuse detection, automated follow-up email scheduling via Gmail, and payment analytics for Indian freelancers and agencies. We provide tools to help you manage your receivables — we do not act as a payment processor or financial institution.',
+                text: 'Flowcent is a SaaS platform that provides invoice tracking, AI-assisted payment reply analysis, automated follow-up email scheduling via Gmail, and collection reporting. We provide tools to help you manage receivables; we do not act as a payment processor, financial institution, credit bureau, or legal adviser.',
             },
         ],
     },
@@ -71,7 +71,7 @@ const SECTIONS = [
             },
             {
                 subtitle: 'Paid Plans',
-                text: 'Pro and Agency plans are billed monthly or annually as selected. All prices are in Indian Rupees (INR) and include applicable GST. Payments are processed securely; we do not store your payment details on our servers.',
+                text: 'The Pro plan is billed monthly or annually as selected. Prices and any applicable taxes are shown before checkout. Payments are processed by the displayed payment provider; Flowcent does not store full card or bank credentials on its servers.',
             },
             {
                 subtitle: 'Cancellation & Refunds',
@@ -90,7 +90,7 @@ const SECTIONS = [
         content: [
             {
                 subtitle: 'Our Property',
-                text: 'All elements of the Flowcent platform — including software, algorithms (including AI Excuse Memory™), design, text, and trademarks — are owned by or licensed to Flowcent Technologies and are protected by intellectual property laws.',
+                text: 'All elements of the Flowcent platform — including software, AI-assisted workflows, design, text, and branding — are owned by or licensed to Flowcent and are protected by applicable intellectual property laws.',
             },
             {
                 subtitle: 'Your Data',
@@ -138,7 +138,7 @@ const SECTIONS = [
         content: [
             {
                 subtitle: '',
-                text: 'We may update these Terms from time to time. Material changes will be notified via email at least 14 days in advance. Continued use of Flowcent after changes take effect constitutes your acceptance of the revised Terms.',
+                text: 'We may update these Terms from time to time. The effective date and revised text will be published on this page, and material changes may also be communicated through the Service or email. Continued use after changes take effect constitutes acceptance of the revised Terms.',
             },
         ],
     },

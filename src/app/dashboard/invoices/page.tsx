@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/contexts/auth-context';
-import { FileText, Zap, Plus, X, Bot, Mail, Check, AlertTriangle } from 'lucide-react';
+import { FileText, Plus, X, Bot, Mail, Check, AlertTriangle, Pencil, Ban, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import UpgradeModal from '@/components/dashboard/UpgradeModal';
 import { getErrorMessage } from '@/lib/errors';
@@ -13,6 +14,7 @@ interface Invoice {
     due_date: string; status: string; created_at: string; clients: Client;
     current_stage?: number; next_followup_date?: string; auto_followup?: boolean;
     payment_intent_score?: number;
+    razorpay_order_id?: string | null; stripe_session_id?: string | null;
 }
 interface ScoreResult { score: number; label: string; color: string; factors: { label: string; impact: number; detail: string }[]; }
 
@@ -27,10 +29,10 @@ const STAGES = [
 
 // Follow-up modal
 function FollowUpModal({
-    invoice, onClose, onSent, token
+    invoice, onClose, onSent
 }: {
     invoice: Invoice; onClose: () => void;
-    onSent: (msg: string) => void; token: string | null;
+    onSent: (msg: string) => void;
 }) {
     // Default to current_stage if available, else 1
     const [stage, setStage] = useState(invoice.current_stage ? Math.min(invoice.current_stage, 5) : 1);
@@ -41,7 +43,7 @@ function FollowUpModal({
         try {
             const res = await fetch('/api/invoices/send-followup', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ invoiceId: invoice.id, stage }),
             });
             const data = await res.json();
@@ -125,7 +127,7 @@ function FollowUpModal({
 }
 
 export default function InvoicesPage() {
-    const { token } = useAuth();
+    const { isAuthenticated, user } = useAuth();
     const [invoices, setInvoices] = useState<Invoice[]>([]);
     const [clients, setClients] = useState<Client[]>([]);
     const [loading, setLoading] = useState(true);
@@ -138,13 +140,16 @@ export default function InvoicesPage() {
     const [scoreLoading, setScoreLoading] = useState<string | null>(null);
     const [showUpgrade, setShowUpgrade] = useState(false);
     const [upgradeMessage, setUpgradeMessage] = useState('');
+    const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
+    const [statusLoading, setStatusLoading] = useState<string | null>(null);
+    const [selectedCurrency, setSelectedCurrency] = useState('INR');
 
     const calculateScore = async (invoiceId: string) => {
         setScoreLoading(invoiceId);
         try {
             const res = await fetch('/api/invoices/score', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ invoiceId }),
             });
             const data = await res.json();
@@ -161,44 +166,26 @@ export default function InvoicesPage() {
         finally { setScoreLoading(null); }
     };
 
-    const runAutomation = async () => {
-        toast.info('checking for due follow-ups...', { id: 'cron' });
-        try {
-            const res = await fetch('/api/cron/process-followups');
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Automation can only run from the secure scheduler');
-            if (data.processed > 0) {
-                toast.success(`Sent ${data.processed} follow-ups!`, { id: 'cron' });
-                fetchData();
-            } else {
-                toast.success('No follow-ups due right now.', { id: 'cron' });
-            }
-        } catch (err) {
-            console.error(err);
-            toast.error('Failed to run automation', { id: 'cron' });
-        }
-    };
-
     const fetchData = useCallback(async () => {
         try {
             const [ir, cr] = await Promise.all([
-                fetch('/api/invoices', { headers: { Authorization: `Bearer ${token}` } }),
-                fetch('/api/clients', { headers: { Authorization: `Bearer ${token}` } }),
+                fetch('/api/invoices'),
+                fetch('/api/clients'),
             ]);
             const [id, cd] = await Promise.all([ir.json(), cr.json()]);
             setInvoices(id.invoices || []);
             setClients(cd.clients || []);
         } finally { setLoading(false); }
-    }, [token]);
+    }, []);
 
-    useEffect(() => { if (token) fetchData(); }, [token, fetchData]);
+    useEffect(() => { if (isAuthenticated) fetchData(); }, [isAuthenticated, fetchData]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault(); setSubmitting(true);
         try {
-            const res = await fetch('/api/invoices', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            const res = await fetch(editingInvoice ? `/api/invoices/${editingInvoice.id}` : '/api/invoices', {
+                method: editingInvoice ? 'PATCH' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData),
             });
             const data = await res.json();
@@ -211,10 +198,13 @@ export default function InvoicesPage() {
                 }
                 throw new Error(data.error || 'Failed to create invoice');
             }
-            setInvoices(prev => [data.invoice, ...prev]);
+            setInvoices(prev => editingInvoice
+                ? prev.map(invoice => invoice.id === editingInvoice.id ? data.invoice : invoice)
+                : [data.invoice, ...prev]);
             setShowForm(false);
+            setEditingInvoice(null);
             setFormData({ clientId: '', invoiceNumber: '', amount: '', currency: 'INR', dueDate: '', autoFollowup: false });
-            toast.success('Invoice created!');
+            toast.success(editingInvoice ? 'Invoice updated!' : 'Invoice created!');
         } catch (error: unknown) { 
             toast.error(getErrorMessage(error, 'Failed to create invoice')); 
         } finally { setSubmitting(false); }
@@ -225,18 +215,65 @@ export default function InvoicesPage() {
         try {
             const res = await fetch(`/api/invoices/${id}`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: 'paid' }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error);
             setInvoices(prev => prev.map(inv => inv.id === id ? data.invoice : inv));
             toast.success('Invoice marked as paid!');
+        } catch (error: unknown) {
+            toast.error(getErrorMessage(error, 'Failed to mark invoice as paid'));
         } finally { setPaidLoading(null); }
+    };
+
+    const updateStatus = async (invoice: Invoice, status: 'pending' | 'cancelled') => {
+        if (status === 'cancelled' && !window.confirm(`Cancel invoice ${invoice.invoice_number}? Its payment link will stop accepting new payments.`)) return;
+        setStatusLoading(invoice.id);
+        try {
+            const res = await fetch(`/api/invoices/${invoice.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+            setInvoices(previous => previous.map(item => item.id === invoice.id ? data.invoice : item));
+            toast.success(status === 'cancelled' ? 'Invoice cancelled' : 'Invoice reopened');
+        } catch (error: unknown) {
+            toast.error(getErrorMessage(error, 'Failed to update invoice'));
+        } finally {
+            setStatusLoading(null);
+        }
+    };
+
+    const startCreate = () => {
+        setEditingInvoice(null);
+        setFormData({ clientId: '', invoiceNumber: '', amount: '', currency: 'INR', dueDate: '', autoFollowup: false });
+        setShowForm(true);
+    };
+
+    const startEdit = (invoice: Invoice) => {
+        setEditingInvoice(invoice);
+        setFormData({
+            clientId: invoice.clients.id,
+            invoiceNumber: invoice.invoice_number,
+            amount: String(invoice.amount),
+            currency: invoice.currency,
+            dueDate: invoice.due_date,
+            autoFollowup: Boolean(invoice.auto_followup),
+        });
+        setShowForm(true);
+    };
+
+    const closeForm = () => {
+        setShowForm(false);
+        setEditingInvoice(null);
     };
 
     const getStatus = (status: string, dueDate: string) => {
         if (status === 'paid') return { label: '✓ Paid', cls: 'badge-paid' };
+        if (status === 'cancelled') return { label: 'Cancelled', cls: 'bg-white/[0.06] text-white/45 border border-white/10' };
         if (new Date(dueDate) < new Date()) return { label: '⚠ Overdue', cls: 'badge-overdue' };
         return { label: '◷ Pending', cls: 'badge-pending' };
     };
@@ -244,8 +281,14 @@ export default function InvoicesPage() {
     const fmt = (amount: number, currency: string) =>
         new Intl.NumberFormat('en-IN', { style: 'currency', currency, maximumFractionDigits: 0 }).format(amount);
 
-    const totalPending = invoices.filter(i => i.status !== 'paid').reduce((a, i) => a + i.amount, 0);
-    const totalPaid = invoices.filter(i => i.status === 'paid').reduce((a, i) => a + i.amount, 0);
+    const currencies = useMemo(() => Array.from(new Set(invoices.map(invoice => invoice.currency))).sort(), [invoices]);
+    useEffect(() => {
+        if (currencies.length > 0 && !currencies.includes(selectedCurrency)) setSelectedCurrency(currencies[0]);
+    }, [currencies, selectedCurrency]);
+    const currencyInvoices = invoices.filter(invoice => invoice.currency === selectedCurrency);
+    const totalPending = currencyInvoices.filter(invoice => invoice.status === 'pending').reduce((sum, invoice) => sum + invoice.amount, 0);
+    const totalPaid = currencyInvoices.filter(invoice => invoice.status === 'paid').reduce((sum, invoice) => sum + invoice.amount, 0);
+    const financialFieldsLocked = Boolean(editingInvoice?.razorpay_order_id || editingInvoice?.stripe_session_id);
 
     return (
         <div className="min-h-screen bg-[#09090f] text-white">
@@ -260,7 +303,6 @@ export default function InvoicesPage() {
             <UpgradeModal
                 isOpen={showUpgrade}
                 onClose={() => setShowUpgrade(false)}
-                token={token}
                 message={upgradeMessage}
             />
 
@@ -269,7 +311,6 @@ export default function InvoicesPage() {
                 {followUpInvoice && (
                     <FollowUpModal
                         invoice={followUpInvoice}
-                        token={token}
                         onClose={() => setFollowUpInvoice(null)}
                         onSent={(msg) => toast.success(msg)}
                     />
@@ -279,14 +320,11 @@ export default function InvoicesPage() {
                 <div className="flex items-center justify-between flex-wrap gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-white tracking-tight">Invoices</h1>
-                        <p className="text-sm text-white/35 mt-1">{invoices.length} total · {fmt(totalPending, 'INR')} pending</p>
+                        <p className="text-sm text-white/35 mt-1">{invoices.length} total · {fmt(totalPending, selectedCurrency)} outstanding</p>
                     </div>
                     <div className="flex gap-3">
-                        <button onClick={runAutomation} className="btn-outline text-xs px-4 py-2 hover:bg-white/5 disabled:opacity-50 flex items-center gap-2">
-                            <Zap size={14} className="text-yellow-400" /> Run Automation
-                        </button>
                         <button
-                            onClick={() => setShowForm(!showForm)}
+                            onClick={showForm ? closeForm : startCreate}
                             disabled={clients.length === 0}
                             className={showForm ? 'btn-outline text-xs px-4 py-2 flex items-center gap-2' : 'btn-primary text-xs px-4 py-2 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2'}
                         >
@@ -297,17 +335,29 @@ export default function InvoicesPage() {
 
                 {/* Mini stat row */}
                 {invoices.length > 0 && (
-                    <div className="grid grid-cols-3 gap-4">
-                        {[
-                            { label: 'Collected', val: fmt(totalPaid, 'INR'), col: '#34d399' },
-                            { label: 'Outstanding', val: fmt(totalPending, 'INR'), col: '#fbbf24' },
-                            { label: 'Total Invoices', val: invoices.length, col: '#6b96ff' },
-                        ].map(s => (
-                            <div key={s.label} className="glass-card px-4 py-3 flex flex-col gap-1">
-                                <span className="text-xs text-white/30">{s.label}</span>
-                                <span className="text-lg font-bold" style={{ color: s.col }}>{s.val}</span>
+                    <div className="space-y-3">
+                        {currencies.length > 1 && (
+                            <div className="flex items-center gap-1 p-1 rounded-lg bg-white/[0.03] border border-white/[0.06] w-fit" aria-label="Invoice currency">
+                                {currencies.map(currency => (
+                                    <button key={currency} onClick={() => setSelectedCurrency(currency)}
+                                        className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${selectedCurrency === currency ? 'bg-white/10 text-white' : 'text-white/35 hover:text-white/60'}`}>
+                                        {currency}
+                                    </button>
+                                ))}
                             </div>
-                        ))}
+                        )}
+                        <div className="grid grid-cols-3 gap-4">
+                            {[
+                                { label: 'Collected', val: fmt(totalPaid, selectedCurrency), col: '#34d399' },
+                                { label: 'Outstanding', val: fmt(totalPending, selectedCurrency), col: '#fbbf24' },
+                                { label: `${selectedCurrency} Invoices`, val: currencyInvoices.length, col: '#6b96ff' },
+                            ].map(s => (
+                                <div key={s.label} className="glass-card px-4 py-3 flex flex-col gap-1">
+                                    <span className="text-xs text-white/30">{s.label}</span>
+                                    <span className="text-lg font-bold" style={{ color: s.col }}>{s.val}</span>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 )}
 
@@ -316,18 +366,18 @@ export default function InvoicesPage() {
                     <div className="px-4 py-3 rounded-xl text-sm text-yellow-400 flex items-center gap-3"
                         style={{ background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.15)' }}>
                         <AlertTriangle size={16} />
-                        <span>Add a <a href="/dashboard/clients" className="underline font-semibold">client</a> first before creating invoices.</span>
+                        <span>Add a <Link href="/dashboard/clients" className="underline font-semibold">client</Link> first before creating invoices.</span>
                     </div>
                 )}
 
                 {/* Form */}
                 {showForm && clients.length > 0 && (
                     <div className="glass-card p-6 anim-up" style={{ borderColor: 'rgba(95,135,255,0.2)' }}>
-                        <p className="text-xs font-semibold text-white/35 uppercase tracking-widest mb-5">New Invoice</p>
+                        <p className="text-xs font-semibold text-white/35 uppercase tracking-widest mb-5">{editingInvoice ? 'Edit Invoice' : 'New Invoice'}</p>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="space-y-1.5">
                                 <label className="text-xs font-semibold text-white/35 uppercase tracking-widest">Client *</label>
-                                <select className="input-premium" value={formData.clientId} onChange={e => setFormData(p => ({ ...p, clientId: e.target.value }))} required>
+                                <select className="input-premium" value={formData.clientId} onChange={e => setFormData(p => ({ ...p, clientId: e.target.value }))} required disabled={financialFieldsLocked}>
                                     <option value="">Select a client...</option>
                                     {clients.map(c => <option key={c.id} value={c.id}>{c.name}{c.company ? ` (${c.company})` : ''}</option>)}
                                 </select>
@@ -343,12 +393,13 @@ export default function InvoicesPage() {
                                         <input type={f.type} placeholder={f.placeholder} className="input-premium"
                                             value={formData[f.key as keyof typeof formData] as string}
                                             onChange={e => setFormData(p => ({ ...p, [f.key]: e.target.value }))}
-                                            required={f.required} min={f.type === 'number' ? 1 : undefined} />
+                                            required={f.required} min={f.type === 'number' ? 1 : undefined}
+                                            disabled={financialFieldsLocked && f.key === 'amount'} />
                                     </div>
                                 ))}
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-semibold text-white/35 uppercase tracking-widest">Currency</label>
-                                    <select className="input-premium" value={formData.currency} onChange={e => setFormData(p => ({ ...p, currency: e.target.value }))}>
+                                    <select className="input-premium" value={formData.currency} onChange={e => setFormData(p => ({ ...p, currency: e.target.value }))} disabled={financialFieldsLocked}>
                                         {['INR', 'USD', 'EUR', 'GBP'].map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
                                 </div>
@@ -366,12 +417,19 @@ export default function InvoicesPage() {
                                     </div>
                                 </div>
                                 <label className="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" className="sr-only peer" checked={formData.autoFollowup} onChange={e => setFormData(p => ({ ...p, autoFollowup: e.target.checked }))} />
+                                    <input type="checkbox" className="sr-only peer" checked={formData.autoFollowup} onChange={event => {
+                                        if (event.target.checked && user?.subscriptionPlan === 'free') {
+                                            setUpgradeMessage('Automated follow-ups are available on the Pro plan.');
+                                            setShowUpgrade(true);
+                                            return;
+                                        }
+                                        setFormData(previous => ({ ...previous, autoFollowup: event.target.checked }));
+                                    }} />
                                     <div className="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
                                 </label>
                             </div>
                             <button type="submit" disabled={submitting} className="btn-primary w-full py-2.5 text-sm mt-3">
-                                {submitting ? 'Creating...' : 'Create Invoice'}
+                                {submitting ? 'Saving...' : editingInvoice ? 'Save Changes' : 'Create Invoice'}
                             </button>
                         </form>
                     </div>
@@ -419,7 +477,7 @@ export default function InvoicesPage() {
                         <div>
                             {invoices.map((invoice, i) => {
                                 const status = getStatus(invoice.status, invoice.due_date);
-                                const isUnpaid = invoice.status !== 'paid';
+                                const isPending = invoice.status === 'pending';
                                 return (
                                     <div key={invoice.id} className="premium-table-row grid gap-4 items-center px-5 py-4 anim-up"
                                         style={{ gridTemplateColumns: '1.2fr 1.5fr 1fr 1fr 1fr auto 1fr auto auto', animationDelay: `${i * 0.04}s` }}>
@@ -490,7 +548,7 @@ export default function InvoicesPage() {
                                         </div>
 
                                         {/* Mark Paid */}
-                                        {isUnpaid ? (
+                                        {isPending ? (
                                             <button onClick={() => markAsPaid(invoice.id)} disabled={paidLoading === invoice.id}
                                                 className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:bg-green-500/10 disabled:opacity-50"
                                                 style={{ border: '1px solid rgba(52,211,153,0.2)', color: '#34d399' }}
@@ -500,14 +558,37 @@ export default function InvoicesPage() {
                                         ) : <span />}
 
                                         {/* Follow-up button */}
-                                        {isUnpaid ? (
-                                            <button onClick={() => setFollowUpInvoice(invoice)}
-                                                className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:bg-blue-500/10"
-                                                style={{ border: '1px solid rgba(95,135,255,0.2)', color: '#6b96ff' }}
-                                                title="Send follow-up email">
-                                                <Mail size={14} strokeWidth={2} />
-                                            </button>
-                                        ) : <span />}
+                                        <div className="flex items-center gap-1">
+                                            {isPending && (
+                                                <button onClick={() => setFollowUpInvoice(invoice)}
+                                                    className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:bg-blue-500/10"
+                                                    style={{ border: '1px solid rgba(95,135,255,0.2)', color: '#6b96ff' }}
+                                                    title="Send follow-up email">
+                                                    <Mail size={14} strokeWidth={2} />
+                                                </button>
+                                            )}
+                                            {invoice.status !== 'paid' && (
+                                                <button onClick={() => startEdit(invoice)}
+                                                    className="w-8 h-8 rounded-lg flex items-center justify-center text-white/30 hover:text-white/70 hover:bg-white/[0.06]"
+                                                    title="Edit invoice">
+                                                    <Pencil size={14} />
+                                                </button>
+                                            )}
+                                            {isPending && (
+                                                <button onClick={() => updateStatus(invoice, 'cancelled')} disabled={statusLoading === invoice.id}
+                                                    className="w-8 h-8 rounded-lg flex items-center justify-center text-white/30 hover:text-red-400 hover:bg-red-500/10 disabled:opacity-40"
+                                                    title="Cancel invoice">
+                                                    <Ban size={14} />
+                                                </button>
+                                            )}
+                                            {invoice.status === 'cancelled' && (
+                                                <button onClick={() => updateStatus(invoice, 'pending')} disabled={statusLoading === invoice.id}
+                                                    className="w-8 h-8 rounded-lg flex items-center justify-center text-white/30 hover:text-green-400 hover:bg-green-500/10 disabled:opacity-40"
+                                                    title="Reopen invoice">
+                                                    <RotateCcw size={14} />
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 );
                             })}

@@ -3,6 +3,7 @@ import { checkClientLimit, PlanType } from '@/lib/plan-limits';
 import { requireUser } from '@/lib/auth/server';
 import { createClientSchema, validationError } from '@/lib/validations/domain';
 import { ZodError } from 'zod';
+import { createAdminSupabaseClient } from '@/lib/supabase/admin';
 
 // GET /api/clients - List all clients for current user
 export async function GET() {
@@ -30,12 +31,12 @@ export async function POST(req: NextRequest) {
     try {
         const { supabase, user, response } = await requireUser();
         if (!user) return response!;
-        const { name, email, phone, company } = createClientSchema.parse(await req.json());
+        const { name, email, phone, company, whatsappOptIn } = createClientSchema.parse(await req.json());
 
         // Fetch user plan and current client count
         const { data: profile } = await supabase
             .from('users')
-            .select('subscription_plan')
+            .select('subscription_plan, plan_expires_at')
             .eq('id', user.id)
             .single();
 
@@ -46,24 +47,32 @@ export async function POST(req: NextRequest) {
             .select('id', { count: 'exact', head: true })
             .eq('user_id', user.id);
 
-        const limitCheck = checkClientLimit((profile.subscription_plan || 'free') as PlanType, clientCount || 0);
+        const activePlan = profile.plan_expires_at && new Date(profile.plan_expires_at) < new Date()
+            ? 'free'
+            : profile.subscription_plan || 'free';
+        const limitCheck = checkClientLimit(activePlan as PlanType, clientCount || 0);
 
         if (!limitCheck.allowed) {
             return NextResponse.json({ error: 'LIMIT_EXCEEDED', message: limitCheck.message }, { status: 403 });
         }
 
-        const { data, error } = await supabase
-            .from('clients')
-            .insert({
-                user_id: user.id,
-                name,
-                email,
-                phone: phone || null,
-                company: company || null,
-                payment_history_score: 50,
-                avg_payment_delay: 0,
-            })
+        const admin = createAdminSupabaseClient();
+        const { data: clientId, error: createError } = await admin.rpc('create_client_record', {
+            p_user_id: user.id,
+            p_name: name,
+            p_email: email,
+            p_phone: phone || '',
+            p_company: company || '',
+            p_whatsapp_opt_in: whatsappOptIn || false,
+        });
+        if (createError?.message.includes('CLIENT_LIMIT_EXCEEDED')) {
+            return NextResponse.json({ error: 'LIMIT_EXCEEDED', message: limitCheck.message }, { status: 403 });
+        }
+        if (createError) throw createError;
+
+        const { data, error } = await admin.from('clients')
             .select()
+            .eq('id', clientId)
             .single();
 
         if (error) throw error;

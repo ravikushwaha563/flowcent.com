@@ -6,7 +6,7 @@ import Image from 'next/image';
 // Announcement bar items (rotate)
 const ANNOUNCEMENTS = [
     { text: '🎉 Flowcent v1.0 is live — Built for Indian freelancers', cta: 'Read more', href: '/blog/how-indian-freelancers-get-paid-faster' },
-    { text: '⚡ New: AI Excuse Memory™ now detects 6 payment patterns', cta: 'Try it', href: '/dashboard/intelligence' },
+    { text: 'New: AI-assisted payment reply analysis', cta: 'Try it', href: '/dashboard/intelligence' },
     { text: '💳 Secure Razorpay and Stripe payment links are available', cta: 'Explore', href: '/features/integrations' },
 ];
 
@@ -35,12 +35,12 @@ const NAV_FEATURES = [
         group: 'AI & Intelligence',
         items: [
             {
-                label: 'AI Excuse Memory™', desc: 'Detects payment promises & red flags', href: '/dashboard/intelligence', icon: (
+                label: 'AI Reply Analysis', desc: 'Extracts payment commitments for review', href: '/dashboard/intelligence', icon: (
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="3" stroke="currentColor" strokeWidth="1.2" /><path d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M2.9 2.9l1 1M10.1 10.1l1 1M2.9 11.1l1-1M10.1 3.9l1-1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" /></svg>
                 )
             },
             {
-                label: 'Payment Intent Score', desc: '0–100 AI score predicting payment', href: '/features', icon: (
+                label: 'Payment Intent Score', desc: '0–100 follow-up priority signal', href: '/features', icon: (
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 10.5l3-3 2.5 2 4-5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 )
             },
