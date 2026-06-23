@@ -106,6 +106,9 @@ export default function ExcuseAnalyzerModal({ isOpen, onClose, invoiceContext }:
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: 20 }}
                     className="relative w-full max-w-2xl bg-[#0a0f1c] border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="excuse-analyzer-title"
                 >
                     {/* Glowing Accent Top */}
                     <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50" />
@@ -117,11 +120,11 @@ export default function ExcuseAnalyzerModal({ isOpen, onClose, invoiceContext }:
                                 <Bot className="w-5 h-5 text-blue-400" />
                             </div>
                             <div>
-                                <h2 className="text-lg font-bold text-white tracking-tight">AI Excuse Analyzer</h2>
+                                <h2 id="excuse-analyzer-title" className="text-lg font-bold text-white tracking-tight">AI Reply Analyzer</h2>
                                 <p className="text-sm text-white/40">Evidence-based payment reply review</p>
                             </div>
                         </div>
-                        <button onClick={onClose} className="p-2 text-white/40 hover:text-white transition-colors rounded-lg hover:bg-white/5">
+                        <button type="button" onClick={onClose} aria-label="Close AI reply analyzer" className="p-2 text-white/40 hover:text-white transition-colors rounded-lg hover:bg-white/5">
                             <X className="w-5 h-5" />
                         </button>
                     </div>
@@ -136,6 +139,7 @@ export default function ExcuseAnalyzerModal({ isOpen, onClose, invoiceContext }:
                                     {invoiceContext && <span className="text-blue-400/60 lowercase">Context loaded</span>}
                                 </label>
                                 <textarea
+                                    aria-label="Client payment reply"
                                     value={excuse}
                                     onChange={(e) => setExcuse(e.target.value)}
                                     placeholder="e.g., 'We are waiting on our own clients to pay us before we can clear this invoice...'"

@@ -49,12 +49,12 @@ function ProfileEditForm({ profile, onSaved }: {
             <p className="text-xs font-semibold text-white/30 uppercase tracking-widest">Edit Profile</p>
             <div className="grid sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-white/35 uppercase tracking-widest">Full Name</label>
-                    <input className="input-premium" value={name} onChange={e => setName(e.target.value)} placeholder="Your name" />
+                    <label htmlFor="profile-name" className="text-xs font-semibold text-white/35 uppercase tracking-widest">Full Name</label>
+                    <input id="profile-name" className="input-premium" value={name} onChange={e => setName(e.target.value)} placeholder="Your name" />
                 </div>
                 <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-white/35 uppercase tracking-widest">Company / Studio</label>
-                    <input className="input-premium" value={company} onChange={e => setCompany(e.target.value)} placeholder="Optional" />
+                    <label htmlFor="profile-company" className="text-xs font-semibold text-white/35 uppercase tracking-widest">Company / Studio</label>
+                    <input id="profile-company" className="input-premium" value={company} onChange={e => setCompany(e.target.value)} placeholder="Optional" />
                 </div>
             </div>
             <div className="flex items-center gap-3">
@@ -101,14 +101,13 @@ export default function SettingsPage() {
         try {
             const res = await fetch('/api/auth/gmail');
             const data = await res.json();
-                if (!res.ok) {
-                    toast.error(data.error || 'Failed to get Gmail auth URL');
-                    return;
-                }
-                // Redirect to Google OAuth
-                window.location.href = data.authUrl;
-            } catch {
-                toast.error('Network error. Failed to initiate connection.');
+            if (!res.ok) {
+                toast.error(data.error || 'Failed to get Gmail auth URL');
+                return;
+            }
+            window.location.href = data.authUrl;
+        } catch {
+            toast.error('Network error. Failed to initiate connection.');
         } finally {
             setGmailConnecting(false);
         }
@@ -243,7 +242,7 @@ export default function SettingsPage() {
                         <p className="text-sm text-white/70">Export account data</p>
                         <p className="text-xs text-white/30 mt-1">Download your profile, clients, invoices, promises, follow-ups and billing records.</p>
                     </div>
-                    <a href="/api/user/export" className="btn-outline p-2.5" title="Download account data">
+                    <a href="/api/user/export" className="btn-outline p-2.5" title="Download account data" aria-label="Download account data">
                         <Download size={16} />
                     </a>
                 </div>
@@ -252,7 +251,8 @@ export default function SettingsPage() {
                         <p className="text-sm text-red-400">Delete account permanently</p>
                         <p className="text-xs text-white/30 mt-1">This removes your authentication record and all Flowcent data. This cannot be undone.</p>
                     </div>
-                    <input type="email" value={deleteConfirmation} onChange={event => setDeleteConfirmation(event.target.value)}
+                    <label htmlFor="delete-confirmation" className="sr-only">Confirm account email for deletion</label>
+                    <input id="delete-confirmation" type="email" value={deleteConfirmation} onChange={event => setDeleteConfirmation(event.target.value)}
                         className="input-premium" placeholder={user?.email || 'Confirm your email'} />
                     <button onClick={deleteAccount} disabled={deleting || !deleteConfirmation}
                         className="btn-outline text-xs px-4 py-2 text-red-400 flex items-center gap-2 disabled:opacity-40"

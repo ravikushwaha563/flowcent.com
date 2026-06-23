@@ -37,6 +37,7 @@ export default function RevenueChart({ history }: { history: CollectionMonth[] }
         </div>
         {currencies.length > 1 && (
           <select value={currency} onChange={event => setSelectedCurrency(event.target.value)}
+            aria-label="Revenue currency"
             className="bg-white/[0.04] border border-white/[0.08] rounded-lg px-2.5 py-1 text-xs text-white/60">
             {currencies.map(item => <option key={item} value={item}>{item}</option>)}
           </select>
@@ -56,7 +57,9 @@ export default function RevenueChart({ history }: { history: CollectionMonth[] }
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} dy={10} />
             <YAxis axisLine={false} tickLine={false} tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} 
-                   tickFormatter={(val) => `₹${val >= 1000 ? (val/1000) + 'k' : val}`} />
+                   tickFormatter={(value) => new Intl.NumberFormat('en-IN', {
+                     style: 'currency', currency, notation: 'compact', maximumFractionDigits: 1,
+                   }).format(Number(value))} />
             <Tooltip content={<CustomTooltip currency={currency} />} cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1, strokeDasharray: '4 4' }} />
             <Area type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
           </AreaChart>

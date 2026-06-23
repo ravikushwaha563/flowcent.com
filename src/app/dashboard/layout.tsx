@@ -1,10 +1,10 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth, type User } from '@/contexts/auth-context';
-import { Home, FileText, Users, Bot, Settings, LineChart, MessageCircle, UsersRound } from 'lucide-react';
+import { Home, FileText, Users, Bot, Settings, LineChart, MessageCircle, UsersRound, LogOut, Menu, X } from 'lucide-react';
 
 const NAV = [
     { href: '/dashboard', label: 'Overview', exact: true, icon: <Home size={18} strokeWidth={1.5} /> },
@@ -87,10 +87,8 @@ function DashboardSidebar({
                     <span className="text-xs font-semibold text-white/60 capitalize">{user?.subscriptionPlan || 'free'} Plan</span>
                     <span className="ml-auto text-[9px] px-1.5 py-0.5 rounded bg-green-500/15 text-green-400 font-bold">ACTIVE</span>
                 </div>
-                <Link href="/dashboard/billing" onClick={onNavigate}>
-                    <button className="mt-1 w-full py-1.5 rounded-lg grad-brand text-white text-[11px] font-semibold hover:opacity-90 transition-opacity">
-                        View billing
-                    </button>
+                <Link href="/dashboard/billing" onClick={onNavigate} className="mt-1 w-full py-1.5 rounded-lg grad-brand text-white text-[11px] font-semibold hover:opacity-90 transition-opacity flex items-center justify-center">
+                    View billing
                 </Link>
             </div>
 
@@ -103,10 +101,8 @@ function DashboardSidebar({
                         <p className="text-xs font-semibold text-white truncate">{user?.name || 'My Account'}</p>
                         <p className="text-[10px] text-white/30 truncate">{user?.email}</p>
                     </div>
-                    <button onClick={onLogout} className="text-white/25 hover:text-white/60 transition-colors p-1" title="Sign out">
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                            <path d="M5 2H2.5A1.5 1.5 0 0 0 1 3.5v7A1.5 1.5 0 0 0 2.5 12H5M9.5 9.5 13 7l-3.5-2.5M5 7h8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
+                    <button type="button" onClick={onLogout} className="text-white/25 hover:text-white/60 transition-colors p-1" title="Sign out" aria-label="Sign out">
+                        <LogOut size={14} />
                     </button>
                 </div>
             </div>
@@ -124,6 +120,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         await logout();
         router.replace('/login');
     };
+
+    useEffect(() => {
+        if (!sidebarOpen) return;
+        const closeOnEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') setSidebarOpen(false);
+        };
+        window.addEventListener('keydown', closeOnEscape);
+        return () => window.removeEventListener('keydown', closeOnEscape);
+    }, [sidebarOpen]);
 
     if (isLoading) {
         return (
@@ -152,7 +157,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {sidebarOpen && (
                 <div className="lg:hidden fixed inset-0 z-50 flex">
                     <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
-                    <aside className="relative z-10 w-60 border-r border-white/[0.06] flex flex-col" style={{ background: 'linear-gradient(180deg, #09090f 0%, #0a0a13 100%)' }}>
+                    <aside className="relative z-10 w-60 border-r border-white/[0.06] flex flex-col" aria-label="Dashboard navigation" style={{ background: 'linear-gradient(180deg, #09090f 0%, #0a0a13 100%)' }}>
+                        <button type="button" onClick={() => setSidebarOpen(false)} aria-label="Close navigation" className="absolute top-4 right-3 z-20 p-1.5 text-white/40 hover:text-white rounded-lg hover:bg-white/[0.06]">
+                            <X size={17} />
+                        </button>
                         <DashboardSidebar pathname={pathname} user={user} onNavigate={() => setSidebarOpen(false)} onLogout={() => void handleLogout()} />
                     </aside>
                 </div>
@@ -163,10 +171,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                 {/* Mobile topbar */}
                 <header className="lg:hidden sticky top-0 z-20 flex items-center gap-3 px-4 h-14 border-b border-white/[0.06] bg-[#09090f]/95 backdrop-blur-xl">
-                    <button onClick={() => setSidebarOpen(true)} className="text-white/50 hover:text-white p-1.5 rounded-lg hover:bg-white/[0.06] transition-all">
-                        <svg width="18" height="18" fill="none" viewBox="0 0 18 18">
-                            <path d="M2 4h14M2 9h14M2 14h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                        </svg>
+                    <button type="button" onClick={() => setSidebarOpen(true)} aria-label="Open navigation" className="text-white/50 hover:text-white p-1.5 rounded-lg hover:bg-white/[0.06] transition-all">
+                        <Menu size={18} />
                     </button>
                     <div className="flex items-center gap-2">
                         <Image src="/logo.png" alt="Flowcent Logo" width={24} height={24} className="w-6 h-6 rounded-md object-contain drop-shadow-[0_0_8px_rgba(61,97,255,0.3)]" />

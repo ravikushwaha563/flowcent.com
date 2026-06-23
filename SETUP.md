@@ -50,6 +50,7 @@ Provider callback URLs must use the same origin as `NEXT_PUBLIC_APP_URL`.
 ```bash
 npm run dev
 npm run quality
+npm run verify:deployment
 ```
 
 Open `http://localhost:3000`. Before launch, smoke-test signup and password
@@ -63,5 +64,7 @@ export, and account deletion.
 - Use production callback URLs and live payment credentials.
 - Confirm row-level security is enabled on every user-owned table.
 - Configure webhook retries and scheduler monitoring.
+- Poll `/api/health` from external uptime monitoring; a database or required
+  service-role failure returns HTTP 503.
 - Run `npm run quality` from a clean checkout.
 - Back up Postgres and document a restore drill before accepting live data.

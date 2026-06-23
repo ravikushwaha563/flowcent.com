@@ -273,7 +273,13 @@
   background: #111118;
   border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 1rem;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+:where(a, button, input, select, textarea):focus-visible {
+  outline: 2px solid #6b96ff;
+  outline-offset: 2px;
 }
 
 .premium-table-header {

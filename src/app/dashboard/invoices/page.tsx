@@ -60,15 +60,15 @@ function FollowUpModal({
     const selectedStage = STAGES[stage - 1] || STAGES[0];
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="followup-title" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}>
             <div className="w-full max-w-md glass-card p-6 space-y-5 anim-up" style={{ borderColor: 'rgba(95,135,255,0.25)' }}>
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h3 className="font-bold text-white">Send Follow-up Email</h3>
+                        <h3 id="followup-title" className="font-bold text-white">Send Follow-up Email</h3>
                         <p className="text-xs text-white/40 mt-0.5">Invoice <span className="text-blue-400 font-mono">{invoice.invoice_number}</span> → {invoice.clients.name}</p>
                     </div>
-                    <button onClick={onClose} className="text-white/30 hover:text-white/60 text-xl transition-colors">✕</button>
+                    <button type="button" onClick={onClose} aria-label="Close follow-up dialog" className="text-white/30 hover:text-white/60 text-xl transition-colors">✕</button>
                 </div>
 
                 <div className="divider-grad"></div>
@@ -346,7 +346,7 @@ export default function InvoicesPage() {
                                 ))}
                             </div>
                         )}
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             {[
                                 { label: 'Collected', val: fmt(totalPaid, selectedCurrency), col: '#34d399' },
                                 { label: 'Outstanding', val: fmt(totalPending, selectedCurrency), col: '#fbbf24' },
@@ -376,8 +376,8 @@ export default function InvoicesPage() {
                         <p className="text-xs font-semibold text-white/35 uppercase tracking-widest mb-5">{editingInvoice ? 'Edit Invoice' : 'New Invoice'}</p>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-white/35 uppercase tracking-widest">Client *</label>
-                                <select className="input-premium" value={formData.clientId} onChange={e => setFormData(p => ({ ...p, clientId: e.target.value }))} required disabled={financialFieldsLocked}>
+                                <label htmlFor="invoice-client" className="text-xs font-semibold text-white/35 uppercase tracking-widest">Client *</label>
+                                <select id="invoice-client" className="input-premium" value={formData.clientId} onChange={e => setFormData(p => ({ ...p, clientId: e.target.value }))} required disabled={financialFieldsLocked}>
                                     <option value="">Select a client...</option>
                                     {clients.map(c => <option key={c.id} value={c.id}>{c.name}{c.company ? ` (${c.company})` : ''}</option>)}
                                 </select>
@@ -389,8 +389,8 @@ export default function InvoicesPage() {
                                     { key: 'amount', label: 'Amount *', placeholder: '50000', type: 'number', required: true },
                                 ].map(f => (
                                     <div key={f.key} className="space-y-1.5">
-                                        <label className="text-xs font-semibold text-white/35 uppercase tracking-widest">{f.label}</label>
-                                        <input type={f.type} placeholder={f.placeholder} className="input-premium"
+                                        <label htmlFor={`invoice-${f.key}`} className="text-xs font-semibold text-white/35 uppercase tracking-widest">{f.label}</label>
+                                        <input id={`invoice-${f.key}`} type={f.type} placeholder={f.placeholder} className="input-premium"
                                             value={formData[f.key as keyof typeof formData] as string}
                                             onChange={e => setFormData(p => ({ ...p, [f.key]: e.target.value }))}
                                             required={f.required} min={f.type === 'number' ? 1 : undefined}
@@ -398,8 +398,8 @@ export default function InvoicesPage() {
                                     </div>
                                 ))}
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-white/35 uppercase tracking-widest">Currency</label>
-                                    <select className="input-premium" value={formData.currency} onChange={e => setFormData(p => ({ ...p, currency: e.target.value }))} disabled={financialFieldsLocked}>
+                                    <label htmlFor="invoice-currency" className="text-xs font-semibold text-white/35 uppercase tracking-widest">Currency</label>
+                                    <select id="invoice-currency" className="input-premium" value={formData.currency} onChange={e => setFormData(p => ({ ...p, currency: e.target.value }))} disabled={financialFieldsLocked}>
                                         {['INR', 'USD', 'EUR', 'GBP'].map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
                                 </div>
@@ -417,7 +417,7 @@ export default function InvoicesPage() {
                                     </div>
                                 </div>
                                 <label className="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" className="sr-only peer" checked={formData.autoFollowup} onChange={event => {
+                                    <input type="checkbox" className="sr-only peer" aria-label="Enable automated follow-ups" checked={formData.autoFollowup} onChange={event => {
                                         if (event.target.checked && user?.subscriptionPlan === 'free') {
                                             setUpgradeMessage('Automated follow-ups are available on the Pro plan.');
                                             setShowUpgrade(true);
@@ -457,7 +457,7 @@ export default function InvoicesPage() {
                         </div>
                         <h3 className="text-xl font-bold text-white mb-2 tracking-tight">No invoices yet</h3>
                         <p className="text-sm text-white/40 max-w-sm mx-auto mb-8 leading-relaxed">
-                            Create your first professional invoice. Flowcent will track it and ensure you get paid on time.
+                            Create your first invoice to track its due date, payment status, and follow-up workflow.
                         </p>
                         {clients.length > 0 && (
                             <button onClick={() => setShowForm(true)} className="btn-primary text-sm px-6 py-3 flex items-center gap-2 mx-auto shadow-[0_0_20px_rgba(95,135,255,0.25)] hover:shadow-[0_0_30px_rgba(95,135,255,0.4)]">
@@ -468,7 +468,7 @@ export default function InvoicesPage() {
                 ) : (
                     <div className="premium-table anim-up">
                         <div className="premium-table-header">
-                            <div className="grid gap-4 px-5 py-3.5" style={{ gridTemplateColumns: '1.2fr 1.5fr 1fr 1fr 1fr auto 1fr auto auto' }}>
+                            <div className="grid gap-4 px-5 py-3.5 min-w-[1120px]" style={{ gridTemplateColumns: '1.2fr 1.5fr 1fr 1fr 1fr auto 1fr auto auto' }}>
                                 {['Invoice #', 'Client', 'Amount', 'Due Date', 'Status', 'Intent Score', 'Automation', '', ''].map((h, i) => (
                                     <span key={i} className="text-xs font-semibold text-white/30 uppercase tracking-widest">{h}</span>
                                 ))}
@@ -479,7 +479,7 @@ export default function InvoicesPage() {
                                 const status = getStatus(invoice.status, invoice.due_date);
                                 const isPending = invoice.status === 'pending';
                                 return (
-                                    <div key={invoice.id} className="premium-table-row grid gap-4 items-center px-5 py-4 anim-up"
+                                    <div key={invoice.id} className="premium-table-row grid gap-4 items-center px-5 py-4 anim-up min-w-[1120px]"
                                         style={{ gridTemplateColumns: '1.2fr 1.5fr 1fr 1fr 1fr auto 1fr auto auto', animationDelay: `${i * 0.04}s` }}>
                                         <a href={`/dashboard/invoices/${invoice.id}`}
                                             className="text-sm font-mono text-blue-400 hover:text-blue-300 hover:underline transition-colors"

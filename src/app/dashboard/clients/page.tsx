@@ -185,8 +185,8 @@ export default function ClientsPage() {
                                     { key: 'company', label: 'Company', placeholder: 'Acme Corp', type: 'text', required: false },
                                 ].map(f => (
                                     <div key={f.key} className="space-y-1.5">
-                                        <label className="text-xs font-semibold text-white/35 uppercase tracking-widest">{f.label}</label>
-                                        <input type={f.type} placeholder={f.placeholder} className="input-premium"
+                                        <label htmlFor={`client-${f.key}`} className="text-xs font-semibold text-white/35 uppercase tracking-widest">{f.label}</label>
+                                        <input id={`client-${f.key}`} type={f.type} placeholder={f.placeholder} className="input-premium"
                                             value={formData[f.key as 'name' | 'email' | 'phone' | 'company']}
                                             onChange={e => setFormData(p => ({ ...p, [f.key]: e.target.value }))}
                                             required={f.required} />
@@ -194,7 +194,7 @@ export default function ClientsPage() {
                                 ))}
                             </div>
                             <label className="flex items-start gap-3 p-4 rounded-lg bg-white/[0.02] border border-white/[0.07] cursor-pointer">
-                                <input type="checkbox" className="mt-0.5" checked={formData.whatsappOptIn}
+                                <input type="checkbox" className="mt-0.5" aria-label="Client consented to WhatsApp reminders" checked={formData.whatsappOptIn}
                                     onChange={event => setFormData(previous => ({ ...previous, whatsappOptIn: event.target.checked }))} />
                                 <MessageCircle size={16} className="text-green-400 mt-0.5 shrink-0" />
                                 <span className="text-xs text-white/50 leading-relaxed">
@@ -259,12 +259,13 @@ export default function ClientsPage() {
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <ScoreBadge score={client.payment_history_score} aiRisk={client.ai_risk_level} />
-                                            <button onClick={() => startEdit(client)} className="w-7 h-7 rounded-lg flex items-center justify-center text-white/25 hover:text-white/70 hover:bg-white/[0.06]" title="Edit client">
+                                            <button type="button" onClick={() => startEdit(client)} aria-label={`Edit ${client.name}`} className="w-7 h-7 rounded-lg flex items-center justify-center text-white/25 hover:text-white/70 hover:bg-white/[0.06]" title="Edit client">
                                                 <Pencil size={13} />
                                             </button>
                                             <button
                                                 onClick={() => deleteClient(client)}
                                                 disabled={deletingId === client.id}
+                                                aria-label={`Delete ${client.name}`}
                                                 className="w-7 h-7 rounded-lg flex items-center justify-center text-white/25 hover:text-red-400 hover:bg-red-500/10 disabled:opacity-40"
                                                 title="Delete client"
                                             >

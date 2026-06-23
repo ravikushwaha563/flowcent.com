@@ -32,6 +32,15 @@ npm run quality
 Individual commands are available as `npm run lint`, `npm run typecheck`,
 `npm test`, `npm run test:coverage`, and `npm run build`.
 
+After applying migrations to a configured Supabase project, run:
+
+```bash
+npm run verify:deployment
+```
+
+This fails if anonymous table reads or the protected billing activation RPC
+remain reachable.
+
 ## Production requirements
 
 - Apply the database security migration before serving traffic.
@@ -42,6 +51,7 @@ Individual commands are available as `npm run lint`, `npm run typecheck`,
   supported.
 - Obtain explicit client consent before enabling WhatsApp reminders.
 - Configure Razorpay and Stripe webhooks before enabling live payments.
+- Monitor `/api/health`, scheduler failures, and payment webhook retries.
 - Run the full quality gate and a payment/auth smoke test before deployment.
 
 See [supabase/README.md](supabase/README.md) for database details and
